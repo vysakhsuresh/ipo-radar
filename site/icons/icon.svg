@@ -1,33 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0f8583"/>
-      <stop offset="1" stop-color="#074d4c"/>
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#128c89"/>
+      <stop offset="0.6" stop-color="#0a5f5d"/>
+      <stop offset="1" stop-color="#05302f"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7fe3dc" stop-opacity="0"/>
-      <stop offset="1" stop-color="#7fe3dc" stop-opacity="0.55"/>
+    <linearGradient id="sweep" gradientUnits="userSpaceOnUse" x1="256" y1="276" x2="470" y2="170">
+      <stop offset="0" stop-color="#8ff2ea" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#8ff2ea" stop-opacity="0.6"/>
     </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe066" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffe066" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <clipPath id="round"><rect width="512" height="512" rx="112"/></clipPath>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g clip-path="url(#round)" fill="none" stroke="#9fe8e3" stroke-opacity="0.35" stroke-width="8">
-    <circle cx="256" cy="276" r="72"/>
-    <circle cx="256" cy="276" r="140"/>
-    <circle cx="256" cy="276" r="208"/>
+  <rect width="512" height="512" rx="112" fill="url(#sheen)"/>
+  <g clip-path="url(#round)">
+    <!-- rings -->
+    <g fill="none" stroke="#b9f3ee" stroke-linecap="round">
+      <circle cx="256" cy="276" r="66" stroke-width="7" stroke-opacity="0.55"/>
+      <circle cx="256" cy="276" r="132" stroke-width="7" stroke-opacity="0.4"/>
+      <circle cx="256" cy="276" r="198" stroke-width="7" stroke-opacity="0.28"/>
+    </g>
+    <!-- crosshair, fainter than rings -->
+    <g stroke="#b9f3ee" stroke-opacity="0.22" stroke-width="5" stroke-linecap="round">
+      <line x1="48" y1="276" x2="464" y2="276"/>
+      <line x1="256" y1="68" x2="256" y2="484"/>
+    </g>
+    <!-- sweep wedge: 75 degrees, bright at the beam -->
+    <path d="M256 276 L256 66 A210 210 0 0 1 459 222 Z" fill="url(#sweep)"/>
+    <!-- beam -->
+    <line x1="256" y1="276" x2="256" y2="66" stroke="#eafffd" stroke-width="11" stroke-linecap="round" filter="url(#glow)"/>
+    <!-- the blip: a rising candle caught in the sweep -->
+    <circle cx="344" cy="212" r="92" fill="url(#halo)"/>
+    <g filter="url(#glow)">
+      <line x1="344" y1="130" x2="344" y2="298" stroke="#fff6cc" stroke-width="13" stroke-linecap="round"/>
+      <rect x="312" y="162" width="64" height="104" rx="14" fill="#ffd23f" stroke="#fff6cc" stroke-width="7"/>
+    </g>
+    <!-- centre -->
+    <circle cx="256" cy="276" r="24" fill="#083f3e" stroke="#eafffd" stroke-width="7"/>
+    <circle cx="256" cy="276" r="8" fill="#eafffd"/>
   </g>
-  <!-- sweep: a 70° wedge trailing the beam -->
-  <path d="M256 276 L256 60 A216 216 0 0 1 459 202 Z" fill="url(#sweep)" clip-path="url(#round)"/>
-  <line x1="256" y1="276" x2="256" y2="58" stroke="#c8f6f2" stroke-width="10" stroke-linecap="round"/>
-  <!-- crosshair -->
-  <g stroke="#9fe8e3" stroke-opacity="0.45" stroke-width="6" stroke-linecap="round">
-    <line x1="40" y1="276" x2="472" y2="276"/>
-    <line x1="256" y1="60" x2="256" y2="492"/>
-  </g>
-  <!-- the blip: a rising listing-day candle, lit by the sweep -->
-  <g>
-    <line x1="340" y1="148" x2="340" y2="298" stroke="#fff4c2" stroke-width="12" stroke-linecap="round"/>
-    <rect x="312" y="176" width="56" height="94" rx="12" fill="#ffd54a" stroke="#fff4c2" stroke-width="6"/>
-  </g>
-  <circle cx="256" cy="276" r="18" fill="#e6fbf9"/>
 </svg>
