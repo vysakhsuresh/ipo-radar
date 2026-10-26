@@ -146,13 +146,21 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .sec-head p { color: var(--ink-2); max-width: 70ch; }
 
 /* filters */
-.filters { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
-.seg { display: inline-flex; border: 1px solid var(--hair-2); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-.seg button { background: transparent; border: 0; padding: 6px 10px; cursor: pointer; color: var(--ink-2); border-right: 1px solid var(--hair); }
-.seg button:last-child { border-right: 0; }
-.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
-.filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
-.filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: var(--radius); padding: 5px 8px; }
+.filters { display: grid; gap: 10px; }
+.filters .line { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.filters .line .spacer { flex: 1; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--hair-2); border-radius: 999px; background: var(--surface); }
+.seg button { background: transparent; border: 0; padding: 5px 12px; border-radius: 999px; cursor: pointer; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 0; }
+.chips::-webkit-scrollbar { display: none; }
+@media (max-width: 720px) { .chips { margin: 0 -16px; padding: 2px 16px; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); } .chips:has(.chip:last-child[aria-pressed="true"]) { mask-image: none; -webkit-mask-image: none; } }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--hair-2); background: var(--surface); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; line-height: 1; }
+.chip .n { font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 600; }
+.chip[aria-pressed="true"] .n { background: rgba(255,255,255,.22); color: var(--on-accent); }
+.filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+.filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
 
 /* table */
 .tablewrap { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
@@ -348,18 +356,21 @@ table.data th { color: var(--muted); font-weight: 500; }
       <p>Click a row for the reasons, the warnings, the cost breakdown and a what-if box. Probabilities come from a model fitted on past listings; GMP is the unofficial grey-market quote the model treats as one input among several.</p>
     </div>
     <div class="filters" role="group" aria-label="Filters">
+      <div class="chips" id="f-status" role="group" aria-label="Status">
+        <button type="button" class="chip" data-v="active" aria-pressed="true" title="Open, upcoming and awaiting listing">Active <span class="n"></span></button>
+        <button type="button" class="chip" data-v="open" aria-pressed="false" title="Bidding open today">Open now <span class="n"></span></button>
+        <button type="button" class="chip" data-v="upcoming" aria-pressed="false" title="Bidding opens later">Upcoming <span class="n"></span></button>
+        <button type="button" class="chip" data-v="listed" aria-pressed="false" title="Listed in the last weeks">Listed <span class="n"></span></button>
+        <button type="button" class="chip" data-v="watch" aria-pressed="false" title="Your watchlist">★ Watching <span class="n"></span></button>
+        <button type="button" class="chip" data-v="all" aria-pressed="false">All <span class="n"></span></button>
+      </div>
+      <div class="line">
       <div class="seg" id="f-board" role="group" aria-label="Board">
         <button type="button" data-v="all" aria-pressed="true">All boards</button>
         <button type="button" data-v="mainboard" aria-pressed="false">Mainboard</button>
         <button type="button" data-v="sme" aria-pressed="false">SME</button>
       </div>
-      <div class="seg" id="f-status" role="group" aria-label="Status">
-        <button type="button" data-v="active" aria-pressed="true">Open, upcoming &amp; awaiting listing</button>
-        <button type="button" data-v="open" aria-pressed="false">Open now</button>
-        <button type="button" data-v="listed" aria-pressed="false">Listed recently</button>
-        <button type="button" data-v="watch" aria-pressed="false">Watching</button>
-        <button type="button" data-v="all" aria-pressed="false">Everything</button>
-      </div>
+      <span class="spacer"></span>
       <label><input type="checkbox" id="f-nodata"> Hide “not enough data”</label>
       <label>Sort <select id="f-sort">
         <option value="verdict">by status, then verdict</option>
@@ -368,6 +379,7 @@ table.data th { color: var(--muted); font-weight: 500; }
         <option value="p">by chance of gain</option>
         <option value="date">by date</option>
       </select></label>
+      </div>
     </div>
     <div class="tablewrap">
       <table class="pipe" id="pipe">
