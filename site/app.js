@@ -108,7 +108,7 @@
     a.append(el('span', null, 'Data as of ', el('b', null, gen ? gen.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'unknown')));
     if (ageH !== null && ageH > 30) a.append(el('span', { class: 'stale' }, 'This snapshot is ' + Math.round(ageH / 24) + ' days old; GMP and subscription figures move daily.'));
     if (PARAMS && PARAMS.status === 'calibrated') a.append(el('span', null, 'Model fitted on ', el('b', null, PARAMS.n_rows + ' listings'), ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1])));
-    else if (PARAMS) a.append(el('span', { class: 'stale' }, 'Model is on documented prior weights: ' + PARAMS.n_rows + ' of the ' + (PARAMS.min_rows_to_calibrate || 120) + ' listings with outcomes needed before it is fitted to data.'));
+    else if (PARAMS) a.append(el('span', { class: 'stale' }, 'Model is on documented prior weights. The history holds ' + PARAMS.n_rows + ' listings with outcomes, but only ' + (PARAMS.n_rows_gating || 0) + ' of them carry a GMP or subscription figure on a closing-price basis; ' + (PARAMS.min_rows_to_calibrate || 120) + ' are needed before it is fitted to data.'));
     const m = LIVE.market || {};
     if (m.nifty) a.append(el('span', null, 'Nifty 50 ', el('b', { class: 'num' }, Number(m.nifty).toLocaleString('en-IN')), ' (' + pct(m.nifty_1m_pct) + ' in a month)' + (m.vix ? ', India VIX ' + m.vix : '')));
   }
@@ -128,7 +128,7 @@
     if (PARAMS) {
       const m = PARAMS.metrics;
       if (m) t.append(tile('Model skill, out of sample', Math.round(m.auc * 100) + '%', 'of the time it ranks a winner above a loser (50% = coin toss). Brier ' + m.brier.toFixed(3) + ' vs ' + m.brier_naive.toFixed(3) + ' for always guessing the base rate.'));
-      else t.append(tile('Model skill', 'not yet measured', 'prior weights until ' + (PARAMS.min_rows_to_calibrate || 120) + ' listings with outcomes are in the history (' + PARAMS.n_rows + ' so far)'));
+      else t.append(tile('Model skill', 'not yet measured', 'prior weights until ' + (PARAMS.min_rows_to_calibrate || 120) + ' listings with inputs and a closing price are in the history (' + (PARAMS.n_rows_gating || 0) + ' so far)'));
       const br = PARAMS.base_rate;
       const mb = br.mainboard, sm = br.sme;
       const rate = b => (b && b.p_up !== null && b.n >= 20) ? Math.round(b.p_up * 100) + '%' : '–';
@@ -569,7 +569,7 @@
     host.append(el('ul', null,
       el('li', null, 'GMP is an unregulated, unofficial quote from grey-market dealers. It can be thin, stale, or steered, especially for small SME issues. It is an input here, not the answer. The record: in 2025, 56 of 101 mainboard IPOs listed below what their GMP implied; trackers that score it put the direction right roughly 72\u201383% of the time, with a median miss of about 3 percentage points on mainboard and about 20 on SME.'),
       el('li', null, 'A market shock on listing day (a bad global open, a sector-wide sell-off) is not in any pre-listing number.'),
-      el('li', null, 'The model is fitted on ' + (PARAMS ? PARAMS.n_rows : 0) + ' listings. That is enough to rank issues and to flag gambles; it is not enough to promise a specific gain on a specific IPO.'),
+      el('li', null, PARAMS && PARAMS.status === 'calibrated' ? 'The model is fitted on ' + PARAMS.n_rows + ' listings. That is enough to rank issues and to flag gambles; it is not enough to promise a specific gain on a specific IPO.' : 'The model is not yet fitted to data: it runs on documented prior weights checked against ' + (PARAMS ? PARAMS.n_rows : 0) + ' recent outcomes. It can rank issues and flag gambles; it cannot promise a specific gain on a specific IPO.'),
       el('li', null, 'Expected profit is an average over many applications. Hitting a monthly figure depends mostly on how many accounts you apply from and how oversubscribed retail is, not on picking the single best IPO.')));
     host.append(el('h3', { text: 'Data' }));
     host.append(el('p', { class: 'small ink2', text: 'Snapshot generated ' + (LIVE.generated_at || 'unknown') + '. ' + (hosts.length ? 'Sources read this refresh: ' + hosts.join(', ') + '.' : 'Source list is in the repository’s data/ipos.json.') + ' Subscription figures are the exchanges’ published multiples; GMP figures are what the grey-market trackers published on the stated date.' }));
@@ -590,7 +590,7 @@
     renderAll();
     $('#cal-lede').textContent = !PARAMS ? 'No calibration data in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'Fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + '. Every number below is out of sample: the model was scored on IPOs it was not trained on.'
-      : 'Not fitted yet. The weights are documented priors (GMP first, then institutional demand, then the rest), and the history holds ' + PARAMS.n_rows + ' listings with outcomes' + (PARAMS.date_range[0] ? ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1]) : '') + '. Once it reaches ' + (PARAMS.min_rows_to_calibrate || 120) + ', each refresh fits the model to the data, shrunk toward these priors, and reports out-of-sample accuracy here.';
+      : 'Not fitted yet. The weights are documented priors (GMP first, then institutional demand, then the rest). The history holds ' + PARAMS.n_rows + ' listings with outcomes' + (PARAMS.date_range[0] ? ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1]) : '') + ', of which ' + (PARAMS.n_rows_gating || 0) + ' have both a model input (GMP or subscription) and a closing-price outcome. Once that count reaches ' + (PARAMS.min_rows_to_calibrate || 120) + ', each refresh fits the model to the data, shrunk toward these priors, and reports out-of-sample accuracy here.';
     chartGmp(); chartRel(); bucketTable(); coefTable(); methodText();
     const h = (location.hash || '').replace('#', '');
     if (['pipeline', 'planner', 'calibration', 'method'].includes(h)) { const t = document.getElementById(h); if (t) t.scrollIntoView(); }

@@ -202,6 +202,7 @@ def calibrate(rows: list[dict]) -> dict:
     if bc["close"] + bc["reported"] < MIN_ROWS_TO_CALIBRATE:
         out = prior_params(all_rows)
         out["n_rows_informative"] = len(rows)
+        out["n_rows_gating"] = bc["close"] + bc["reported"]   # what the threshold counts
         out["basis_counts"] = bc
         return _clean(out)
     X, y_up, y_gain = build_matrix(rows)
@@ -268,6 +269,7 @@ def calibrate(rows: list[dict]) -> dict:
         "prior": {"logistic_raw": PRIOR_LOGISTIC_RAW, "gain_raw": PRIOR_GAIN_RAW},
         "basis_counts": bc,
         "n_rows_informative": len(rows),
+        "n_rows_gating": bc["close"] + bc["reported"],
         "n_rows_all": len(all_rows),
     }
 
