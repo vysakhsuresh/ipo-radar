@@ -1,0 +1,77 @@
+# Refresh the IPO data, re-calibrate the model, rebuild the page and publish it
+# to GitHub Pages. Runs on a schedule (market hours, IST) and on demand.
+#
+# One-time setup after pushing this repo:
+#   Settings → Pages → Source: "GitHub Actions"
+#   Settings → Actions → General → Workflow permissions: "Read and write"
+name: refresh
+
+on:
+  schedule:
+    # 03:30, 06:30, 09:30, 12:30 UTC = 09:00, 12:00, 15:00, 18:00 IST, Mon-Sat
+    - cron: "30 3,6,9,12 * * 1-6"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Fetch live IPO, GMP, subscription and market data
+        # A source that is down must not fail the run; the page shows what is stale.
+        run: python -m fetch.run --out data
+        continue-on-error: true
+
+      - name: Calibrate the model on the listing history
+        run: python -m model.calibrate --history data/history.json --out model/params.json
+
+      - name: Score the pipeline and build the site
+        run: python -m model.score --ipos data/ipos.json --params model/params.json --out data/scored.json
+      - run: python tools/build_site.py --out dist
+
+      - name: Run tests
+        run: python -m pytest -q model/tests
+
+      - name: Commit refreshed data
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "ipo-radar-bot"
+          git config user.email "ipo-radar-bot@users.noreply.github.com"
+          git add data model/params.json
+          git diff --cached --quiet || git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

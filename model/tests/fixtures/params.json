@@ -1,0 +1,344 @@
+{
+ "version": 1,
+ "status": "prior",
+ "fitted_at": "2026-10-26T05:23:11Z",
+ "feature_names": [
+  "gmp_pct",
+  "gmp_missing",
+  "log_sub_qib",
+  "log_sub_nii",
+  "log_sub_retail",
+  "sub_missing",
+  "is_sme",
+  "log_issue_size",
+  "nifty_1m_pct",
+  "gmp_trend_pct"
+ ],
+ "n_rows": 41,
+ "min_rows_to_calibrate": 120,
+ "date_range": [
+  "2026-09-28",
+  "2026-10-23"
+ ],
+ "base_rate": {
+  "mainboard": {
+   "n": 16,
+   "p_up": 0.6875,
+   "median_gain": 4.195
+  },
+  "sme": {
+   "n": 25,
+   "p_up": 0.52,
+   "median_gain": 0.13
+  }
+ },
+ "logistic": {
+  "coef": [
+   0.1,
+   -0.5,
+   0.35,
+   0.15,
+   0.1,
+   -0.5,
+   -0.4,
+   0.0,
+   0.04,
+   0.03
+  ],
+  "intercept": -1.2,
+  "mean": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "scale": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "l2": null
+ },
+ "gain": {
+  "coef": [
+   0.75,
+   -3.0,
+   2.0,
+   1.0,
+   0.0,
+   -3.0,
+   -2.0,
+   0.0,
+   0.3,
+   0.2
+  ],
+  "intercept": -3.0,
+  "l2": null,
+  "resid_quantiles": {
+   "mainboard": {
+    "p10": -12.0,
+    "p25": -5.0,
+    "p50": 0.0,
+    "p75": 5.0,
+    "p90": 14.0,
+    "n": 0
+   },
+   "sme": {
+    "p10": -25.0,
+    "p25": -10.0,
+    "p50": 0.0,
+    "p75": 10.0,
+    "p90": 30.0,
+    "n": 0
+   }
+  }
+ },
+ "metrics": null,
+ "empirical": [
+  {
+   "board": "mainboard",
+   "bucket": "GMP \u2264 0%",
+   "lo": -1000000000.0,
+   "hi": 0.0,
+   "n": 0
+  },
+  {
+   "board": "mainboard",
+   "bucket": "0\u20135%",
+   "lo": 0.0,
+   "hi": 5.0,
+   "n": 5,
+   "n_up": 3,
+   "p_up": 0.6,
+   "median_gain": 5.54,
+   "p10_gain": -14.440000000000001,
+   "p90_gain": 8.536,
+   "mean_gain": -0.9780000000000003
+  },
+  {
+   "board": "mainboard",
+   "bucket": "5\u201310%",
+   "lo": 5.0,
+   "hi": 10.0,
+   "n": 0
+  },
+  {
+   "board": "mainboard",
+   "bucket": "10\u201320%",
+   "lo": 10.0,
+   "hi": 20.0,
+   "n": 2,
+   "n_up": 1,
+   "p_up": 0.5,
+   "median_gain": 0.21999999999999997,
+   "p10_gain": -1.524,
+   "p90_gain": 1.964,
+   "mean_gain": 0.21999999999999997
+  },
+  {
+   "board": "mainboard",
+   "bucket": "20\u201340%",
+   "lo": 20.0,
+   "hi": 40.0,
+   "n": 1,
+   "n_up": 1,
+   "p_up": 1.0,
+   "median_gain": 23.62,
+   "p10_gain": 23.62,
+   "p90_gain": 23.62,
+   "mean_gain": 23.62
+  },
+  {
+   "board": "mainboard",
+   "bucket": "> 40%",
+   "lo": 40.0,
+   "hi": 1000000000.0,
+   "n": 3,
+   "n_up": 3,
+   "p_up": 1.0,
+   "median_gain": 61.76,
+   "p10_gain": 51.472,
+   "p90_gain": 61.928,
+   "mean_gain": 57.54333333333333
+  },
+  {
+   "board": "sme",
+   "bucket": "GMP \u2264 0%",
+   "lo": -1000000000.0,
+   "hi": 0.0,
+   "n": 0
+  },
+  {
+   "board": "sme",
+   "bucket": "0\u20135%",
+   "lo": 0.0,
+   "hi": 5.0,
+   "n": 4,
+   "n_up": 0,
+   "p_up": 0.0,
+   "median_gain": -7.7749999999999995,
+   "p10_gain": -16.373,
+   "p90_gain": -0.5279999999999997,
+   "mean_gain": -8.2575
+  },
+  {
+   "board": "sme",
+   "bucket": "5\u201310%",
+   "lo": 5.0,
+   "hi": 10.0,
+   "n": 0
+  },
+  {
+   "board": "sme",
+   "bucket": "10\u201320%",
+   "lo": 10.0,
+   "hi": 20.0,
+   "n": 1,
+   "n_up": 0,
+   "p_up": 0.0,
+   "median_gain": -5.0,
+   "p10_gain": -5.0,
+   "p90_gain": -5.0,
+   "mean_gain": -5.0
+  },
+  {
+   "board": "sme",
+   "bucket": "20\u201340%",
+   "lo": 20.0,
+   "hi": 40.0,
+   "n": 0
+  },
+  {
+   "board": "sme",
+   "bucket": "> 40%",
+   "lo": 40.0,
+   "hi": 1000000000.0,
+   "n": 1,
+   "n_up": 0,
+   "p_up": 0.0,
+   "median_gain": -9.45,
+   "p10_gain": -9.45,
+   "p90_gain": -9.45,
+   "mean_gain": -9.45
+  },
+  {
+   "board": "mainboard",
+   "bucket": "no GMP quote",
+   "lo": null,
+   "hi": null,
+   "n": 5,
+   "n_up": 3,
+   "p_up": 0.6,
+   "median_gain": 2.16,
+   "p10_gain": -1.826,
+   "p90_gain": 12.720000000000002,
+   "mean_gain": 4.176
+  },
+  {
+   "board": "sme",
+   "bucket": "no GMP quote",
+   "lo": null,
+   "hi": null,
+   "n": 19,
+   "n_up": 13,
+   "p_up": 0.6842105263157895,
+   "median_gain": 1.52,
+   "p10_gain": -7.984,
+   "p90_gain": 90.124,
+   "mean_gain": 17.39157894736842
+  }
+ ],
+ "coef_table": [
+  {
+   "feature": "gmp_pct",
+   "coef_std": 0.1,
+   "coef_raw": 0.1
+  },
+  {
+   "feature": "gmp_missing",
+   "coef_std": -0.5,
+   "coef_raw": -0.5
+  },
+  {
+   "feature": "log_sub_qib",
+   "coef_std": 0.35,
+   "coef_raw": 0.35
+  },
+  {
+   "feature": "log_sub_nii",
+   "coef_std": 0.15,
+   "coef_raw": 0.15
+  },
+  {
+   "feature": "log_sub_retail",
+   "coef_std": 0.1,
+   "coef_raw": 0.1
+  },
+  {
+   "feature": "sub_missing",
+   "coef_std": -0.5,
+   "coef_raw": -0.5
+  },
+  {
+   "feature": "is_sme",
+   "coef_std": -0.4,
+   "coef_raw": -0.4
+  },
+  {
+   "feature": "log_issue_size",
+   "coef_std": 0.0,
+   "coef_raw": 0.0
+  },
+  {
+   "feature": "nifty_1m_pct",
+   "coef_std": 0.04,
+   "coef_raw": 0.04
+  },
+  {
+   "feature": "gmp_trend_pct",
+   "coef_std": 0.03,
+   "coef_raw": 0.03
+  }
+ ],
+ "prior": {
+  "logistic_raw": {
+   "intercept": -1.2,
+   "gmp_pct": 0.1,
+   "gmp_missing": -0.5,
+   "log_sub_qib": 0.35,
+   "log_sub_nii": 0.15,
+   "log_sub_retail": 0.1,
+   "sub_missing": -0.5,
+   "is_sme": -0.4,
+   "log_issue_size": 0.0,
+   "nifty_1m_pct": 0.04,
+   "gmp_trend_pct": 0.03
+  },
+  "gain_raw": {
+   "intercept": -3.0,
+   "gmp_pct": 0.75,
+   "gmp_missing": -3.0,
+   "log_sub_qib": 2.0,
+   "log_sub_nii": 1.0,
+   "log_sub_retail": 0.0,
+   "sub_missing": -3.0,
+   "is_sme": -2.0,
+   "log_issue_size": 0.0,
+   "nifty_1m_pct": 0.3,
+   "gmp_trend_pct": 0.2
+  }
+ }
+}
