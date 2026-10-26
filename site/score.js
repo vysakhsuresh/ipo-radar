@@ -179,8 +179,7 @@
     const g = ipo.gmp || {};
     const hist = (g.history || []).filter(h => h.rs !== null && h.rs !== undefined);
     const nonzero = hist.filter(h => Number(h.rs) !== 0);
-    return ipo.board === 'sme' && (ipo.status === 'upcoming' || ipo.status === 'open')
-      && g.rs !== null && g.rs !== undefined && Number(g.rs) === 0 && nonzero.length === 0 && hist.length <= 2;
+    return ipo.board === 'sme' && g.rs !== null && g.rs !== undefined && Number(g.rs) === 0 && nonzero.length === 0 && hist.length <= 2;
   }
 
   function dataQuality(ipo, today) {

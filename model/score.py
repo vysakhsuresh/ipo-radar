@@ -77,13 +77,15 @@ def similar_past(ipo: dict, params: dict) -> dict | None:
 
 
 def gmp_is_unquoted(ipo: dict) -> bool:
-    """GMP trackers print Rs 0 for small SME issues nobody quotes yet. An isolated
-    zero on an issue that has not listed is 'no quote', not 'expects a discount'."""
+    """GMP trackers print Rs 0 for small SME issues nobody quotes. An isolated
+    zero with no non-zero quote in its history is 'no quote', not 'expects a
+    discount', whatever the issue's status (so a row reads the same before and
+    after it closes)."""
     g = ipo.get("gmp") or {}
     hist = [h for h in (g.get("history") or []) if h.get("rs") is not None]
     nonzero = [h for h in hist if float(h["rs"]) != 0]
-    return (ipo.get("board") == "sme" and ipo.get("status") in ("upcoming", "open")
-            and g.get("rs") is not None and float(g["rs"]) == 0 and not nonzero and len(hist) <= 2)
+    return (ipo.get("board") == "sme" and g.get("rs") is not None and float(g["rs"]) == 0
+            and not nonzero and len(hist) <= 2)
 
 
 def data_quality(ipo: dict, today: str) -> tuple[str, list[str]]:

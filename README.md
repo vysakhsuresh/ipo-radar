@@ -76,6 +76,8 @@ Warnings: GMP ≤ 0 or < 5%; GMP falling sharply; retail or QIB under-subscribed
 
 ## Known limits
 
+* Two inputs cannot be learned from the shipped history yet: history rows carry no market reading, so the Nifty term stays at its prior weight until `fetch/history.py` stamps one, and a missing GMP in a hand-researched row sometimes means "not captured" rather than "never quoted". The live fetcher removes both gaps.
+
 * The grey market is unregulated and thin for small SME issues; a quoted ₹0 often means "nobody quotes it", which the code treats as *no quote*.
 * The history that ships here was assembled from search results on 26 Oct 2026 (65 issues, 41 with a listing outcome, several of them debut-price rather than close-price); the fetcher's `--build-history` run on a machine with internet access replaces it with the exchanges' and trackers' full tables.
 * A listing-day market shock is in nobody's pre-listing numbers.

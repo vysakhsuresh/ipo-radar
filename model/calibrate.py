@@ -31,6 +31,7 @@ from model.fit import (fit_logistic, fit_ridge, cv_logistic, cv_ridge, brier, au
                        log_loss, reliability, expected_calibration_error, predict_ridge)
 from model.prior import (PRIOR_LOGISTIC_RAW, PRIOR_GAIN_RAW, PRIOR_RESID, MIN_ROWS_TO_CALIBRATE)  # noqa: E402
 
+REPORT_SEED = 11      # fold partition for reported metrics; selection uses the fitter's default seed 7
 GMP_BUCKETS = [(-1e9, 0.0, "GMP ≤ 0%"), (0.0, 5.0, "0–5%"), (5.0, 10.0, "5–10%"), (10.0, 20.0, "10–20%"),
                (20.0, 40.0, "20–40%"), (40.0, 1e9, "> 40%")]
 
@@ -58,10 +59,18 @@ def build_matrix(rows: list[dict]):
     return X, y_up, y_gain
 
 
+# Smallest spread each feature may be standardised by: a near-constant column
+# (every row with the same market reading, or every GMP trend at zero) must not
+# be blown up into a huge standardised coefficient.
+SCALE_FLOOR = {"gmp_pct": 2.0, "gmp_missing": 0.2, "log_sub_qib": 0.2, "log_sub_nii": 0.2, "log_sub_retail": 0.2,
+               "sub_missing": 0.2, "is_sme": 0.2, "log_issue_size": 0.2, "nifty_1m_pct": 1.0, "gmp_trend_pct": 1.0}
+
+
 def standardise(X: np.ndarray):
     mean = X.mean(axis=0)
     scale = X.std(axis=0)
-    scale[scale < 1e-6] = 1.0      # a (near-)constant column keeps its raw scale
+    floor = np.array([SCALE_FLOOR[f] for f in FEATURE_NAMES])
+    scale = np.maximum(scale, floor)
     return (X - mean) / scale, mean, scale
 
 
@@ -76,7 +85,14 @@ def _clean(obj):
     return obj
 
 
+def close_basis(rows: list[dict]) -> list[dict]:
+    """Rows whose gain is the listing-day close (or a tracker's 'listing return'),
+    not the debut price: the target the page talks about."""
+    return [r for r in rows if ((r.get("listing") or {}).get("gain_basis") or "close") in ("close", "reported")]
+
+
 def empirical_table(rows: list[dict]) -> list[dict]:
+    rows = close_basis(rows)
     out = []
     for board in ("mainboard", "sme"):
         for lo, hi, label in GMP_BUCKETS:
@@ -145,12 +161,13 @@ def prior_params(rows: list[dict]) -> dict:
     lg = raw_to_std(PRIOR_LOGISTIC_RAW, mean, scale)
     gn = raw_to_std(PRIOR_GAIN_RAW, mean, scale)
     dates = sorted(r.get("listing_date") for r in rows if r.get("listing_date"))
-    boards = np.array([r.get("board") for r in rows]) if rows else np.array([])
-    y_up = np.array([1.0 if (r["listing"]["gain_pct"] or 0) > 0 else 0.0 for r in rows]) if rows else np.array([])
-    y_gain = np.array([float(r["listing"]["gain_pct"]) for r in rows]) if rows else np.array([])
-    base_rate = {board: {"n": int((boards == board).sum()) if rows else 0,
-                         "p_up": float(y_up[boards == board].mean()) if rows and (boards == board).sum() else None,
-                         "median_gain": float(np.median(y_gain[boards == board])) if rows and (boards == board).sum() else None}
+    cb = close_basis(rows)
+    boards = np.array([r.get("board") for r in cb]) if cb else np.array([])
+    y_up = np.array([1.0 if (r["listing"]["gain_pct"] or 0) > 0 else 0.0 for r in cb]) if cb else np.array([])
+    y_gain = np.array([float(r["listing"]["gain_pct"]) for r in cb]) if cb else np.array([])
+    base_rate = {board: {"n": int((boards == board).sum()) if cb else 0,
+                         "p_up": float(y_up[boards == board].mean()) if cb and (boards == board).sum() else None,
+                         "median_gain": float(np.median(y_gain[boards == board])) if cb and (boards == board).sum() else None}
                  for board in ("mainboard", "sme")}
     return {
         "version": 1, "status": "prior",
@@ -192,13 +209,16 @@ def calibrate(rows: list[dict]) -> dict:
     prior_lg = raw_to_std(PRIOR_LOGISTIC_RAW, mean, scale)
     prior_gn = raw_to_std(PRIOR_GAIN_RAW, mean, scale)
 
+    # l2 is chosen on one fold partition (seed 7) and the reported metrics come
+    # from a different partition (seed 11), so the report is not the minimum of
+    # the values the selection just searched over
     l2 = choose_l2(Xs, y_up, prior_lg)
     coef, b = fit_logistic(Xs, y_up, l2=l2, prior=prior_lg)
-    oof = cv_logistic(Xs, y_up, l2, prior=prior_lg)
+    oof = cv_logistic(Xs, y_up, l2, prior=prior_lg, seed=REPORT_SEED)
 
     l2g = choose_l2_ridge(Xs, y_gain, prior_gn)
     gcoef, gb = fit_ridge(Xs, y_gain, l2=l2g, prior=prior_gn)
-    oofg = cv_ridge(Xs, y_gain, l2g, prior=prior_gn)
+    oofg = cv_ridge(Xs, y_gain, l2g, prior=prior_gn, seed=REPORT_SEED)
     resid = y_gain - oofg
     boards = np.array([r.get("board") for r in rows])
     resid_q = {}
@@ -213,9 +233,13 @@ def calibrate(rows: list[dict]) -> dict:
             resid_q[board] = dict(PRIOR_RESID[board], n=int(m.sum()))
 
     dates = sorted(r.get("listing_date") for r in rows if r.get("listing_date"))
-    base_rate = {board: {"n": int((boards == board).sum()),
-                         "p_up": float(y_up[boards == board].mean()) if (boards == board).sum() else None,
-                         "median_gain": float(np.median(y_gain[boards == board])) if (boards == board).sum() else None}
+    cb = close_basis(all_rows)
+    cb_boards = np.array([r.get("board") for r in cb])
+    cb_up = np.array([1.0 if (r["listing"]["gain_pct"] or 0) > 0 else 0.0 for r in cb])
+    cb_gain = np.array([float(r["listing"]["gain_pct"]) for r in cb])
+    base_rate = {board: {"n": int((cb_boards == board).sum()),
+                         "p_up": float(cb_up[cb_boards == board].mean()) if (cb_boards == board).sum() else None,
+                         "median_gain": float(np.median(cb_gain[cb_boards == board])) if (cb_boards == board).sum() else None}
                  for board in ("mainboard", "sme")}
     naive_brier = float(np.mean((y_up.mean() - y_up) ** 2))
 
@@ -234,6 +258,7 @@ def calibrate(rows: list[dict]) -> dict:
             "auc": auc(oof, y_up), "brier": brier(oof, y_up), "brier_naive": naive_brier,
             "log_loss": log_loss(oof, y_up), "ece": expected_calibration_error(oof, y_up),
             "reliability": reliability(oof, y_up, 8),
+            "note": "l2 chosen on folds seed 7; metrics on folds seed 11",
             "gain_mae": float(np.mean(np.abs(resid))), "gain_rmse": float(math.sqrt(np.mean(resid ** 2))),
             "gain_mae_naive": float(np.mean(np.abs(y_gain - np.median(y_gain)))),
         },

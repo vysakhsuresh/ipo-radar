@@ -131,8 +131,9 @@
       else t.append(tile('Model skill', 'not yet measured', 'prior weights until ' + (PARAMS.min_rows_to_calibrate || 120) + ' listings with outcomes are in the history (' + PARAMS.n_rows + ' so far)'));
       const br = PARAMS.base_rate;
       const mb = br.mainboard, sm = br.sme;
-      t.append(tile('Listed above issue price', (mb && mb.p_up !== null ? Math.round(mb.p_up * 100) + '%' : '–') + ' / ' + (sm && sm.p_up !== null ? Math.round(sm.p_up * 100) + '%' : '–'),
-        'mainboard / SME in the history so far (' + (mb ? mb.n : 0) + ' and ' + (sm ? sm.n : 0) + ' listings' + (PARAMS.basis_counts && PARAMS.basis_counts.open ? ', ' + PARAMS.basis_counts.open + ' on debut price' : '') + '); median gain ' + (mb && mb.median_gain !== null ? pct(mb.median_gain, 0) : '–') + ' / ' + (sm && sm.median_gain !== null ? pct(sm.median_gain, 0) : '–')));
+      const rate = b => (b && b.p_up !== null && b.n >= 20) ? Math.round(b.p_up * 100) + '%' : '–';
+      t.append(tile('Listed above issue price', rate(mb) + ' / ' + rate(sm),
+        'mainboard / SME, closing-price basis (' + (mb ? mb.n : 0) + ' and ' + (sm ? sm.n : 0) + ' listings; a dash means fewer than 20); median gain ' + (mb && mb.median_gain !== null && mb.n >= 20 ? pct(mb.median_gain, 0) : '–') + ' / ' + (sm && sm.median_gain !== null && sm.n >= 20 ? pct(sm.median_gain, 0) : '–')));
     }
   }
 
@@ -309,14 +310,15 @@
     c2.append(el('h3', { text: (s && s.ev && s.ev.min_lots > 1 ? 'Minimum application (' + s.ev.min_lots + ' lots), sold on listing day' : 'One lot, sold on listing day') }));
     const inv = s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : (ipo.issue_price && ipo.lot_size ? ipo.issue_price * ipo.lot_size : null);
     if (inv && s && s.gain) {
-      const mid = S.netProfitOnSale(inv, inv * (1 + s.gain.p50 / 100), state.costs);
+      const mid = S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs);
       const dl = el('dl', { class: 'kv' });
       const kv = (k, v) => dl.append(el('dt', { text: k }), el('dd', { class: 'num', text: v }));
       kv('Blocked when you apply', inr(inv));
-      kv('Sale at the middle gain (' + pct(s.gain.p50, 0) + ')', inr(inv * (1 + s.gain.p50 / 100)));
+      kv('Sale at the expected gain (' + pct(s.gain.mean, 0) + ')', inr(inv * (1 + s.gain.mean / 100)));
       kv('Charges (STT, exchange, DP, GST)', '−' + inr(mid.charges));
       kv('Short-term capital gains tax', '−' + inr(mid.tax));
       kv('Net profit if allotted', inr(mid.net, { plus: true }));
+      kv('Same sale at the middle gain (' + pct(s.gain.p50, 0) + ')', inr(S.netProfitOnSale(inv, inv * (1 + s.gain.p50 / 100), state.costs).net, { plus: true }));
       if (s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined) {
         kv('Chance of allotment', pct0(s.allotment.p_min_lot));
         kv('Expected value of applying', inr(s.ev.ev, { plus: true }));
@@ -340,11 +342,13 @@
     const btns = el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap' });
     btns.append(el('button', { class: 'btn primary small', type: 'button', onclick: () => {
       const ed = {};
+      const src = r.ipo, ssub = src.subscription || {}, sg = src.gmp || {};
       const num = i => i.value === '' ? undefined : Number(i.value);
-      if (num(iG) !== undefined) ed.gmp_rs = num(iG);
-      if (num(iQ) !== undefined) ed.qib = num(iQ);
-      if (num(iN) !== undefined) ed.nii = num(iN);
-      if (num(iR) !== undefined) ed.retail = num(iR);
+      const differs = (v, orig) => v !== undefined && !(orig !== null && orig !== undefined && Number(orig) === v);
+      if (differs(num(iG), sg.rs)) ed.gmp_rs = num(iG);
+      if (differs(num(iQ), ssub.qib)) ed.qib = num(iQ);
+      if (differs(num(iN), ssub.nii)) ed.nii = num(iN);
+      if (differs(num(iR), ssub.retail)) ed.retail = num(iR);
       if (Object.keys(ed).length) state.edits[ipo.id] = ed; else delete state.edits[ipo.id];
       computeAll(); renderAll();
     } }, 'Recompute'));
