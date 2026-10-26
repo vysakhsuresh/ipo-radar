@@ -146,19 +146,21 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .sec-head p { color: var(--ink-2); max-width: 70ch; }
 
 /* filters */
-.filters { display: grid; gap: 10px; }
+.filters { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; }
 .filters .line { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
-.filters .line .spacer { flex: 1; }
+.filters .opts { justify-content: flex-end; }
+.filters .chips { grid-column: 1 / -1; }
+@media (max-width: 720px) { .filters { grid-template-columns: 1fr; } .filters .opts { order: 3; justify-content: flex-start; } }
 .seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--hair-2); border-radius: 999px; background: var(--surface); }
 .seg button { background: transparent; border: 0; padding: 5px 12px; border-radius: 999px; cursor: pointer; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 0; }
 .chips::-webkit-scrollbar { display: none; }
 @media (max-width: 720px) { .chips { margin: 0 -16px; padding: 2px 16px; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); } .chips:has(.chip:last-child[aria-pressed="true"]) { mask-image: none; -webkit-mask-image: none; } }
-.chip { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--hair-2); background: var(--surface); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; line-height: 1; }
-.chip .n { font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
-.chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 600; }
-.chip[aria-pressed="true"] .n { background: rgba(255,255,255,.22); color: var(--on-accent); }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--hair-2); background: var(--surface-2); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; line-height: 1; }
+.chip .n { font-family: var(--mono); font-size: 11px; min-width: 18px; text-align: center; padding: 3px 5px; border-radius: 5px; background: var(--surface); color: var(--muted); border: 1px solid var(--hair); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.chip[aria-pressed="true"] .n { background: var(--warn-fill); color: #1a1200; border-color: transparent; }
 .filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
 .filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
 
@@ -356,21 +358,14 @@ table.data th { color: var(--muted); font-weight: 500; }
       <p>Click a row for the reasons, the warnings, the cost breakdown and a what-if box. Probabilities come from a model fitted on past listings; GMP is the unofficial grey-market quote the model treats as one input among several.</p>
     </div>
     <div class="filters" role="group" aria-label="Filters">
-      <div class="chips" id="f-status" role="group" aria-label="Status">
-        <button type="button" class="chip" data-v="active" aria-pressed="true" title="Open, upcoming and awaiting listing">Active <span class="n"></span></button>
-        <button type="button" class="chip" data-v="open" aria-pressed="false" title="Bidding open today">Open now <span class="n"></span></button>
-        <button type="button" class="chip" data-v="upcoming" aria-pressed="false" title="Bidding opens later">Upcoming <span class="n"></span></button>
-        <button type="button" class="chip" data-v="listed" aria-pressed="false" title="Listed in the last weeks">Listed <span class="n"></span></button>
-        <button type="button" class="chip" data-v="watch" aria-pressed="false" title="Your watchlist">★ Watching <span class="n"></span></button>
-        <button type="button" class="chip" data-v="all" aria-pressed="false">All <span class="n"></span></button>
-      </div>
       <div class="line">
       <div class="seg" id="f-board" role="group" aria-label="Board">
         <button type="button" data-v="all" aria-pressed="true">All boards</button>
         <button type="button" data-v="mainboard" aria-pressed="false">Mainboard</button>
         <button type="button" data-v="sme" aria-pressed="false">SME</button>
       </div>
-      <span class="spacer"></span>
+      </div>
+      <div class="line opts">
       <label><input type="checkbox" id="f-nodata"> Hide “not enough data”</label>
       <label>Sort <select id="f-sort">
         <option value="verdict">by status, then verdict</option>
@@ -379,6 +374,14 @@ table.data th { color: var(--muted); font-weight: 500; }
         <option value="p">by chance of gain</option>
         <option value="date">by date</option>
       </select></label>
+      </div>
+      <div class="chips" id="f-status" role="group" aria-label="Status">
+        <button type="button" class="chip" data-v="active" aria-pressed="true" title="Open, upcoming and awaiting listing">Active <span class="n"></span></button>
+        <button type="button" class="chip" data-v="open" aria-pressed="false" title="Bidding open today">Open now <span class="n"></span></button>
+        <button type="button" class="chip" data-v="upcoming" aria-pressed="false" title="Bidding opens later">Upcoming <span class="n"></span></button>
+        <button type="button" class="chip" data-v="listed" aria-pressed="false" title="Listed in the last weeks">Listed <span class="n"></span></button>
+        <button type="button" class="chip" data-v="watch" aria-pressed="false" title="Your watchlist">★ Watching <span class="n"></span></button>
+        <button type="button" class="chip" data-v="all" aria-pressed="false">All <span class="n"></span></button>
       </div>
     </div>
     <div class="tablewrap">
