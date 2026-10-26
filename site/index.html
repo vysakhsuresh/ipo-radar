@@ -43,7 +43,7 @@
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45; margin: 0; }
-.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; align-content: start; }
 h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; }
 h1 { font-size: 26px; }
 h2 { font-size: 18px; }
@@ -81,10 +81,17 @@ nav.screens button[aria-current="page"] { color: var(--accent-ink); background: 
 .pick .n { font-weight: 600; }
 .pick .m { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink-2); }
 .pick .m b { color: var(--ink); }
-.contact-box { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); padding: 14px; display: grid; gap: 8px; max-width: 70ch; }
-.contact-box .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.contact-box code { font-family: var(--mono); font-size: 13px; background: var(--surface-2); padding: 3px 8px; border-radius: 4px; user-select: all; }
-footer.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--hair); padding-top: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.rail .support { display: grid; gap: 6px; padding: 0 2px; }
+.btn-help, .btn-coffee { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 13px; text-decoration: none; border: 1px solid var(--hair-2); color: var(--ink); background: var(--surface); }
+.btn-help:hover, .btn-coffee:hover { background: var(--surface-2); }
+.btn-coffee { background: #ffdd00; color: #1a1a1a; border-color: transparent; }
+.btn-coffee:hover { background: #ffe74a; }
+.btn-help.big, .btn-coffee.big { padding: 10px 18px; font-size: 14px; }
+.about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.about-grid .panel p { color: var(--ink-2); }
+.about-grid .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.linklike { background: none; border: 0; padding: 0; color: var(--ink-2); text-decoration: underline; cursor: pointer; font: inherit; }
+footer.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--hair); padding-top: 14px; display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 4px 16px; }
 footer.foot a { color: var(--ink-2); }
 
 /* header */
@@ -103,7 +110,7 @@ footer.foot a { color: var(--ink-2); }
 .tile .sub { font-size: 12px; color: var(--muted); }
 
 /* sections */
-section { display: grid; gap: 12px; min-width: 0; }
+section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .sec-head p { color: var(--ink-2); max-width: 70ch; }
 
@@ -185,7 +192,7 @@ td.name .dates { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 
 /* planner */
 .planner { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
-.panel { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; box-shadow: var(--shadow); }
+.panel { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; min-width: 0; box-shadow: var(--shadow); align-content: start; }
 .panel label { display: grid; gap: 3px; font-size: 12px; color: var(--ink-2); }
 .panel input, .panel select { padding: 6px 8px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); width: 100%; }
 .panel .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -231,9 +238,9 @@ table.data th { color: var(--muted); font-weight: 500; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
   .rail { position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; flex-direction: row; align-items: stretch; gap: 0; padding: 0; padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); border-right: 0; border-top: 1px solid var(--hair); z-index: 9; }
-  .rail .brand, .rail .spacer, .rail .contact { display: none; }
+  .rail .brand, .rail .spacer, .rail .support { display: none; }
   nav.screens { flex-direction: row; flex: 1; gap: 0; }
-  nav.screens button { flex: 1; flex-direction: column; gap: 3px; justify-content: center; padding: 8px 2px 7px; font-size: 11px; border-radius: 0; min-width: 0; }
+  nav.screens button { flex: 1; flex-direction: column; gap: 3px; justify-content: center; padding: 8px 1px 7px; font-size: 10.5px; border-radius: 0; min-width: 0; }
   nav.screens button svg { width: 20px; height: 20px; }
   nav.screens button[aria-current="page"] { background: transparent; box-shadow: inset 0 2px 0 var(--accent); }
   .wrap { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
@@ -265,9 +272,13 @@ table.data th { color: var(--muted); font-weight: 500; }
     <button type="button" data-screen="planner"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15v3"/></svg><span>Planner</span></button>
     <button type="button" data-screen="calibration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3M20 16V5"/></svg><span>Evidence</span></button>
     <button type="button" data-screen="method"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg><span>Method</span></button>
+    <button type="button" data-screen="about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></svg><span>About</span></button>
   </nav>
   <div class="spacer"></div>
-  <div class="contact">A Layerbit tool<a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a><a href="mailto:ceo@layerbit.co.in">ceo@layerbit.co.in</a></div>
+  <div class="support">
+    <a class="btn-help" href="https://layerbit.co.in/contact.html" target="_blank" rel="noopener">Get help</a>
+    <a class="btn-coffee" href="https://www.buymeacoffee.com/layerbit" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+  </div>
 </aside>
 <div class="wrap">
   <section class="screen today" id="screen-today">
@@ -376,14 +387,32 @@ table.data th { color: var(--muted); font-weight: 500; }
   <section class="screen" id="screen-method" hidden>
     <div class="sec-head"><h2>Method, rules and limits</h2></div>
     <div class="method" id="method-body"></div>
-    <div class="sec-head" style="margin-top:8px"><h2>Contact</h2></div>
-    <div class="contact-box">
-      <p>Questions about this tool, a number that looks wrong, or an IPO it has missed: email us and we will look into it and respond directly.</p>
-      <div class="row"><code id="contact-email">ceo@layerbit.co.in</code><button type="button" class="btn small" id="copy-email">Copy</button><span class="small muted" id="copy-note"></span></div>
-      <p class="small muted">IPO Radar is a Layerbit tool (<a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a>). It is a decision aid, not investment advice; the people who build it do not take positions based on it.</p>
+  </section>
+  <section class="screen about" id="screen-about" hidden>
+    <div class="sec-head"><h2>About IPO Radar</h2></div>
+    <div class="about-grid">
+      <div class="panel">
+        <h3>What it is</h3>
+        <p>A listing-day decision aid for Indian IPOs, mainboard and SME. For every issue in the pipeline it estimates the chance of closing above the issue price, the likely gain range, your odds in the retail allotment lottery, and what one application is worth after charges and tax, then says in plain words whether it is an apply, a coin flip, or a gamble.</p>
+        <p>It exists because the usual way of chasing listing gains, trusting the grey-market premium and hoping, loses money quietly. Here the GMP is one input among several, every probability is either calibrated on past listings or labelled as a prior, and the allotment lottery is counted rather than wished away.</p>
+      </div>
+      <div class="panel">
+        <h3>Who makes it</h3>
+        <p>IPO Radar is a <a href="https://layerbit.co.in/" target="_blank" rel="noopener">Layerbit</a> tool, built by the same small team behind the Layerbit developer utilities and LayerLink. It is free, carries no account and no tracking, and keeps your planner inputs in your own browser only.</p>
+        <p>It is not investment advice. A 75% chance of a gain is a 25% chance of a loss, and no pre-listing number knows what the market does on listing morning. Apply only with money that can stay stuck if a listing goes wrong.</p>
+      </div>
+      <div class="panel">
+        <h3>Contact and support</h3>
+        <p>A number that looks wrong, an IPO the radar has missed, a broker whose charges differ from the presets, or a feature you need: use the normal Layerbit help route and it reaches the same people who build this.</p>
+        <div class="actions">
+          <a class="btn-help big" href="https://layerbit.co.in/contact.html" target="_blank" rel="noopener">Get help</a>
+          <a class="btn-coffee big" href="https://www.buymeacoffee.com/layerbit" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+        </div>
+        <p class="small muted">The coffee keeps the data refreshes and the model work going. Most messages get a reply within one to two business days.</p>
+      </div>
     </div>
   </section>
-  <footer class="foot"><span>IPO Radar · a Layerbit tool</span><a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a><span>ceo@layerbit.co.in</span></footer>
+  <footer class="foot"><span>IPO Radar · a Layerbit tool</span><a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a><button type="button" class="linklike" data-goto="about">About &amp; contact</button></footer>
 </div>
 </div>
 <div class="tip" id="tip" hidden></div>

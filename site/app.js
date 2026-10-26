@@ -602,7 +602,7 @@
   }
 
   // ------------------------------------------------------------ screens ---
-  const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method'];
+  const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method', 'about'];
   function showScreen(name, opts) {
     if (!SCREENS.includes(name)) name = 'today';
     for (const id of SCREENS) { const sec = document.getElementById('screen-' + id); if (sec) sec.hidden = id !== name; }
@@ -612,13 +612,7 @@
     if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
   }
   function bindContact() {
-    const b = $('#copy-email'); if (!b) return;
-    b.addEventListener('click', () => {
-      const t = $('#contact-email').textContent;
-      const done = () => { $('#copy-note').textContent = 'Copied'; setTimeout(() => { $('#copy-note').textContent = ''; }, 1500); };
-      const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#contact-email')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#copy-note').textContent = 'Selected: press copy'; };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(fallback); else fallback();
-    });
+    for (const b of document.querySelectorAll('[data-goto]')) b.addEventListener('click', () => showScreen(b.dataset.goto));
   }
   function bindScreens() {
     document.querySelector('nav.screens').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) showScreen(b.dataset.screen); });
