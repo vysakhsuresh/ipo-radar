@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-26T15:46:46Z",
+ "generated_at": "2026-10-26T16:03:38Z",
  "rows": [
   {
    "id": "aegis-vopak-terminals-2026",
@@ -3923,7 +3923,7 @@
     "employee": 2.4,
     "total": 5.71,
     "as_of": "2026-09-21",
-    "day": null
+    "day": 3
    },
    "listing": {
     "open": null,
@@ -3945,7 +3945,8 @@
     "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
     "exchange": "https://www.nseindia.com/api/ipo-detail?symbol=NSE&series=EQ",
     "price_band_low": "https://www.nseindia.com/api/public-past-issues",
-    "price_band_high": "https://www.nseindia.com/api/public-past-issues"
+    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
    },
    "flags": [
     "price_band_only"
@@ -3962,7 +3963,8 @@
     "rs": null,
     "pct": null,
     "as_of": null
-   }
+   },
+   "open_date": "2026-09-17"
   },
   {
    "id": "sonaselection-india-2026",
@@ -4780,14 +4782,27 @@
     "price_band_high": "https://www.nseindia.com/api/public-past-issues",
     "issue_price": "https://www.nseindia.com/api/public-past-issues",
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
+    "ref1": "https://www.ipoji.com/ipo-subscription/acevector-ipo",
+    "ref2": "https://www.ipopremium.in/view/ipo/1381/acevector-ltd",
+    "ref3": "https://groww.in/ipo/acevector-ipo",
+    "ref4": "https://www.inkl.com/news/snapdeal-parent-acevector-lists-at-12-discount",
+    "ref5": "https://upstox.com/ipo/acevector-limited-ipo/",
+    "ref6": "https://www.indiaipo.in/ipo-blogs/acevector-limited-ipo",
+    "ref7": "https://www.chittorgarh.com/ipo/snapdeal-ipo/2543/",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
    },
    "flags": [],
    "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
+    "history": [
+     {
+      "date": "2026-10-26",
+      "rs": 1.0
+     }
+    ],
+    "rs": 1,
+    "pct": 3.13,
+    "as_of": "2026-10-26"
    },
    "subscription": {
     "qib": 3.42,
@@ -4798,16 +4813,31 @@
     "total": 5.07,
     "as_of": "2026-09-29",
     "employee": null,
-    "day": null
+    "day": 3
    },
    "listing": {
-    "open": null,
+    "open": 28.32,
     "close": 26.08,
     "high": null,
     "low": null,
     "gain_pct": -18.5,
     "gain_basis": "close"
-   }
+   },
+   "open_date": "2026-09-25",
+   "close_date": "2026-09-29",
+   "allotment_date": "2026-09-30",
+   "lot_size": 468,
+   "issue_size_cr": 420,
+   "fresh_issue_cr": 287,
+   "ofs_cr": 133,
+   "sector": "E-commerce",
+   "lead_managers": [
+    "IIFL Capital Services",
+    "CLSA India",
+    "Systematix Corporate Services"
+   ],
+   "notes": "Listing open 28.32 NSE / 28.30 BSE (-11.5%); close 26.10 on 5 Oct per inkl/agency report (single source). Quota QIB 75% / NII 15% / retail 10%. Subscription 5.07x per ipoji final; others 4.93x at evening 29 Sep. Lead-manager list may be incomplete (snippet truncated). Pre-listing GMP ~1 (est. listing 33). Anchor bid date 24 Sep; amount not found. P/E n/a (loss-making not confirmed).",
+   "min_investment": 14976.0
   },
   {
    "id": "acevector-snapdeal-parent-2026",
@@ -5088,14 +5118,20 @@
     "issue_price": "https://www.nseindia.com/api/public-past-issues",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
+    "ref1": "https://www.chittorgarh.com/ipo/german-green-steel-and-power-ipo/2497/",
+    "ref2": "https://groww.in/ipo/german-green-steel-and-power-ipo",
+    "ref3": "https://www.mstock.com/ipo/german-green-steel-and-power-ltd/ipo1063",
+    "ref4": "https://www.kotakneo.com/ipo/german-green-steel-power-ltd-ipo/",
+    "ref5": "https://www.ipoplatform.com/ipo/german-green-steel-and-power-ipo/4207",
+    "ref6": "https://upstox.com/news/market-news/ipo/orient-cables-shares-debut-65-above-ipo-price-on-nse-here-s-how-ace-vector-runwal-enterprises-german-green-steel-debuted/article-201257/"
    },
    "flags": [],
    "gmp": {
     "history": [],
     "rs": null,
     "pct": null,
-    "as_of": null
+    "as_of": "2026-10-26"
    },
    "subscription": {
     "qib": 21.91,
@@ -5109,14 +5145,21 @@
     "employee": null
    },
    "listing": {
-    "open": null,
+    "open": 142,
     "close": 128.33,
     "high": null,
     "low": null,
     "gain_pct": -7.68,
     "gain_basis": "close"
    },
-   "open_date": "2026-09-25"
+   "open_date": "2026-09-25",
+   "lot_size": 107,
+   "issue_size_cr": 303.9,
+   "fresh_issue_cr": 290,
+   "ofs_cr": 13.9,
+   "sector": "Steel",
+   "notes": "Open/close/allotment dates not captured (subscription snapshots dated 29 Sep suggest close ~29-30 Sep). Listing open 142 NSE / 143.50 BSE (+2.16%); chittorgarh day-1 'last traded near 128' on both exchanges (approximate, so listing_close omitted). Subscription per chittorgarh (QIB ex-anchor 21.91; NII not captured); Kotak Neo 28.48x. Lead managers, anchor, P/E, GMP not found.",
+   "min_investment": 14873.0
   },
   {
    "id": "himalayan-solar-2026",
@@ -6358,14 +6401,25 @@
     "issue_price": "https://www.nseindia.com/api/public-past-issues",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
+    "ref1": "https://www.chittorgarh.com/ipo/nityas-gems-jewellery-ipo/2974/",
+    "ref2": "https://upstox.com/news/market-news/ipo/nityas-gems-and-jewellery-shares-list-at-nearly-7-premium-on-nse-here-s-how-much-investors-made-per-lot/article-201498/",
+    "ref3": "https://ticker.finology.in/ipo/nityas-gems-jewellery",
+    "ref4": "https://www.zeebiz.com/markets/ipo/news-nityas-gems-and-jewellery-ipo-opens-rs-70-75-price-band-check-lot-size-and-key-dates-403088",
+    "ref5": "https://www.ipoji.com/ipo/nityas-gems-jewellery-ipo",
+    "ref6": "https://www.ipoplatform.com/ipo/nityas-gems-and-jewellery-ipo/4650"
    },
    "flags": [],
    "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
+    "history": [
+     {
+      "date": "2026-10-26",
+      "rs": 1.0
+     }
+    ],
+    "rs": 1,
+    "pct": 1.33,
+    "as_of": "2026-10-26"
    },
    "subscription": {
     "qib": 1.06,
@@ -6379,14 +6433,26 @@
     "day": 4
    },
    "listing": {
-    "open": null,
+    "open": 80,
     "close": 83.99,
     "high": null,
     "low": null,
     "gain_pct": 11.99,
     "gain_basis": "close"
    },
-   "open_date": "2026-09-30"
+   "open_date": "2026-09-30",
+   "close_date": "2026-10-05",
+   "allotment_date": "2026-10-06",
+   "lot_size": 200,
+   "issue_size_cr": 108.35,
+   "fresh_issue_cr": 108.35,
+   "ofs_cr": 0,
+   "sector": "Gems & jewellery",
+   "lead_managers": [
+    "Choice Capital Advisors"
+   ],
+   "notes": "Listing open 80 NSE (+6.67%) / 82 BSE (+9.33%); listing-day close not found. Subscription per chittorgarh (NII not captured); Groww 2.19x, Upstox 2.25x. Employee discount 7. Pre-listing GMP ~1 (est. 76). Anchor, P/E not found.",
+   "min_investment": 15000.0
   },
   {
    "id": "omara-ventures-india-2026",
