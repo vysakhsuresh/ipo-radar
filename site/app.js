@@ -67,7 +67,7 @@
     custom:  {},
   };
   const state = {
-    board: 'all', status: 'active', hideNodata: true, sort: 'verdict', open: null,
+    board: 'all', status: 'active', hideNodata: false, sort: 'verdict', open: null,
     edits: {},                                   // id → {gmp_rs, qib, nii, retail}
     plan: Object.assign({ capital: 200000, accounts: 1, target: 25000, broker: 'zerodha', picked: null }, load('plan', {})),
     costs: null,
@@ -87,10 +87,6 @@
     c.gmp = c.gmp || {}; c.subscription = c.subscription || {};
     if (e.gmp_rs !== undefined) { c.gmp.rs = e.gmp_rs; c.gmp.pct = null; c.gmp.as_of = TODAY; }
     for (const k of ['qib', 'nii', 'retail']) if (e[k] !== undefined) c.subscription[k] = e[k];
-    if (e.qib !== undefined || e.nii !== undefined || e.retail !== undefined) {
-      const vals = ['qib', 'nii', 'retail'].map(k => c.subscription[k]).filter(v => v !== null && v !== undefined);
-      if (vals.length) c.subscription.total = vals.reduce((a, b) => a + b, 0) / vals.length;
-    }
     return c;
   }
   let SCORED = [];
@@ -134,7 +130,7 @@
       const br = PARAMS.base_rate;
       const mb = br.mainboard, sm = br.sme;
       t.append(tile('Listed above issue price', (mb && mb.p_up !== null ? Math.round(mb.p_up * 100) + '%' : '–') + ' / ' + (sm && sm.p_up !== null ? Math.round(sm.p_up * 100) + '%' : '–'),
-        'mainboard / SME in the history so far (' + (mb ? mb.n : 0) + ' and ' + (sm ? sm.n : 0) + ' listings); median gain ' + (mb && mb.median_gain !== null ? pct(mb.median_gain, 0) : '–') + ' / ' + (sm && sm.median_gain !== null ? pct(sm.median_gain, 0) : '–')));
+        'mainboard / SME in the history so far (' + (mb ? mb.n : 0) + ' and ' + (sm ? sm.n : 0) + ' listings' + (PARAMS.basis_counts && PARAMS.basis_counts.open ? ', ' + PARAMS.basis_counts.open + ' on debut price' : '') + '); median gain ' + (mb && mb.median_gain !== null ? pct(mb.median_gain, 0) : '–') + ' / ' + (sm && sm.median_gain !== null ? pct(sm.median_gain, 0) : '–')));
     }
   }
 
@@ -279,6 +275,7 @@
       else if (s) {
         vtd.append(el('span', { class: 'verdict ' + s.verdict.tier, text: s.verdict.label }));
         if (s.verdict.gamble) vtd.append(el('span', { class: 'gamble ' + s.verdict.gamble, text: s.verdict.gamble === 'sure' ? 'Sure gamble' : 'Possible gamble' }));
+        if (ipo.status === 'closed') vtd.append(el('span', { class: 'small muted', style: 'display:block;margin-top:4px', text: 'bids closed; for those allotted' }));
       }
       tr.append(vtd);
       tr.addEventListener('click', (ev) => { if (ev.target.closest('a')) return; toggle(ipo.id); });
@@ -346,7 +343,8 @@
       if (num(iQ) !== undefined) ed.qib = num(iQ);
       if (num(iN) !== undefined) ed.nii = num(iN);
       if (num(iR) !== undefined) ed.retail = num(iR);
-      state.edits[ipo.id] = ed; computeAll(); renderAll();
+      if (Object.keys(ed).length) state.edits[ipo.id] = ed; else delete state.edits[ipo.id];
+      computeAll(); renderAll();
     } }, 'Recompute'));
     btns.append(el('button', { class: 'btn small', type: 'button', onclick: () => { delete state.edits[ipo.id]; computeAll(); renderAll(); } }, 'Reset'));
     c3.append(btns);
@@ -362,12 +360,12 @@
     const c = state.costs;
     $('#c-brok').value = c.brokerage_pct; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
     const out = $('#plan-result'); out.replaceChildren();
-    const cands = SCORED.filter(r => r.score && ['open', 'upcoming', 'closed'].includes(r.ipo.status) && r.score.p_up !== null && r.ipo.issue_price && r.ipo.lot_size);
-    if (!cands.length) { out.append(el('p', { class: 'muted', text: 'No scoreable IPO in the pipeline right now, so there is nothing to plan.' })); return; }
+    const cands = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null && r.ipo.issue_price && r.ipo.lot_size);
+    if (!cands.length) { out.append(el('p', { class: 'muted', text: 'Nothing is open or upcoming with a usable read right now, so there is nothing to plan. Issues that have closed cannot be applied to.' })); return; }
     if (p.picked === null) p.picked = cands.filter(r => ['apply', 'lean'].includes(r.score.verdict.tier)).map(r => r.ipo.id);
     const picked = new Set(p.picked);
     const accounts = Math.max(1, Math.round(p.accounts || 1));
-    let totalEv = 0, totalBlock = 0, pNone = 1, rows = [];
+    let totalEv = 0, totalBlock = 0, pNone = 1, rows = [], posEv = 0, posBlock = 0;
     for (const r of cands) {
       const inv = r.score.ev.invested_if_allotted || r.ipo.issue_price * r.ipo.lot_size;
       const s = r.score;
@@ -375,7 +373,7 @@
       const evIf = s.ev.ev_if_allotted !== null && s.ev.ev_if_allotted !== undefined ? s.ev.ev_if_allotted : S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs).net;
       const ev1 = pa === null ? null : pa * evIf;
       const on = picked.has(r.ipo.id);
-      if (on) { totalBlock += inv * accounts; if (ev1 !== null) { totalEv += ev1 * accounts; pNone *= Math.pow(1 - pa, accounts); } }
+      if (on) { totalBlock += inv * accounts; if (ev1 !== null) { totalEv += ev1 * accounts; pNone *= Math.pow(1 - pa, accounts); if (ev1 > 0) { posEv += ev1 * accounts; posBlock += inv * accounts; } } }
       rows.push({ r, inv, pa, evIf, ev1, on });
     }
     const overCap = totalBlock > p.capital;
@@ -383,10 +381,10 @@
     out.append(el('div', { class: 'eyebrow', text: 'Expected profit from the ticked IPOs, ' + accounts + ' account' + (accounts > 1 ? 's' : '') }));
     out.append(hero);
     const anyUnknown = rows.some(q => q.on && q.pa === null);
-    const need = totalEv > 0 ? p.target / (totalEv / Math.max(1, totalBlock)) : null;
+    const need = posEv > 0 ? p.target / (posEv / Math.max(1, posBlock)) : null;
     const vs = [];
     vs.push('Against a ' + inr(p.target) + ' monthly target: ' + (totalEv >= p.target ? 'on paper this batch gets there.' : 'this batch covers ' + Math.round(100 * totalEv / Math.max(1, p.target)) + '% of it.'));
-    if (need !== null && isFinite(need)) vs.push('At these odds you would need about ' + inrShort(need) + ' blocked per cycle to expect ' + inr(p.target) + ', because the allotment lottery, not the GMP, sets the ceiling.');
+    if (need !== null && isFinite(need)) vs.push('At the odds of the positive-value picks you would need about ' + inrShort(need) + ' blocked per cycle to expect ' + inr(p.target) + ', because the allotment lottery, not the GMP, sets the ceiling.');
     vs.push('Blocked capital: ' + inr(totalBlock) + (overCap ? ', more than the ' + inr(p.capital) + ' you set.' : ' of your ' + inr(p.capital) + '.'));
     if (!anyUnknown && totalBlock > 0) vs.push('Chance that none of these applications gets a single lot: ' + pct0(pNone) + '.');
     if (anyUnknown) vs.push('Some ticked IPOs have no subscription figures yet, so their allotment odds (and expected profit) are not counted.');

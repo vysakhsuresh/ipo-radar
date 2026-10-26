@@ -58,25 +58,31 @@ def sell_charges(sell_value: float, cfg: CostConfig) -> float:
 
 def net_profit_on_sale(invested: float, sell_value: float, cfg: CostConfig) -> dict:
     """Profit after charges and after STCG tax (tax only when there is a gain).
-    Returns a breakdown so the page can show where the money goes."""
+
+    STT is NOT deductible in computing capital gains (section 48), so the tax
+    base is gross minus the other charges only. `opportunity` (cost of the
+    blocked funds) is reported separately and excluded from `net`: ASBA blocks
+    every applicant's money, allotted or not, so the EV subtracts it once."""
     charges = sell_charges(sell_value, cfg)
+    stt = sell_value * cfg.stt_pct / 100 if sell_value > 0 else 0.0
     gross = sell_value - invested
-    pre_tax = gross - charges
-    tax = max(0.0, pre_tax) * cfg.stcg_tax_pct / 100 * (1 + cfg.cess_pct / 100)
+    taxable = gross - (charges - stt)
+    tax = max(0.0, taxable) * cfg.stcg_tax_pct / 100 * (1 + cfg.cess_pct / 100)
     opp = invested * cfg.opportunity_rate_pct / 100 * cfg.blocked_days / 365
     return {"gross": gross, "charges": charges, "tax": tax, "opportunity": opp,
-            "net": pre_tax - tax - opp}
+            "net": gross - charges - tax}
 
 
 # --- allotment odds -----------------------------------------------------------
 
-def retail_lots_affordable(lot_size: int, issue_price: float) -> int:
-    """Max lots one retail application can bid for under the Rs 2 lakh cap."""
+def retail_lots_affordable(lot_size: int, issue_price: float, min_lots: int = 1) -> int:
+    """Max lots one retail application can bid for under the Rs 2 lakh cap,
+    never below the issue's minimum application."""
     one = lot_size * issue_price
-    return max(1, int(RETAIL_MAX_APPLICATION // one)) if one > 0 else 1
+    return max(min_lots, int(RETAIL_MAX_APPLICATION // one)) if one > 0 else max(1, min_lots)
 
 
-def p_allotment(sub: float | None, lots_bid: int = 1, board: str = "mainboard") -> dict:
+def p_allotment(sub: float | None, lots_bid: int = 1, board: str = "mainboard", status: str = "closed") -> dict:
     """Probability of getting *at least the minimum lot* and the expected lots.
 
     SEBI's allotment rule when a category is oversubscribed: first, every
@@ -87,28 +93,36 @@ def p_allotment(sub: float | None, lots_bid: int = 1, board: str = "mainboard") 
     Bidding more lots does NOT raise the chance of the lottery (every
     applicant counts once); it only matters when the book is undersubscribed.
 
-    `sub` is the category's times-subscribed figure. None → unknown.
+    `sub` is the category's times-subscribed figure. None → unknown. While
+    bidding is still open the figure is provisional: an under-filled book on
+    day one says nothing about day three, so that case is reported as unknown.
     """
     if sub is None:
         return {"p_min_lot": None, "expected_lots": None, "basis": "no subscription data"}
+    if status == "open" and sub < 1.0:
+        return {"p_min_lot": None, "expected_lots": None, "basis": "bidding still on and retail not yet full: odds unknown"}
     if sub <= 1.0:
         # undersubscribed: everyone gets what they bid for
         return {"p_min_lot": 1.0, "expected_lots": float(lots_bid), "basis": "category under-subscribed: full allotment"}
     p = min(1.0, 1.0 / sub)
     r1 = f"{math.floor(sub * 10 + 0.5) / 10:.1f}"   # half-up, same as score.js
-    return {"p_min_lot": p, "expected_lots": p * 1.0, "basis": f"lottery at {r1}x: about 1 in {r1} applicants"}
+    tail = " so far; the last day usually adds the most" if status == "open" else ""
+    return {"p_min_lot": p, "expected_lots": p * 1.0, "basis": f"lottery at {r1}x: about 1 in {r1} applicants{tail}"}
 
 
 def expected_value_of_application(issue_price: float, lot_size: int, sub_retail: float | None,
                                   p_gain: float | None, gain_quantiles: dict | None,
-                                  cfg: CostConfig, lots_bid: int = 1, min_lots: int = 1) -> dict:
+                                  cfg: CostConfig, lots_bid: int = 1, min_lots: int = 1,
+                                  status: str = "closed") -> dict:
     """Expected net profit (Rs) of ONE retail application that sells on listing day.
 
     gain_quantiles: {"p10": %, "p50": %, "p90": %, "mean": %} of listing-day gain.
     The EV uses the *mean* gain; the downside line uses p10. `min_lots` is the
     smallest application the issue accepts (2 for SME issues since 2025).
+    The opportunity cost of the blocked funds is paid whether or not shares
+    are allotted, so it is subtracted once, outside the allotment probability.
     """
-    allot = p_allotment(sub_retail, lots_bid)
+    allot = p_allotment(sub_retail, lots_bid, status=status)
     invested_one_lot = issue_price * lot_size * max(1, min_lots)
     out = {"allotment": allot, "invested_if_allotted": invested_one_lot}
     if allot["p_min_lot"] is None or gain_quantiles is None:
@@ -117,13 +131,14 @@ def expected_value_of_application(issue_price: float, lot_size: int, sub_retail:
     lots = allot["expected_lots"] / allot["p_min_lot"] if allot["p_min_lot"] else lots_bid
     invested = invested_one_lot * max(1.0, lots)
     mean_sale = invested * (1 + gain_quantiles["mean"] / 100)
-    ev_alloc = net_profit_on_sale(invested, mean_sale, cfg)["net"]
+    mean_res = net_profit_on_sale(invested, mean_sale, cfg)
     p10_sale = invested * (1 + gain_quantiles["p10"] / 100)
-    down_alloc = net_profit_on_sale(invested, p10_sale, cfg)["net"]
+    down_res = net_profit_on_sale(invested, p10_sale, cfg)
+    opp = mean_res["opportunity"]
     out.update({
-        "ev_if_allotted": ev_alloc,
-        "downside_if_allotted": down_alloc,
-        "ev": allot["p_min_lot"] * ev_alloc,
+        "ev_if_allotted": mean_res["net"] - opp,
+        "downside_if_allotted": down_res["net"] - opp,
+        "ev": allot["p_min_lot"] * mean_res["net"] - opp,
         "invested": invested,
     })
     return out

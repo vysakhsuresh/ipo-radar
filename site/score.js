@@ -98,29 +98,33 @@
 
   function netProfitOnSale(invested, sellValue, cfg) {
     const charges = sellCharges(sellValue, cfg);
+    const stt = sellValue > 0 ? sellValue * cfg.stt_pct / 100 : 0.0;
     const gross = sellValue - invested;
-    const preTax = gross - charges;
-    const tax = Math.max(0, preTax) * cfg.stcg_tax_pct / 100 * (1 + cfg.cess_pct / 100);
+    const taxable = gross - (charges - stt);           // STT is not deductible (section 48)
+    const tax = Math.max(0, taxable) * cfg.stcg_tax_pct / 100 * (1 + cfg.cess_pct / 100);
     const opp = invested * cfg.opportunity_rate_pct / 100 * cfg.blocked_days / 365;
-    return { gross, charges, tax, opportunity: opp, net: preTax - tax - opp };
+    return { gross, charges, tax, opportunity: opp, net: gross - charges - tax };
   }
 
-  function retailLotsAffordable(lot, price) {
+  function retailLotsAffordable(lot, price, minLots) {
+    minLots = minLots || 1;
     const one = lot * price;
-    return one > 0 ? Math.max(1, Math.floor(RETAIL_MAX_APPLICATION / one)) : 1;
+    return one > 0 ? Math.max(minLots, Math.floor(RETAIL_MAX_APPLICATION / one)) : Math.max(1, minLots);
   }
 
-  function pAllotment(sub, lotsBid) {
-    lotsBid = lotsBid || 1;
+  function pAllotment(sub, lotsBid, board, status) {
+    lotsBid = lotsBid || 1; status = status || 'closed';
     if (sub === null || sub === undefined) return { p_min_lot: null, expected_lots: null, basis: 'no subscription data' };
+    if (status === 'open' && sub < 1.0) return { p_min_lot: null, expected_lots: null, basis: 'bidding still on and retail not yet full: odds unknown' };
     if (sub <= 1.0) return { p_min_lot: 1.0, expected_lots: lotsBid, basis: 'category under-subscribed: full allotment' };
     const p = Math.min(1.0, 1.0 / sub);
-    return { p_min_lot: p, expected_lots: p * 1.0, basis: 'lottery at ' + r1(sub) + 'x: about 1 in ' + r1(sub) + ' applicants' };
+    const tail = status === 'open' ? ' so far; the last day usually adds the most' : '';
+    return { p_min_lot: p, expected_lots: p * 1.0, basis: 'lottery at ' + r1(sub) + 'x: about 1 in ' + r1(sub) + ' applicants' + tail };
   }
 
-  function expectedValueOfApplication(price, lot, subRetail, pGain, gainQ, cfg, lotsBid, minLots) {
-    lotsBid = lotsBid || 1; minLots = minLots || 1;
-    const allot = pAllotment(subRetail, lotsBid);
+  function expectedValueOfApplication(price, lot, subRetail, pGain, gainQ, cfg, lotsBid, minLots, status) {
+    lotsBid = lotsBid || 1; minLots = minLots || 1; status = status || 'closed';
+    const allot = pAllotment(subRetail, lotsBid, undefined, status);
     const investedOne = price * lot * Math.max(1, minLots);
     const out = { allotment: allot, invested_if_allotted: investedOne };
     if (allot.p_min_lot === null || !gainQ) {
@@ -129,12 +133,11 @@
     }
     const lots = allot.p_min_lot ? allot.expected_lots / allot.p_min_lot : lotsBid;
     const invested = investedOne * Math.max(1.0, lots);
-    const meanSale = invested * (1 + gainQ.mean / 100);
-    const evAlloc = netProfitOnSale(invested, meanSale, cfg).net;
-    const p10Sale = invested * (1 + gainQ.p10 / 100);
-    const downAlloc = netProfitOnSale(invested, p10Sale, cfg).net;
-    out.ev_if_allotted = evAlloc; out.downside_if_allotted = downAlloc;
-    out.ev = allot.p_min_lot * evAlloc; out.invested = invested;
+    const meanRes = netProfitOnSale(invested, invested * (1 + gainQ.mean / 100), cfg);
+    const downRes = netProfitOnSale(invested, invested * (1 + gainQ.p10 / 100), cfg);
+    const opp = meanRes.opportunity;
+    out.ev_if_allotted = meanRes.net - opp; out.downside_if_allotted = downRes.net - opp;
+    out.ev = allot.p_min_lot * meanRes.net - opp; out.invested = invested;
     return out;
   }
 
@@ -204,40 +207,40 @@
   function verdict(ipo, pUp, gain, ev, confidence, flags) {
     const reasons = [], warnings = [];
     const sub = ipo.subscription || {};
+    const qibV = f(sub.qib), niiV = f(sub.nii), retV = f(sub.retail), totV = f(sub.total);
     const board = ipo.board;
     const g = gmpPctOf(ipo);
     const trend = gmpTrendOf(ipo);
-    const size = ipo.issue_size_cr;
+    const size = f(ipo.issue_size_cr);
     const status = ipo.status;
+    const live = status === 'open' || status === 'closed';
+    const sofar = status === 'open' ? ' so far' : '';
     if (pUp === null || confidence === 'none') {
       return { tier: 'nodata', label: TIERS.nodata.label, reasons: ['No GMP quote and no subscription figures yet.'], warnings, gamble: null };
     }
     if (g !== null && g <= 0) warnings.push('GMP is zero or negative: the grey market expects a flat or discount listing.');
     else if (g !== null && g < 5) warnings.push('GMP under 5%: thin cushion; a weak market on listing day wipes it out.');
     if (trend !== null && g !== null && trend <= -0.4 * Math.max(g - trend, 1)) warnings.push('GMP has fallen sharply over the last few sessions.');
-    if ((status === 'closed' || status === 'open') && sub.retail !== null && sub.retail !== undefined && sub.retail < 1 && status === 'closed')
-      warnings.push('Retail portion under-subscribed: weak demand, and you will be allotted everything you bid for.');
-    if (sub.qib !== null && sub.qib !== undefined && sub.qib < 1 && status === 'closed')
-      warnings.push('QIBs (institutions) did not fill their quota: the smart money passed.');
+    if (live && retV !== null && retV < 1) warnings.push('Retail portion under-subscribed' + sofar + ': weak demand, and everyone who bids gets allotted in full.');
+    if (live && qibV !== null && qibV < 1) warnings.push('QIBs (institutions) have not filled their quota' + sofar + (status === 'open' ? ' (they usually bid on the last day).' : ': the smart money passed.'));
     if (board === 'sme') {
       warnings.push('SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.');
-      if (sub.total !== null && sub.total !== undefined && sub.total < 10 && status === 'closed')
-        warnings.push('SME with under 10x total subscription: historically the riskiest bucket.');
+      if (totV !== null && totV < 10 && status === 'closed') warnings.push('SME with under 10x total subscription: historically the riskiest bucket.');
     }
-    const qibV = sub.qib, niiV = sub.nii, retV = sub.retail;
-    if (status === 'closed' && qibV !== null && qibV !== undefined && qibV >= 20
-        && ((niiV !== null && niiV !== undefined && niiV < 2) || (retV !== null && retV !== undefined && retV < 2)))
+    if (status === 'closed' && qibV !== null && qibV >= 20 && ((niiV !== null && niiV < 2) || (retV !== null && retV < 2)))
       warnings.push('Institution-only demand: QIBs piled in but HNIs or retail stayed under 2x. Thin day-one buying is a classic flat-listing setup.');
-    if (flags.indexOf('gmp_stale') >= 0) warnings.push('GMP quote is 3+ days old; check a fresh one before applying.');
-    if (size !== null && size !== undefined && size < 50) warnings.push('Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price.');
-    const ofs = ipo.ofs_cr, fresh = ipo.fresh_issue_cr;
-    if (ofs && fresh !== null && fresh !== undefined && (ofs + fresh) > 0 && ofs / (ofs + fresh) > 0.85)
+    if (flags.indexOf('gmp_stale') >= 0 && status !== 'listed') warnings.push('GMP quote is 3+ days old; check a fresh one before applying.');
+    if (size !== null && size < 50) warnings.push('Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price.');
+    const ofs = f(ipo.ofs_cr), fresh = f(ipo.fresh_issue_cr);
+    if (ofs && fresh !== null && (ofs + fresh) > 0 && ofs / (ofs + fresh) > 0.85)
       reasons.push('Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.');
     if (g !== null) reasons.push('GMP ' + (g >= 0 ? '+' : '-') + r1(Math.abs(g)) + '% of the issue price.');
-    if (sub.qib !== null && sub.qib !== undefined) {
-      reasons.push('QIB ' + r1(sub.qib) + 'x, NII ' + fmtx(sub.nii) + 'x, retail ' + fmtx(sub.retail) + 'x' + (status === 'closed' ? ' (final)' : ' (so far)'));
+    if (qibV !== null || niiV !== null || retV !== null) {
+      const fx = v => v === null ? '–' : r1(v);
+      reasons.push('QIB ' + fx(qibV) + 'x, NII ' + fx(niiV) + 'x, retail ' + fx(retV) + 'x' + ((status === 'closed' || status === 'listed') ? ' (final)' : ' (so far)'));
     }
     if (confidence === 'low') reasons.push('Only a GMP quote so far; subscription figures will sharpen this.');
+    if (status === 'open' && confidence === 'medium') reasons.push('Bidding is still on: QIB and HNI books usually fill on the last day.');
 
     const hard = warnings.filter(w => !w.startsWith('SME issue')).length;
     const evv = ev.ev;
@@ -248,17 +251,20 @@
     else if (pUp >= 0.4 && (evv === null || evv === undefined || evv > -1)) tier = 'coinflip';
     else tier = 'avoid';
     if (hard >= 2 && (tier === 'apply' || tier === 'lean')) tier = 'coinflip';
-    if (confidence === 'low') {
+    if (g !== null && g <= 0 && (tier === 'apply' || tier === 'lean')) tier = 'coinflip';
+    const early = confidence === 'low' || (status === 'open' && confidence === 'medium');
+    if (early && status !== 'closed') {
       if (tier === 'apply') tier = 'lean';
       else if ((tier === 'coinflip' || tier === 'avoid') && !(g !== null && g <= 0)) tier = 'watch';
     }
-
+    let w2 = warnings;
+    if (status === 'listed') w2 = [];
     let gamble = null;
     if (tier === 'avoid') gamble = 'sure';
     else if (tier === 'coinflip' || hard >= 1) gamble = 'possible';
     if (board === 'sme' && tier !== 'apply') gamble = gamble || 'possible';
     if (tier === 'watch' && gamble === 'sure') gamble = 'possible';
-    return { tier, label: TIERS[tier].label, reasons, warnings, gamble };
+    return { tier, label: TIERS[tier].label, reasons, warnings: w2, gamble };
   }
 
   function scoreIpo(ipo, params, market, cfg, today) {
@@ -266,15 +272,18 @@
     today = today || new Date().toISOString().slice(0, 10);
     const [confidence, flags] = dataQuality(ipo, today);
     if (flags.indexOf('gmp_unquoted') >= 0) ipo = Object.assign({}, ipo, { gmp: Object.assign({}, ipo.gmp || {}, { rs: null, pct: null }) });
-    const price = ipo.issue_price, lot = ipo.lot_size;
+    const price = f(ipo.issue_price), lot = f(ipo.lot_size);
     const sub = ipo.subscription || {};
     let pUp = null, gain = null, feat = null;
     if (confidence !== 'none') { const o = modelOutputs(ipo, params, market); pUp = o.pUp; gain = o.gain; feat = o.feat; }
     let ev;
     if (price && lot) {
-      const minLots = Math.trunc(Number(ipo.min_lots) || (ipo.board === 'sme' ? 2 : 1));
-      ev = expectedValueOfApplication(price, lot, f(sub.retail), pUp, gain, cfg, 1, minLots);
-      ev.lots_affordable = retailLotsAffordable(lot, price);
+      const minLots = Math.trunc(f(ipo.min_lots) || (ipo.board === 'sme' ? 2 : 1));
+      let ret = f(sub.retail);
+      if (ret === null && f(sub.total) !== null) ret = f(sub.total);
+      ev = expectedValueOfApplication(price, lot, ret, pUp, gain, cfg, 1, minLots, ipo.status || 'closed');
+      if (ret !== null && f(sub.retail) === null && ev.allotment.p_min_lot !== null) ev.allotment.basis += ' (overall multiple used; retail figure missing)';
+      ev.lots_affordable = retailLotsAffordable(lot, price, minLots);
       ev.min_lots = minLots;
     } else {
       ev = { ev: null, ev_if_allotted: null, downside_if_allotted: null, allotment: { p_min_lot: null, basis: 'price or lot unknown' } };

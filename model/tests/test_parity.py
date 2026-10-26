@@ -35,8 +35,9 @@ def _walk(a, b, path=""):
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
-def test_js_and_python_scores_match():
-    ipos = os.path.join(FIX, "ipos.json")
+@pytest.mark.parametrize("fixture", ["ipos.json", "edge.json"])
+def test_js_and_python_scores_match(fixture):
+    ipos = os.path.join(FIX, fixture)
     params = os.path.join(FIX, "params.json")
     with open(ipos, encoding="utf-8") as fh:
         live = json.load(fh)

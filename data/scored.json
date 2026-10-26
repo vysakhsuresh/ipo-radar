@@ -70,28 +70,25 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.07763975155279502,
+     "expected_lots": 0.07763975155279502,
+     "basis": "lottery at 12.9x: about 1 in 12.9 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 278400,
-     "lots_affordable": 1,
+     "ev": 694.2867645614474,
+     "ev_if_allotted": 8942.413527551444,
+     "downside_if_allotted": -58160.76907429143,
+     "invested_if_allotted": 278400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "coinflip",
      "label": "Coin flip",
      "reasons": [
-      "QIB 21.0x, NII 19.47x, retail –x (so far)"
+      "QIB 21.0x, NII 19.5x, retail –x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -178,23 +175,20 @@
      "basis": "lottery at 807.0x: about 1 in 807.0 applicants"
     },
     "ev": {
-     "ev": 33.414015086288224,
-     "ev_if_allotted": 26965.110174634596,
+     "ev": 33.33958835144177,
+     "ev_if_allotted": 26905.047799613505,
      "downside_if_allotted": -29487.239745295716,
-     "invested_if_allotted": 254400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 254400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "QIB 307.0x, NII 1148x, retail 807x (so far)"
+      "QIB 307.0x, NII 1148.0x, retail 807.0x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -287,20 +281,17 @@
      "ev": -2745.567212743861,
      "ev_if_allotted": -4996.932327193827,
      "downside_if_allotted": -60439.42178419383,
-     "invested_if_allotted": 222000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 222000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.3x, NII 2.41x, retail 1.82x (so far)"
+      "QIB 1.3x, NII 2.4x, retail 1.8x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -391,21 +382,18 @@
      "ev": -2927.8510903002834,
      "ev_if_allotted": -2927.8510903002834,
      "downside_if_allotted": -60468.164472700315,
-     "invested_if_allotted": 230400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 230400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "GMP +0.0% of the issue price."
+      "GMP +0.0% of the issue price.",
+      "QIB –x, NII 1.9x, retail 1.0x (final)"
      ],
-     "warnings": [
-      "GMP is zero or negative: the grey market expects a flat or discount listing.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -499,8 +487,8 @@
      "ev": -1352.576677949309,
      "ev_if_allotted": -3462.596295550231,
      "downside_if_allotted": -66996.69232195024,
-     "invested_if_allotted": 254400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 254400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -508,13 +496,9 @@
      "label": "Avoid",
      "reasons": [
       "GMP +0.0% of the issue price.",
-      "QIB 1.0x, NII 2.9x, retail 2.56x (so far)"
+      "QIB 1.0x, NII 2.9x, retail 2.6x (final)"
      ],
-     "warnings": [
-      "GMP is zero or negative: the grey market expects a flat or discount listing.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -612,20 +596,17 @@
      "ev": -4871.008731120604,
      "ev_if_allotted": -6916.832398191257,
      "downside_if_allotted": -69252.17189579128,
-     "invested_if_allotted": 249600,
-     "lots_affordable": 1,
+     "invested_if_allotted": 249600.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.1x, NII 1.46x, retail 1.42x (so far)"
+      "QIB 1.1x, NII 1.5x, retail 1.4x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -707,26 +688,25 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.19685039370078738,
+     "expected_lots": 0.19685039370078738,
+     "basis": "lottery at 5.1x: about 1 in 5.1 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 216000,
-     "lots_affordable": 1,
+     "ev": 526.2696186047151,
+     "ev_if_allotted": 2673.4496625119527,
+     "downside_if_allotted": -50510.78329178808,
+     "invested_if_allotted": 216000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "coinflip",
      "label": "Coin flip",
-     "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
+     "reasons": [
+      "QIB –x, NII 21.0x, retail –x (final)"
      ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -819,20 +799,17 @@
      "ev": -1100.3548691184967,
      "ev_if_allotted": -2882.929757090462,
      "downside_if_allotted": -71811.4301630905,
-     "invested_if_allotted": 276000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 276000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 2.5x, NII 3.75x, retail 2.62x (so far)"
+      "QIB 2.5x, NII 3.8x, retail 2.6x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -930,20 +907,17 @@
      "ev": -4881.6119074328635,
      "ev_if_allotted": -4881.6119074328635,
      "downside_if_allotted": -67316.84778243283,
-     "invested_if_allotted": 250000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 250000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 2.6x, NII 0.8x, retail 0.78x (so far)"
+      "QIB 2.6x, NII 0.8x, retail 0.8x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -1032,23 +1006,20 @@
      "basis": "lottery at 2.5x: about 1 in 2.5 applicants"
     },
     "ev": {
-     "ev": 108.65046515447538,
-     "ev_if_allotted": 266.1936396284647,
+     "ev": 84.68853307102782,
+     "ev_if_allotted": 207.4869060240182,
      "downside_if_allotted": -69990.94660926105,
-     "invested_if_allotted": 281600,
-     "lots_affordable": 1,
+     "invested_if_allotted": 281600.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 5.3x, NII 3.7x, retail 2.45x (so far)"
+      "QIB 5.3x, NII 3.7x, retail 2.5x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -1150,10 +1121,10 @@
      "basis": "lottery at 9.1x: about 1 in 9.1 applicants"
     },
     "ev": {
-     "ev": 44.3329975817551,
-     "ev_if_allotted": 403.87360796978896,
+     "ev": 43.97849867807002,
+     "ev_if_allotted": 400.64412295721786,
      "downside_if_allotted": -1286.3952342025198,
-     "invested_if_allotted": 14985,
+     "invested_if_allotted": 14985.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -1161,7 +1132,7 @@
      "tier": "coinflip",
      "label": "Coin flip",
      "reasons": [
-      "QIB 7.7x, NII 25.8x, retail 9.11x (so far)"
+      "QIB 7.7x, NII 25.8x, retail 9.1x (final)"
      ],
      "warnings": [],
      "gamble": "possible"
@@ -1291,24 +1262,22 @@
      "basis": "lottery at 20.4x: about 1 in 20.4 applicants"
     },
     "ev": {
-     "ev": 255.48303085700246,
-     "ev_if_allotted": 5214.40865979142,
-     "downside_if_allotted": 3790.8555526795067,
-     "invested_if_allotted": 14994,
+     "ev": 255.26274461035624,
+     "ev_if_allotted": 5209.912617497371,
+     "downside_if_allotted": 3786.7337606254578,
+     "invested_if_allotted": 14994.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "GMP +41.2% of the issue price.",
-      "QIB 230.5x, NII 120.37x, retail 20.41x (so far)"
+      "QIB 230.5x, NII 120.4x, retail 20.4x (final)"
      ],
-     "warnings": [
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -1389,25 +1358,23 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.36101083032490977,
+     "expected_lots": 0.36101083032490977,
+     "basis": "lottery at 2.8x: about 1 in 2.8 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 242400,
-     "lots_affordable": 1,
+     "ev": -986.813285452513,
+     "ev_if_allotted": -2733.472800703461,
+     "downside_if_allotted": -63270.677505103464,
+     "invested_if_allotted": 242400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -1498,23 +1465,20 @@
      "basis": "lottery at 529.8x: about 1 in 529.8 applicants"
     },
     "ev": {
-     "ev": 32.82487255827229,
-     "ev_if_allotted": 17391.273978823825,
+     "ev": 32.71563060574543,
+     "ev_if_allotted": 17333.395407536045,
      "downside_if_allotted": -41975.00226980836,
-     "invested_if_allotted": 256000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 256000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "QIB 44.8x, NII 421.94x, retail 529.82x (so far)"
+      "QIB 44.8x, NII 421.9x, retail 529.8x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -1616,10 +1580,10 @@
      "basis": "lottery at 4.8x: about 1 in 4.8 applicants"
     },
     "ev": {
-     "ev": 107.15242333792261,
-     "ev_if_allotted": 517.5462047221663,
+     "ev": 106.47799363875913,
+     "ev_if_allotted": 514.2887092752067,
      "downside_if_allotted": -1141.7903473261217,
-     "invested_if_allotted": 14976,
+     "invested_if_allotted": 14976.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -1628,11 +1592,9 @@
      "label": "Coin flip",
      "reasons": [
       "GMP +3.1% of the issue price.",
-      "QIB 3.4x, NII 8.53x, retail 4.83x (so far)"
+      "QIB 3.4x, NII 8.5x, retail 4.8x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -1713,8 +1675,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 264000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 264000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -1812,21 +1774,18 @@
      "ev": -636.1887184034936,
      "ev_if_allotted": -1469.5959395120701,
      "downside_if_allotted": -59409.49483151207,
-     "invested_if_allotted": 232000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 232000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "GMP +1.7% of the issue price."
+      "GMP +1.7% of the issue price.",
+      "QIB –x, NII 0.5x, retail 2.3x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -1915,10 +1874,10 @@
      "basis": "lottery at 24.0x: about 1 in 24.0 applicants"
     },
     "ev": {
-     "ev": 27.006750787772457,
-     "ev_if_allotted": 647.6218838907836,
+     "ev": 26.87037689499348,
+     "ev_if_allotted": 644.3516379419437,
      "downside_if_allotted": -965.2061864322425,
-     "invested_if_allotted": 14873,
+     "invested_if_allotted": 14873.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -1926,7 +1885,7 @@
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "QIB 21.9x, NII –x, retail 23.98x (so far)"
+      "QIB 21.9x, NII –x, retail 24.0x (final)"
      ],
      "warnings": [],
      "gamble": null
@@ -2028,8 +1987,8 @@
      "ev": -2921.388425933114,
      "ev_if_allotted": -3680.949416675724,
      "downside_if_allotted": -65416.910649875725,
-     "invested_if_allotted": 247200,
-     "lots_affordable": 1,
+     "invested_if_allotted": 247200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -2037,12 +1996,9 @@
      "label": "Avoid",
      "reasons": [
       "GMP +0.0% of the issue price.",
-      "QIB 1.7x, NII 0.94x, retail 1.26x (so far)"
+      "QIB 1.7x, NII 0.9x, retail 1.3x (final)"
      ],
-     "warnings": [
-      "GMP is zero or negative: the grey market expects a flat or discount listing.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -2175,24 +2131,22 @@
      "basis": "lottery at 32.0x: about 1 in 32.0 applicants"
     },
     "ev": {
-     "ev": 165.7950857956327,
-     "ev_if_allotted": 5305.442745460246,
-     "downside_if_allotted": 3885.117649929084,
-     "invested_if_allotted": 14960,
+     "ev": 165.65405780501777,
+     "ev_if_allotted": 5300.929849760569,
+     "downside_if_allotted": 3880.9781558294067,
+     "invested_if_allotted": 14960.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "GMP +40.4% of the issue price.",
-      "QIB 193.0x, NII 122x, retail 32x (so far)"
+      "QIB 193.0x, NII 122.0x, retail 32.0x (final)"
      ],
-     "warnings": [
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -2291,10 +2245,10 @@
      "basis": "lottery at 1.1x: about 1 in 1.1 applicants"
     },
     "ev": {
-     "ev": 59.677280915770396,
-     "ev_if_allotted": 66.83855462566285,
+     "ev": 56.88036099623639,
+     "ev_if_allotted": 63.70600431578476,
      "downside_if_allotted": -1707.1495178652576,
-     "invested_if_allotted": 14945,
+     "invested_if_allotted": 14945.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -2302,7 +2256,7 @@
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 3.9x, NII 3.94x, retail 1.12x (so far)"
+      "QIB 3.9x, NII 3.9x, retail 1.1x (final)"
      ],
      "warnings": [],
      "gamble": "sure"
@@ -2385,8 +2339,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 271200,
-     "lots_affordable": 1,
+     "invested_if_allotted": 271200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -2465,8 +2419,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 227200,
-     "lots_affordable": 1,
+     "invested_if_allotted": 227200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -2558,20 +2512,17 @@
      "ev": -1328.777449162173,
      "ev_if_allotted": -5727.030805888966,
      "downside_if_allotted": -65065.47898148897,
-     "invested_if_allotted": 237600,
-     "lots_affordable": 1,
+     "invested_if_allotted": 237600.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.0x, NII –x, retail 4.31x (so far)"
+      "QIB 1.0x, NII –x, retail 4.3x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -2670,10 +2621,10 @@
      "basis": "lottery at 63.7x: about 1 in 63.7 applicants"
     },
     "ev": {
-     "ev": 19.691277121056135,
-     "ev_if_allotted": 1254.334352611276,
+     "ev": 19.637183204690384,
+     "ev_if_allotted": 1250.8885701387776,
      "downside_if_allotted": -208.38551483469377,
-     "invested_if_allotted": 14950,
+     "invested_if_allotted": 14950.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -2681,7 +2632,7 @@
      "tier": "apply",
      "label": "Apply",
      "reasons": [
-      "QIB 91.8x, NII 312.99x, retail 63.7x (so far)"
+      "QIB 91.8x, NII 313.0x, retail 63.7x (final)"
      ],
      "warnings": [],
      "gamble": null
@@ -2790,24 +2741,22 @@
      "basis": "lottery at 19.3x: about 1 in 19.3 applicants"
     },
     "ev": {
-     "ev": 91.73028443618755,
-     "ev_if_allotted": 1766.7252782409723,
-     "downside_if_allotted": 419.030443276747,
-     "invested_if_allotted": 14195,
+     "ev": 91.5525437053795,
+     "ev_if_allotted": 1763.3019917656095,
+     "downside_if_allotted": 415.961464001384,
+     "invested_if_allotted": 14195.0,
      "lots_affordable": 14,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "GMP +10.2% of the issue price.",
-      "QIB 28.1x, NII 95.54x, retail 19.26x (so far)"
+      "QIB 28.1x, NII 95.5x, retail 19.3x (final)"
      ],
-     "warnings": [
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -2905,20 +2854,17 @@
      "ev": -2145.086758652459,
      "ev_if_allotted": -7507.803655283607,
      "downside_if_allotted": -69443.55764328361,
-     "invested_if_allotted": 248000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 248000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.0x, NII 1x, retail 3.5x (so far)"
+      "QIB 1.0x, NII 1.0x, retail 3.5x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -3005,25 +2951,23 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.014553922282055015,
+     "expected_lots": 0.014553922282055015,
+     "basis": "lottery at 68.7x: about 1 in 68.7 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 236400,
-     "lots_affordable": 1,
+     "ev": 206.72863579302276,
+     "ev_if_allotted": 14204.324565338593,
+     "downside_if_allotted": -41037.11991506148,
+     "invested_if_allotted": 236400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -3117,19 +3061,17 @@
      "ev": -6840.208118769156,
      "ev_if_allotted": -6840.208118769156,
      "downside_if_allotted": -78765.59984676915,
-     "invested_if_allotted": 288000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 288000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 2.1x, NII 0.64x, retail 0.56x (so far)"
+      "QIB 2.1x, NII 0.6x, retail 0.6x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -3217,8 +3159,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 230400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 230400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -3310,21 +3252,20 @@
      "basis": "lottery at 686.3x: about 1 in 686.3 applicants"
     },
     "ev": {
-     "ev": 48.06117252447953,
-     "ev_if_allotted": 32985.343927000795,
+     "ev": 47.96261543681542,
+     "ev_if_allotted": 32917.70222659516,
      "downside_if_allotted": -29078.4736752091,
-     "invested_if_allotted": 283200,
-     "lots_affordable": 1,
+     "invested_if_allotted": 283200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
-     "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
+     "reasons": [
+      "QIB –x, NII 1031.9x, retail 686.3x (final)"
      ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -3419,19 +3360,17 @@
      "ev": -7020.378232755789,
      "ev_if_allotted": -7020.378232755789,
      "downside_if_allotted": -73551.36558115578,
-     "invested_if_allotted": 266400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 266400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.0x, NII 1.96x, retail 0.81x (so far)"
+      "QIB 1.0x, NII 2.0x, retail 0.8x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -3519,28 +3458,25 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.41841004184100417,
+     "expected_lots": 0.41841004184100417,
+     "basis": "lottery at 2.4x: about 1 in 2.4 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 283200,
-     "lots_affordable": 1,
+     "ev": 1763.5271042456577,
+     "ev_if_allotted": 4214.829779147122,
+     "downside_if_allotted": -65329.004457044706,
+     "invested_if_allotted": 283200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "coinflip",
      "label": "Coin flip",
      "reasons": [
-      "QIB 26.2x, NII 0.51x, retail –x (so far)"
+      "QIB 26.2x, NII 0.5x, retail –x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -3633,23 +3569,20 @@
      "basis": "lottery at 268.3x: about 1 in 268.3 applicants"
     },
     "ev": {
-     "ev": 89.9670971561246,
-     "ev_if_allotted": 24137.27249601667,
+     "ev": 89.7323379867004,
+     "ev_if_allotted": 24074.288958451853,
      "downside_if_allotted": -37453.18247036279,
-     "invested_if_allotted": 272000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 272000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "QIB 148.6x, NII 548.61x, retail 268.29x (so far)"
+      "QIB 148.6x, NII 548.6x, retail 268.3x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -3746,10 +3679,10 @@
      "basis": "lottery at 4.1x: about 1 in 4.1 applicants"
     },
     "ev": {
-     "ev": 12.204076679290685,
-     "ev_if_allotted": 49.67059208471309,
+     "ev": 11.43270352405171,
+     "ev_if_allotted": 46.53110334289047,
      "downside_if_allotted": -1735.4193991536433,
-     "invested_if_allotted": 15000,
+     "invested_if_allotted": 15000.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -3758,11 +3691,9 @@
      "label": "Coin flip",
      "reasons": [
       "GMP +1.3% of the issue price.",
-      "QIB 1.1x, NII –x, retail 4.07x (so far)"
+      "QIB 1.1x, NII –x, retail 4.1x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -3857,18 +3788,17 @@
      "ev": -6620.811508458621,
      "ev_if_allotted": -6620.811508458621,
      "downside_if_allotted": -68756.35825125861,
-     "invested_if_allotted": 248800,
-     "lots_affordable": 1,
+     "invested_if_allotted": 248800.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
-     "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
+     "reasons": [
+      "QIB –x, NII 1.7x, retail 0.4x (final)"
      ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -3963,18 +3893,17 @@
      "ev": -5314.727917719563,
      "ev_if_allotted": -5314.727917719563,
      "downside_if_allotted": -72245.30077571956,
-     "invested_if_allotted": 268000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 268000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
-     "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
+     "reasons": [
+      "QIB –x, NII 1.9x, retail 1.0x (final)"
      ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -4069,20 +3998,17 @@
      "ev": -2329.338806870233,
      "ev_if_allotted": -3913.2891955419914,
      "downside_if_allotted": -55859.40544354199,
-     "invested_if_allotted": 208000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 208000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.7x, NII 2.46x, retail 1.68x (so far)"
+      "QIB 1.7x, NII 2.5x, retail 1.7x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -4166,26 +4092,23 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.4672897196261682,
+     "expected_lots": 0.4672897196261682,
+     "basis": "lottery at 2.1x: about 1 in 2.1 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 220000,
-     "lots_affordable": 1,
+     "ev": -1723.3019621805627,
+     "ev_if_allotted": -3687.866199066404,
+     "downside_if_allotted": -58630.873769066406,
+     "invested_if_allotted": 220000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -4283,7 +4206,7 @@
      "ev": -124.11478417134273,
      "ev_if_allotted": -217.2008722998498,
      "downside_if_allotted": -2010.5406393846506,
-     "invested_if_allotted": 14960,
+     "invested_if_allotted": 14960.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -4291,7 +4214,7 @@
      "tier": "avoid",
      "label": "Avoid",
      "reasons": [
-      "QIB 1.3x, NII 1.89x, retail 1.75x (so far)"
+      "QIB 1.3x, NII 1.9x, retail 1.8x (final)"
      ],
      "warnings": [],
      "gamble": "sure"
@@ -4386,22 +4309,20 @@
      "basis": "lottery at 84.3x: about 1 in 84.3 applicants"
     },
     "ev": {
-     "ev": 182.5665804856291,
-     "ev_if_allotted": 15397.665398157958,
+     "ev": 181.93789224238935,
+     "ev_if_allotted": 15344.641831723118,
      "downside_if_allotted": -39297.57319635407,
-     "invested_if_allotted": 235200,
-     "lots_affordable": 1,
+     "invested_if_allotted": 235200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "QIB 56.4x, NII 196.43x, retail 84.34x (so far)"
+      "QIB 56.4x, NII 196.4x, retail 84.3x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -4497,11 +4418,11 @@
      "basis": "lottery at 1.1x: about 1 in 1.1 applicants"
     },
     "ev": {
-     "ev": 66245.78944881864,
-     "ev_if_allotted": 72870.36839370051,
-     "downside_if_allotted": 22630.482271692515,
-     "invested_if_allotted": 254000,
-     "lots_affordable": 1,
+     "ev": 66180.29170268986,
+     "ev_if_allotted": 72798.32087295885,
+     "downside_if_allotted": 22571.64275095085,
+     "invested_if_allotted": 254000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -4509,11 +4430,9 @@
      "label": "Apply",
      "reasons": [
       "GMP +40.9% of the issue price.",
-      "QIB 119.3x, NII 0.09x, retail 1.1x (so far)"
+      "QIB 119.3x, NII 0.1x, retail 1.1x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
-     ],
+     "warnings": [],
      "gamble": null
     },
     "confidence": "medium",
@@ -4599,26 +4518,25 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.018115942028985508,
+     "expected_lots": 0.018115942028985508,
+     "basis": "lottery at 55.2x: about 1 in 55.2 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 280000,
-     "lots_affordable": 1,
+     "ev": 303.25534322514426,
+     "ev_if_allotted": 16739.69494602796,
+     "downside_if_allotted": -48712.29260739486,
+     "invested_if_allotted": 280000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "lean",
      "label": "Lean apply",
-     "reasons": [],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
+     "reasons": [
+      "QIB –x, NII 102.1x, retail –x (final)"
      ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -4711,23 +4629,20 @@
      "basis": "lottery at 3.1x: about 1 in 3.1 applicants"
     },
     "ev": {
-     "ev": 894.4915712363053,
-     "ev_if_allotted": 2781.868786544909,
+     "ev": 876.687597368823,
+     "ev_if_allotted": 2726.4984278170396,
      "downside_if_allotted": -62019.56298532817,
-     "invested_if_allotted": 262400,
-     "lots_affordable": 1,
+     "invested_if_allotted": 262400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
      "tier": "coinflip",
      "label": "Coin flip",
      "reasons": [
-      "QIB 14.1x, NII 1.77x, retail 3.11x (so far)"
+      "QIB 14.1x, NII 1.8x, retail 3.1x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -4866,25 +4781,23 @@
      "basis": "lottery at 30.5x: about 1 in 30.5 applicants"
     },
     "ev": {
-     "ev": 126.20091211888004,
-     "ev_if_allotted": 3851.651837868219,
-     "downside_if_allotted": 2436.5485257765085,
-     "invested_if_allotted": 14905,
+     "ev": 126.06594343883518,
+     "ev_if_allotted": 3847.53259375325,
+     "downside_if_allotted": 2432.8013104615393,
+     "invested_if_allotted": 14905.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.",
       "GMP +25.8% of the issue price.",
-      "QIB 256.7x, NII 203.19x, retail 30.52x (so far)"
+      "QIB 256.7x, NII 203.2x, retail 30.5x (final)"
      ],
-     "warnings": [
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -4984,8 +4897,8 @@
      "ev": -302.20465554936044,
      "ev_if_allotted": -803.8643837612989,
      "downside_if_allotted": -54747.908179761296,
-     "invested_if_allotted": 216000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 216000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -4993,13 +4906,9 @@
      "label": "Avoid",
      "reasons": [
       "GMP +0.0% of the issue price.",
-      "QIB 1.4x, NII 6.61x, retail 2.66x (so far)"
+      "QIB 1.4x, NII 6.6x, retail 2.7x (final)"
      ],
-     "warnings": [
-      "GMP is zero or negative: the grey market expects a flat or discount listing.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price."
-     ],
+     "warnings": [],
      "gamble": "sure"
     },
     "confidence": "medium",
@@ -5127,24 +5036,21 @@
      "basis": "lottery at 5.7x: about 1 in 5.7 applicants"
     },
     "ev": {
-     "ev": 111.79234348268541,
-     "ev_if_allotted": 637.2163578513068,
+     "ev": 111.22399094968955,
+     "ev_if_allotted": 633.9767484132304,
      "downside_if_allotted": -962.2811394002074,
-     "invested_if_allotted": 14739,
+     "invested_if_allotted": 14739.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "coinflip",
-     "label": "Coin flip",
+     "tier": "lean",
+     "label": "Lean apply",
      "reasons": [
       "GMP +4.7% of the issue price.",
-      "QIB 4.0x, NII 4.5x, retail 5.7x (so far)"
+      "QIB 4.0x, NII 4.5x, retail 5.7x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -5248,11 +5154,11 @@
      "basis": "lottery at 3.5x: about 1 in 3.5 applicants"
     },
     "ev": {
-     "ev": 2022.8217509898745,
-     "ev_if_allotted": 7079.876128464562,
+     "ev": 2006.2980709723174,
+     "ev_if_allotted": 7022.043248403112,
      "downside_if_allotted": -58191.12807685995,
-     "invested_if_allotted": 268800,
-     "lots_affordable": 1,
+     "invested_if_allotted": 268800.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -5260,13 +5166,9 @@
      "label": "Coin flip",
      "reasons": [
       "GMP +0.0% of the issue price.",
-      "QIB 13.2x, NII 7.42x, retail 3.5x (so far)"
+      "QIB 13.2x, NII 7.4x, retail 3.5x (final)"
      ],
-     "warnings": [
-      "GMP is zero or negative: the grey market expects a flat or discount listing.",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -5400,25 +5302,22 @@
      "basis": "lottery at 5.9x: about 1 in 5.9 applicants"
     },
     "ev": {
-     "ev": 323.7954581517859,
-     "ev_if_allotted": 1910.3932030955368,
-     "downside_if_allotted": 519.4999778594743,
-     "invested_if_allotted": 14650,
+     "ev": 323.1927810748282,
+     "ev_if_allotted": 1906.8374083414865,
+     "downside_if_allotted": 516.3098471054238,
+     "invested_if_allotted": 14650.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "coinflip",
-     "label": "Coin flip",
+     "tier": "lean",
+     "label": "Lean apply",
      "reasons": [
       "Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.",
       "GMP +11.3% of the issue price.",
-      "QIB 120.8x, NII 40.39x, retail 5.9x (so far)"
+      "QIB 120.8x, NII 40.4x, retail 5.9x (final)"
      ],
-     "warnings": [
-      "GMP has fallen sharply over the last few sessions.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -5544,25 +5443,22 @@
      "basis": "lottery at 3.0x: about 1 in 3.0 applicants"
     },
     "ev": {
-     "ev": 411.468316977554,
-     "ev_if_allotted": 1250.8636836117641,
+     "ev": 410.34595778402564,
+     "ev_if_allotted": 1247.451711663438,
      "downside_if_allotted": -193.82731950732114,
-     "invested_if_allotted": 14792,
+     "invested_if_allotted": 14792.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "coinflip",
-     "label": "Coin flip",
+     "tier": "lean",
+     "label": "Lean apply",
      "reasons": [
       "Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.",
       "GMP +4.9% of the issue price.",
-      "QIB 34.7x, NII 14.64x, retail 3.04x (so far)"
+      "QIB 34.7x, NII 14.6x, retail 3.0x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -5660,30 +5556,27 @@
      "mean_gain": -5.0
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "no subscription data"
+     "p_min_lot": 0.01708233686368295,
+     "expected_lots": 0.01708233686368295,
+     "basis": "lottery at 58.5x: about 1 in 58.5 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 286400,
-     "lots_affordable": 1,
+     "ev": 710.2457382138671,
+     "ev_if_allotted": 41577.78551503978,
+     "downside_if_allotted": -18939.479192768307,
+     "invested_if_allotted": 286400.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "GMP +14.0% of the issue price.",
-      "QIB 41.9x, NII 86.41x, retail –x (so far)"
+      "QIB 41.9x, NII 86.4x, retail –x (final)"
      ],
-     "warnings": [
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -5811,25 +5704,23 @@
      "basis": "lottery at 31.1x: about 1 in 31.1 applicants"
     },
     "ev": {
-     "ev": 224.89661677747108,
-     "ev_if_allotted": 6987.537883276026,
-     "downside_if_allotted": 5591.897582185917,
-     "invested_if_allotted": 14700,
+     "ev": 224.7388768288919,
+     "ev_if_allotted": 6982.636903073671,
+     "downside_if_allotted": 5587.363513983561,
+     "invested_if_allotted": 14700.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
     "verdict": {
-     "tier": "lean",
-     "label": "Lean apply",
+     "tier": "apply",
+     "label": "Apply",
      "reasons": [
       "Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.",
       "GMP +64.6% of the issue price.",
-      "QIB 293.6x, NII 170.94x, retail 31.07x (so far)"
+      "QIB 293.6x, NII 170.9x, retail 31.1x (final)"
      ],
-     "warnings": [
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
-     "gamble": "possible"
+     "warnings": [],
+     "gamble": null
     },
     "confidence": "medium",
     "flags": [
@@ -5966,10 +5857,10 @@
      "basis": "category under-subscribed: full allotment"
     },
     "ev": {
-     "ev": 98.67024856203946,
-     "ev_if_allotted": 98.67024856203946,
+     "ev": 95.52849687864733,
+     "ev_if_allotted": 95.52849687864733,
      "downside_if_allotted": -1667.4374877288305,
-     "invested_if_allotted": 14949,
+     "invested_if_allotted": 14949.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -5978,13 +5869,9 @@
      "label": "Coin flip",
      "reasons": [
       "GMP +0.7% of the issue price.",
-      "QIB 4.7x, NII 1.4x, retail 0.73x (so far)"
+      "QIB 4.7x, NII 1.4x, retail 0.7x (final)"
      ],
-     "warnings": [
-      "GMP under 5%: thin cushion; a weak market on listing day wipes it out.",
-      "GMP has fallen sharply over the last few sessions.",
-      "GMP quote is 3+ days old; check a fresh one before applying."
-     ],
+     "warnings": [],
      "gamble": "possible"
     },
     "confidence": "medium",
@@ -6140,10 +6027,10 @@
      "basis": "lottery at 2.7x: about 1 in 2.7 applicants"
     },
     "ev": {
-     "ev": 948.3650775681839,
-     "ev_if_allotted": 2579.5530109854603,
-     "downside_if_allotted": 1304.6783196223291,
-     "invested_if_allotted": 13428,
+     "ev": 947.0866671524985,
+     "ev_if_allotted": 2576.075734654796,
+     "downside_if_allotted": 1301.5362061716646,
+     "invested_if_allotted": 13428.0,
      "lots_affordable": 14,
      "min_lots": 1
     },
@@ -6152,7 +6039,7 @@
      "label": "Apply",
      "reasons": [
       "GMP +22.0% of the issue price.",
-      "QIB 70.6x, NII 14x, retail 2.72x (final)"
+      "QIB 70.6x, NII 14.0x, retail 2.7x (final)"
      ],
      "warnings": [],
      "gamble": null
@@ -6302,10 +6189,10 @@
      "basis": "lottery at 2.1x: about 1 in 2.1 applicants"
     },
     "ev": {
-     "ev": 81.03462121650874,
-     "ev_if_allotted": 170.17270455466837,
+     "ev": 79.568861147626,
+     "ev_if_allotted": 167.0946084100146,
      "downside_if_allotted": -1529.6858504097765,
-     "invested_if_allotted": 14553,
+     "invested_if_allotted": 14553.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -6314,7 +6201,7 @@
      "label": "Coin flip",
      "reasons": [
       "GMP +1.7% of the issue price.",
-      "QIB 3.3x, NII 0.69x, retail 2.1x (final)"
+      "QIB 3.3x, NII 0.7x, retail 2.1x (final)"
      ],
      "warnings": [
       "GMP under 5%: thin cushion; a weak market on listing day wipes it out."
@@ -6396,8 +6283,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 243600,
-     "lots_affordable": 1,
+     "invested_if_allotted": 243600.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -6494,26 +6381,30 @@
      "mean_gain": 17.39157894736842
     },
     "allotment": {
-     "p_min_lot": 1.0,
-     "expected_lots": 1.0,
-     "basis": "category under-subscribed: full allotment"
+     "p_min_lot": null,
+     "expected_lots": null,
+     "basis": "bidding still on and retail not yet full: odds unknown"
     },
     "ev": {
-     "ev": -10880.264229109502,
-     "ev_if_allotted": -10880.264229109502,
-     "downside_if_allotted": -66622.44281830947,
-     "invested_if_allotted": 223200,
-     "lots_affordable": 1,
+     "ev": null,
+     "ev_if_allotted": null,
+     "downside_if_allotted": null,
+     "invested_if_allotted": 223200.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
-     "tier": "avoid",
-     "label": "Avoid",
-     "reasons": [],
+     "tier": "watch",
+     "label": "Too early",
+     "reasons": [
+      "QIB –x, NII –x, retail 0.1x (so far)",
+      "Bidding is still on: QIB and HNI books usually fill on the last day."
+     ],
      "warnings": [
+      "Retail portion under-subscribed so far: weak demand, and everyone who bids gets allotted in full.",
       "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard."
      ],
-     "gamble": "sure"
+     "gamble": "possible"
     },
     "confidence": "medium",
     "flags": [
@@ -6595,8 +6486,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 268000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 268000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -6728,7 +6619,7 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 14985,
+     "invested_if_allotted": 14985.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -6876,7 +6767,7 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 15000,
+     "invested_if_allotted": 15000.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -6998,7 +6889,7 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 14850,
+     "invested_if_allotted": 14850.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -7188,8 +7079,8 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 256000,
-     "lots_affordable": 1,
+     "invested_if_allotted": 256000.0,
+     "lots_affordable": 2,
      "min_lots": 2
     },
     "verdict": {
@@ -7307,7 +7198,7 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 14742,
+     "invested_if_allotted": 14742.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -7419,7 +7310,7 @@
      "ev": null,
      "ev_if_allotted": null,
      "downside_if_allotted": null,
-     "invested_if_allotted": 14924,
+     "invested_if_allotted": 14924.0,
      "lots_affordable": 13,
      "min_lots": 1
     },
@@ -7454,7 +7345,7 @@
   }
  ],
  "scored_with": {
-  "fitted_at": "2026-10-26T05:28:16Z",
+  "fitted_at": "2026-10-26T05:51:43Z",
   "n_rows": 41
  }
 }

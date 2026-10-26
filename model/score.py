@@ -11,11 +11,14 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
 from datetime import date
 
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model.features import FEATURE_NAMES, features, vector, gmp_pct_of, gmp_trend_of  # noqa: E402
+from model.features import FEATURE_NAMES, features, vector, gmp_pct_of, gmp_trend_of, _f  # noqa: E402
 from model.rules import CostConfig, expected_value_of_application, retail_lots_affordable  # noqa: E402
 
 TIERS = {
@@ -95,7 +98,7 @@ def data_quality(ipo: dict, today: str) -> tuple[str, list[str]]:
         flags.append("gmp_unquoted")
     has_sub = any(sub.get(k) is not None for k in ("qib", "nii", "retail", "total"))
     has_gmp = gmp_pct_of(ipo) is not None
-    if gmp.get("as_of") and today:
+    if gmp.get("as_of") and today and ISO_DATE.match(str(gmp["as_of"])) and ISO_DATE.match(str(today)):
         try:
             age = (date.fromisoformat(today) - date.fromisoformat(gmp["as_of"])).days
             if age >= 3:
@@ -119,11 +122,14 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
     reasons: list[str] = []
     warnings: list[str] = []
     sub = ipo.get("subscription") or {}
+    qib_v, nii_v, ret_v, tot_v = _f(sub.get("qib")), _f(sub.get("nii")), _f(sub.get("retail")), _f(sub.get("total"))
     board = ipo.get("board")
     g = gmp_pct_of(ipo)
     trend = gmp_trend_of(ipo)
-    size = ipo.get("issue_size_cr")
+    size = _f(ipo.get("issue_size_cr"))
     status = ipo.get("status")
+    live = status in ("open", "closed")          # figures mean something once bidding has started
+    sofar = " so far" if status == "open" else ""
 
     if p_up is None or confidence == "none":
         return {"tier": "nodata", "label": TIERS["nodata"]["label"], "reasons": ["No GMP quote and no subscription figures yet."],
@@ -136,34 +142,35 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
         warnings.append("GMP under 5%: thin cushion; a weak market on listing day wipes it out.")
     if trend is not None and g is not None and trend <= -0.4 * max(g - trend, 1):
         warnings.append("GMP has fallen sharply over the last few sessions.")
-    if status in ("closed", "open") and sub.get("retail") is not None and sub["retail"] < 1 and status == "closed":
-        warnings.append("Retail portion under-subscribed: weak demand, and you will be allotted everything you bid for.")
-    if sub.get("qib") is not None and sub["qib"] < 1 and status == "closed":
-        warnings.append("QIBs (institutions) did not fill their quota: the smart money passed.")
+    if live and ret_v is not None and ret_v < 1:
+        warnings.append(f"Retail portion under-subscribed{sofar}: weak demand, and everyone who bids gets allotted in full.")
+    if live and qib_v is not None and qib_v < 1:
+        warnings.append(f"QIBs (institutions) have not filled their quota{sofar}" + (" (they usually bid on the last day)." if status == "open" else ": the smart money passed."))
     if board == "sme":
         warnings.append("SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.")
-        if sub.get("total") is not None and sub["total"] < 10 and status == "closed":
+        if tot_v is not None and tot_v < 10 and status == "closed":
             warnings.append("SME with under 10x total subscription: historically the riskiest bucket.")
-    qib_v, nii_v, ret_v = sub.get("qib"), sub.get("nii"), sub.get("retail")
     if (status == "closed" and qib_v is not None and qib_v >= 20
             and ((nii_v is not None and nii_v < 2) or (ret_v is not None and ret_v < 2))):
         warnings.append("Institution-only demand: QIBs piled in but HNIs or retail stayed under 2x. Thin day-one buying is a classic flat-listing setup.")
-    if "gmp_stale" in flags:
+    if "gmp_stale" in flags and status != "listed":
         warnings.append("GMP quote is 3+ days old; check a fresh one before applying.")
     if size is not None and size < 50:
         warnings.append("Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price.")
-    ofs, fresh = ipo.get("ofs_cr"), ipo.get("fresh_issue_cr")
+    ofs, fresh = _f(ipo.get("ofs_cr")), _f(ipo.get("fresh_issue_cr"))
     if ofs and (fresh is not None) and (ofs + fresh) > 0 and ofs / (ofs + fresh) > 0.85:
         reasons.append("Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.")
 
     # --- supporting reasons ---
     if g is not None:
         reasons.append(f"GMP {'+' if g >= 0 else '-'}{_r1(abs(g))}% of the issue price.")
-    if sub.get("qib") is not None:
-        reasons.append(f"QIB {_r1(sub['qib'])}x, NII {sub.get('nii') if sub.get('nii') is not None else '–'}x, retail {sub.get('retail') if sub.get('retail') is not None else '–'}x"
-                       + (" (final)" if status == "closed" else " (so far)"))
+    if qib_v is not None or nii_v is not None or ret_v is not None:
+        fx = lambda v: "–" if v is None else _r1(v)  # noqa: E731
+        reasons.append(f"QIB {fx(qib_v)}x, NII {fx(nii_v)}x, retail {fx(ret_v)}x" + (" (final)" if status in ("closed", "listed") else " (so far)"))
     if confidence == "low":
         reasons.append("Only a GMP quote so far; subscription figures will sharpen this.")
+    if status == "open" and confidence == "medium":
+        reasons.append("Bidding is still on: QIB and HNI books usually fill on the last day.")
 
     # --- tier ---
     hard = len([w for w in warnings if not w.startswith("SME issue")])
@@ -179,12 +186,17 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
         tier = "avoid"
     if hard >= 2 and tier in ("apply", "lean"):
         tier = "coinflip"
-    if confidence == "low":
-        # only a GMP quote so far: an early lean is useful, a verdict is not
+    if g is not None and g <= 0 and tier in ("apply", "lean"):
+        tier = "coinflip"                         # a discount GMP is never an apply
+    early = confidence == "low" or (status == "open" and confidence == "medium")
+    if early and status != "closed":
+        # before the books are final an early lean is useful, a verdict is not
         if tier == "apply":
             tier = "lean"
         elif tier in ("coinflip", "avoid") and not (g is not None and g <= 0):
             tier = "watch"
+    if status == "listed":
+        warnings = []                             # it has listed; nothing left to warn about
 
     # --- is it a gamble? ---
     gamble = None
@@ -211,10 +223,17 @@ def score_ipo(ipo: dict, params: dict, market: dict | None = None, cfg: CostConf
     p_up = gain = feat = None
     if confidence != "none":
         p_up, gain, feat = model_outputs(ipo, params, market)
+    price, lot = _f(price), _f(lot)
     if price and lot:
-        min_lots = int(ipo.get("min_lots") or (2 if ipo.get("board") == "sme" else 1))
-        ev = expected_value_of_application(price, lot, sub.get("retail"), p_up, gain, cfg, min_lots=min_lots)
-        ev["lots_affordable"] = retail_lots_affordable(int(lot), float(price))
+        min_lots = int(_f(ipo.get("min_lots")) or (2 if ipo.get("board") == "sme" else 1))
+        ret = _f(sub.get("retail"))
+        if ret is None and _f(sub.get("total")) is not None:
+            ret = _f(sub.get("total"))            # only an overall multiple: use it as the retail stand-in
+        ev = expected_value_of_application(price, lot, ret, p_up, gain, cfg, min_lots=min_lots,
+                                           status=ipo.get("status") or "closed")
+        if ret is not None and _f(sub.get("retail")) is None and ev["allotment"].get("p_min_lot") is not None:
+            ev["allotment"]["basis"] += " (overall multiple used; retail figure missing)"
+        ev["lots_affordable"] = retail_lots_affordable(int(lot), float(price), min_lots)
         ev["min_lots"] = min_lots
     else:
         ev = {"ev": None, "ev_if_allotted": None, "downside_if_allotted": None, "allotment": {"p_min_lot": None, "basis": "price or lot unknown"}}

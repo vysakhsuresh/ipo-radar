@@ -50,8 +50,19 @@ def build_matrix(rows: list[dict]):
 def standardise(X: np.ndarray):
     mean = X.mean(axis=0)
     scale = X.std(axis=0)
-    scale[scale == 0] = 1.0
+    scale[scale < 1e-6] = 1.0      # a (near-)constant column keeps its raw scale
     return (X - mean) / scale, mean, scale
+
+
+def _clean(obj):
+    """NaN/inf are not JSON; the page reads this file in JavaScript."""
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: _clean(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean(v) for v in obj]
+    return obj
 
 
 def empirical_table(rows: list[dict]) -> list[dict]:
@@ -146,10 +157,23 @@ def prior_params(rows: list[dict]) -> dict:
     }
 
 
+def basis_counts(rows: list[dict]) -> dict:
+    out = {"close": 0, "open": 0, "reported": 0}
+    for r in rows:
+        b = (r.get("listing") or {}).get("gain_basis") or "close"
+        out[b if b in out else "reported"] += 1
+    return out
+
+
 def calibrate(rows: list[dict]) -> dict:
     rows = [r for r in rows if usable(r)]
-    if len(rows) < MIN_ROWS_TO_CALIBRATE:
-        return prior_params(rows)
+    bc = basis_counts(rows)
+    # debut-price gains (SME rows where no close was found) do not count toward
+    # the threshold: the model's target is the listing-day close
+    if bc["close"] + bc["reported"] < MIN_ROWS_TO_CALIBRATE:
+        out = prior_params(rows)
+        out["basis_counts"] = bc
+        return _clean(out)
     X, y_up, y_gain = build_matrix(rows)
     Xs, mean, scale = standardise(X)
     prior_lg = raw_to_std(PRIOR_LOGISTIC_RAW, mean, scale)
@@ -204,6 +228,7 @@ def calibrate(rows: list[dict]) -> dict:
         "coef_table": [{"feature": f, "coef_std": float(c), "coef_raw": float(c / s)}
                        for f, c, s in zip(FEATURE_NAMES, coef, scale)],
         "prior": {"logistic_raw": PRIOR_LOGISTIC_RAW, "gain_raw": PRIOR_GAIN_RAW},
+        "basis_counts": bc,
     }
 
 
@@ -215,7 +240,7 @@ def main(argv=None):
     with open(a.history, encoding="utf-8") as f:
         hist = json.load(f)
     rows = hist["rows"] if isinstance(hist, dict) else hist
-    params = calibrate(rows)
+    params = _clean(calibrate(rows))
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(params, f, indent=1)

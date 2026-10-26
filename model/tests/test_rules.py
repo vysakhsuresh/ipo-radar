@@ -30,6 +30,7 @@ def test_retail_cap_of_two_lakh():
     assert retail_lots_affordable(15, 999) == 13        # 14,985 a lot → 13 lots = 1,94,805
     assert retail_lots_affordable(12, 1119) == 14       # 13,428 a lot
     assert retail_lots_affordable(1200, 93) == 1        # SME lot already above the cap
+    assert retail_lots_affordable(1200, 93, min_lots=2) == 2   # never below the issue's minimum
 
 
 def test_sme_minimum_is_two_lots():
@@ -53,13 +54,29 @@ def test_sell_charges_with_capped_brokerage():
     assert sell_charges(100_000, cfg) - sell_charges(100_000, CostConfig()) == pytest.approx(20 * 1.18)  # capped at Rs 20 + GST
 
 
-def test_tax_only_on_gains_and_net_sign():
+def test_tax_only_on_gains_stt_not_deductible_and_net_sign():
     cfg = CostConfig()
-    gain = net_profit_on_sale(14_985, 14_985 * 1.30, cfg)
-    assert gain["tax"] == pytest.approx(max(0, gain["gross"] - gain["charges"]) * 0.20 * 1.04)
+    sell = 14_985 * 1.30
+    gain = net_profit_on_sale(14_985, sell, cfg)
+    stt = sell * 0.001
+    assert gain["tax"] == pytest.approx(max(0, gain["gross"] - (gain["charges"] - stt)) * 0.20 * 1.04)
     assert gain["net"] == pytest.approx(gain["gross"] - gain["charges"] - gain["tax"])
     loss = net_profit_on_sale(14_985, 14_985 * 0.90, cfg)
     assert loss["tax"] == 0.0 and loss["net"] < 0
+
+
+def test_open_book_under_one_is_unknown_not_full():
+    assert p_allotment(0.4, status="open")["p_min_lot"] is None
+    assert p_allotment(0.4, status="closed")["p_min_lot"] == 1.0
+    assert p_allotment(3.0, status="open")["p_min_lot"] == pytest.approx(1 / 3)
+
+
+def test_opportunity_cost_is_paid_whether_or_not_allotted():
+    cfg = CostConfig(opportunity_rate_pct=7.0, blocked_days=7)
+    q = {"p10": -5.0, "p50": 20.0, "p90": 45.0, "mean": 22.0}
+    ev = expected_value_of_application(999, 15, 12.4, 0.8, q, cfg)
+    opp = 14_985 * 0.07 * 7 / 365
+    assert ev["ev"] == pytest.approx((ev["ev_if_allotted"] + opp) / 12.4 - opp)
 
 
 def test_expected_value_scales_with_allotment_probability():
