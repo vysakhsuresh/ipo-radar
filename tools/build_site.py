@@ -73,7 +73,23 @@ def main(argv=None):
     full = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
             '<meta name="description" content="Indian IPOs with the chance of a listing-day gain, allotment odds and what one application is worth after costs.">\n'
+            '<meta name="theme-color" content="#0b6e6d">\n'
+            '<link rel="icon" type="image/svg+xml" href="icons/icon.svg">\n'
+            '<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">\n'
+            '<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">\n'
+            '<link rel="manifest" href="manifest.json">\n'
             '</head>\n<body>\n' + page + '\n</body>\n</html>\n')
+    icons_src = os.path.join(ROOT, "site", "icons")
+    if os.path.isdir(icons_src):
+        os.makedirs(os.path.join(a.out, "icons"), exist_ok=True)
+        for fn in os.listdir(icons_src):
+            shutil.copy(os.path.join(icons_src, fn), os.path.join(a.out, "icons", fn))
+    with open(os.path.join(a.out, "manifest.json"), "w", encoding="utf-8") as f:
+        json.dump({"name": "IPO Radar", "short_name": "IPO Radar", "start_url": "./", "display": "standalone",
+                   "background_color": "#f4f6f4", "theme_color": "#0b6e6d",
+                   "description": "Indian IPOs with the chance of a listing-day gain, allotment odds and what one application is worth after costs.",
+                   "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+                             {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}, f, indent=1)
     with open(os.path.join(a.out, "index.html"), "w", encoding="utf-8") as f:
         f.write(full)
     for src in (a.scored, a.params, a.history, os.path.join(ROOT, "data", "ipos.json")):

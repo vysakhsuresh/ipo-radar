@@ -20,6 +20,10 @@ The page is a single HTML file with the data inlined, so it works from GitHub Pa
 * **Costs are real.** Defaults match a discount broker's delivery sell (0.1% STT, exchange and SEBI charges, GST, ₹15.34 DP charge) and 20% STCG plus cess; change the preset to your broker.
 * **Every number has a source.** `data/ipos.json` carries the URLs each row was built from and `sources` logs what the last refresh fetched.
 
+## Icon
+
+`site/icons/icon.svg` is the app mark (a radar sweep catching a rising listing-day candle); the PNG sizes next to it are rendered from it and the build copies them to `dist/icons/` for the favicon, the Apple touch icon and the web manifest, so the hosted site can be installed to a phone home screen.
+
 ## Layout
 
 ```
