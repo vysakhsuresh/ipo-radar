@@ -51,7 +51,7 @@ jobs:
       - run: python tools/build_site.py --out dist
 
       - name: Run tests
-        run: python -m pytest -q model/tests
+        run: python -m pytest -q model/tests fetch/tests
 
       - name: Commit refreshed data
         if: github.event_name != 'pull_request'

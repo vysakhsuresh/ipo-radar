@@ -1,7 +1,7 @@
 {
  "version": 1,
  "status": "prior",
- "fitted_at": "2026-10-26T05:23:11Z",
+ "fitted_at": "2026-10-26T05:28:16Z",
  "feature_names": [
   "gmp_pct",
   "gmp_missing",
@@ -34,18 +34,18 @@
  },
  "logistic": {
   "coef": [
-   0.1,
-   -0.5,
+   0.08,
+   -0.3,
    0.35,
    0.15,
    0.1,
-   -0.5,
-   -0.4,
+   -0.3,
+   -0.3,
    0.0,
    0.04,
    0.03
   ],
-  "intercept": -1.2,
+  "intercept": -1.0,
   "mean": [
    0.0,
    0.0,
@@ -75,12 +75,12 @@
  "gain": {
   "coef": [
    0.75,
-   -3.0,
+   -1.0,
    2.0,
    1.0,
    0.0,
-   -3.0,
-   -2.0,
+   -1.0,
+   -1.0,
    0.0,
    0.3,
    0.2
@@ -264,13 +264,13 @@
  "coef_table": [
   {
    "feature": "gmp_pct",
-   "coef_std": 0.1,
-   "coef_raw": 0.1
+   "coef_std": 0.08,
+   "coef_raw": 0.08
   },
   {
    "feature": "gmp_missing",
-   "coef_std": -0.5,
-   "coef_raw": -0.5
+   "coef_std": -0.3,
+   "coef_raw": -0.3
   },
   {
    "feature": "log_sub_qib",
@@ -289,13 +289,13 @@
   },
   {
    "feature": "sub_missing",
-   "coef_std": -0.5,
-   "coef_raw": -0.5
+   "coef_std": -0.3,
+   "coef_raw": -0.3
   },
   {
    "feature": "is_sme",
-   "coef_std": -0.4,
-   "coef_raw": -0.4
+   "coef_std": -0.3,
+   "coef_raw": -0.3
   },
   {
    "feature": "log_issue_size",
@@ -315,14 +315,14 @@
  ],
  "prior": {
   "logistic_raw": {
-   "intercept": -1.2,
-   "gmp_pct": 0.1,
-   "gmp_missing": -0.5,
+   "intercept": -1.0,
+   "gmp_pct": 0.08,
+   "gmp_missing": -0.3,
    "log_sub_qib": 0.35,
    "log_sub_nii": 0.15,
    "log_sub_retail": 0.1,
-   "sub_missing": -0.5,
-   "is_sme": -0.4,
+   "sub_missing": -0.3,
+   "is_sme": -0.3,
    "log_issue_size": 0.0,
    "nifty_1m_pct": 0.04,
    "gmp_trend_pct": 0.03
@@ -330,12 +330,12 @@
   "gain_raw": {
    "intercept": -3.0,
    "gmp_pct": 0.75,
-   "gmp_missing": -3.0,
+   "gmp_missing": -1.0,
    "log_sub_qib": 2.0,
    "log_sub_nii": 1.0,
    "log_sub_retail": 0.0,
-   "sub_missing": -3.0,
-   "is_sme": -2.0,
+   "sub_missing": -1.0,
+   "is_sme": -1.0,
    "log_issue_size": 0.0,
    "nifty_1m_pct": 0.3,
    "gmp_trend_pct": 0.2

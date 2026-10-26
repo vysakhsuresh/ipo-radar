@@ -12,21 +12,25 @@ All coefficients are on the RAW feature scale (see model/features.py):
 
 Sanity anchors used when setting them (listing-day close vs issue price):
   * GMP ~20%+ with QIB 50x+                  → P(up) ≈ 0.9, gain ≈ 20-25%
-  * GMP ~5% with QIB 3x, NII < 1x            → P(up) ≈ 0.4, gain ≈ 0-3%
-  * no GMP quote, subscription ≈ 1x, SME     → P(up) ≈ 0.25
+  * GMP ~10%, QIB 20x, NII 10x, retail 3x    → P(up) ≈ 0.8 (a typical decent mainboard issue)
+  * GMP ~2% with QIB 3x, NII < 1x            → P(up) ≈ 0.45, gain ≈ 0-3%
+  * no GMP quote, subscription ≈ 2x, SME     → P(up) ≈ 0.3
+  * no GMP quote, subscription 50x+, SME     → P(up) ≈ 0.7 (tiny issues nobody quotes but everyone bids)
+Base rates behind the intercept: roughly 65-75% of mainboard and 55-70% of SME
+listings closed above issue price in 2024-25, falling in 2026.
 Replace with evidence as the calibration report grows; the page shows which
 regime is active ("prior" vs "calibrated on N").
 """
 
 PRIOR_LOGISTIC_RAW = {
-    "intercept": -1.2,
-    "gmp_pct": 0.10,          # +1 pp of GMP → +0.10 log-odds
-    "gmp_missing": -0.5,      # no quote at all is itself a bad sign
+    "intercept": -1.0,
+    "gmp_pct": 0.08,          # +1 pp of GMP → +0.08 log-odds
+    "gmp_missing": -0.3,      # no quote is mildly bad (small issues nobody quotes)
     "log_sub_qib": 0.35,      # institutional demand is the strongest non-GMP signal
     "log_sub_nii": 0.15,
     "log_sub_retail": 0.10,
-    "sub_missing": -0.5,
-    "is_sme": -0.4,
+    "sub_missing": -0.3,
+    "is_sme": -0.3,
     "log_issue_size": 0.0,    # no prior view; let data decide
     "nifty_1m_pct": 0.04,
     "gmp_trend_pct": 0.03,
@@ -35,12 +39,12 @@ PRIOR_LOGISTIC_RAW = {
 PRIOR_GAIN_RAW = {
     "intercept": -3.0,
     "gmp_pct": 0.75,          # realised gains run below the quoted premium
-    "gmp_missing": -3.0,
+    "gmp_missing": -1.0,
     "log_sub_qib": 2.0,
     "log_sub_nii": 1.0,
     "log_sub_retail": 0.0,
-    "sub_missing": -3.0,
-    "is_sme": -2.0,
+    "sub_missing": -1.0,
+    "is_sme": -1.0,
     "log_issue_size": 0.0,
     "nifty_1m_pct": 0.3,
     "gmp_trend_pct": 0.2,
