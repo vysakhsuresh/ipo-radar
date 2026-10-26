@@ -201,7 +201,7 @@
   function inStatus(r, st) { return st === 'all' || (st === 'active' ? r.ipo.status !== 'listed' : st === 'watch' ? WATCH.has(r.ipo.id) : r.ipo.status === st); }
   function renderChipCounts() {
     const onBoard = SCORED.filter(r => state.board === 'all' || r.ipo.board === state.board);
-    for (const b of document.querySelectorAll('#f-status .chip')) { const n = b.querySelector('.n'); if (n) n.textContent = String(onBoard.filter(r => inStatus(r, b.dataset.v)).length); }
+    for (const b of document.querySelectorAll('#f-status .stile')) { const n = b.querySelector('.n'); if (n) n.textContent = String(onBoard.filter(r => inStatus(r, b.dataset.v)).length); }
   }
   function visible() {
     let rows = SCORED.filter(r => (state.board === 'all' || r.ipo.board === state.board) && inStatus(r, state.status));
@@ -808,7 +808,7 @@
   function renderAll() { renderHead(); renderTiles(); renderToday(); renderWatchlist(); renderTable(); renderPlanner(); }
   function bindFilters() {
     for (const [id, key] of [['#f-board', 'board'], ['#f-status', 'status']]) {
-      $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); if (b.classList.contains('chip') && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); renderTable(); });
+      $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); if (b.classList.contains('stile') && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); renderTable(); });
     }
     $('#f-nodata').addEventListener('change', () => { state.hideNodata = $('#f-nodata').checked; renderTable(); });
     $('#f-sort').addEventListener('change', () => { state.sort = $('#f-sort').value; renderTable(); });

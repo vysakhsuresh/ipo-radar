@@ -156,11 +156,11 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 0; }
 .chips::-webkit-scrollbar { display: none; }
-@media (max-width: 720px) { .chips { margin: 0 -16px; padding: 2px 16px; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); } .chips:has(.chip:last-child[aria-pressed="true"]) { mask-image: none; -webkit-mask-image: none; } }
-.chip { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--hair-2); background: var(--surface-2); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; line-height: 1; }
-.chip .n { font-family: var(--mono); font-size: 11px; min-width: 18px; text-align: center; padding: 3px 5px; border-radius: calc(var(--radius) - 2px); background: var(--surface); color: var(--muted); border: 1px solid var(--hair); }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
-.chip[aria-pressed="true"] .n { background: var(--warn-fill); color: #1a1200; border-color: transparent; }
+@media (max-width: 720px) { .chips { margin: 0 -16px; padding: 2px 16px; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); } .chips:has(.stile:last-child[aria-pressed="true"]) { mask-image: none; -webkit-mask-image: none; } }
+.stile { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--hair-2); background: var(--surface-2); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; line-height: 1; }
+.stile .n { font-family: var(--mono); font-size: 11px; min-width: 18px; text-align: center; padding: 3px 5px; border-radius: calc(var(--radius) - 2px); background: var(--surface); color: var(--muted); border: 1px solid var(--hair); }
+.stile[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.stile[aria-pressed="true"] .n { background: var(--warn-fill); color: #1a1200; border-color: transparent; }
 .filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
 .filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
 
@@ -376,12 +376,12 @@ table.data th { color: var(--muted); font-weight: 500; }
       </select></label>
       </div>
       <div class="chips" id="f-status" role="group" aria-label="Status">
-        <button type="button" class="chip" data-v="active" aria-pressed="true" title="Open, upcoming and awaiting listing">Active <span class="n"></span></button>
-        <button type="button" class="chip" data-v="open" aria-pressed="false" title="Bidding open today">Open now <span class="n"></span></button>
-        <button type="button" class="chip" data-v="upcoming" aria-pressed="false" title="Bidding opens later">Upcoming <span class="n"></span></button>
-        <button type="button" class="chip" data-v="listed" aria-pressed="false" title="Listed in the last weeks">Listed <span class="n"></span></button>
-        <button type="button" class="chip" data-v="watch" aria-pressed="false" title="Your watchlist">★ Watching <span class="n"></span></button>
-        <button type="button" class="chip" data-v="all" aria-pressed="false">All <span class="n"></span></button>
+        <button type="button" class="stile" data-v="active" aria-pressed="true" title="Open, upcoming and awaiting listing">Active <span class="n"></span></button>
+        <button type="button" class="stile" data-v="open" aria-pressed="false" title="Bidding open today">Open now <span class="n"></span></button>
+        <button type="button" class="stile" data-v="upcoming" aria-pressed="false" title="Bidding opens later">Upcoming <span class="n"></span></button>
+        <button type="button" class="stile" data-v="listed" aria-pressed="false" title="Listed in the last weeks">Listed <span class="n"></span></button>
+        <button type="button" class="stile" data-v="watch" aria-pressed="false" title="Your watchlist">★ Watching <span class="n"></span></button>
+        <button type="button" class="stile" data-v="all" aria-pressed="false">All <span class="n"></span></button>
       </div>
     </div>
     <div class="tablewrap">
