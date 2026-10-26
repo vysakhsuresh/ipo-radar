@@ -151,8 +151,8 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .filters .opts { justify-content: flex-end; }
 .filters .chips { grid-column: 1 / -1; }
 @media (max-width: 720px) { .filters { grid-template-columns: 1fr; } .filters .opts { order: 3; justify-content: flex-start; } }
-.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--hair-2); border-radius: var(--radius); background: var(--surface); }
-.seg button { background: transparent; border: 0; padding: 5px 12px; border-radius: calc(var(--radius) - 2px); cursor: pointer; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--hair-2); border-radius: 999px; background: var(--surface); }
+.seg button { background: transparent; border: 0; padding: 5px 12px; border-radius: 999px; cursor: pointer; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 2px 0; }
 .chips::-webkit-scrollbar { display: none; }
@@ -162,7 +162,7 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
 .chip[aria-pressed="true"] .n { background: var(--warn-fill); color: #1a1200; border-color: transparent; }
 .filters label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
-.filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: var(--radius); padding: 6px 10px; font-size: 13px; }
+.filters select { background: var(--surface); border: 1px solid var(--hair-2); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
 
 /* table */
 .tablewrap { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
