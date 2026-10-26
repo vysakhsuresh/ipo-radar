@@ -1,6 +1,6 @@
 # IPO Radar
 
-A small, self-hosting website that lists every Indian IPO in the pipeline (mainboard and SME) and, for each one, estimates:
+An Android app (a Layerbit tool) that lists every Indian IPO in the pipeline (mainboard and SME) and, for each one, estimates:
 
 * the **chance it closes above its issue price on listing day**,
 * the **likely gain range** (P10 to P90, not a single number),
@@ -10,7 +10,18 @@ A small, self-hosting website that lists every Indian IPO in the pipeline (mainb
 
 plus a planner that answers the question that started this project: *can listing gains make ₹25,000 a month, and with how much capital and how many accounts?*
 
-The page is a single HTML file with the data inlined, so it works from GitHub Pages, from a local file, and as a claude.ai artifact. Nothing is sent anywhere; planner inputs stay in the browser.
+The screen is a single HTML page with the data inlined, bundled into the APK so it works with no network; the app refreshes the data from this repository on launch and on pull-to-refresh. Nothing is sent anywhere; planner inputs stay on the phone.
+
+## The Android app
+
+```
+./gradlew assembleDebug          # builds the page into app assets first, then the APK
+# → app/build/outputs/apk/debug/app-debug.apk
+```
+
+Needs a JDK 17, the Android SDK (compileSdk 34) and python3 on the PATH (the `buildWeb` Gradle task runs `tools/build_site.py`). The `android` workflow builds the same debug APK on every push and attaches it to the run under Artifacts, so a phone can install it without any local tooling. A signed release build reads `keystore.properties` (never committed), exactly as Dawn Patrol does.
+
+How it works: `MainActivity` is a WebView served from the bundled `assets/www` (built from `site/`), with pull-to-refresh. On launch and on pull-down it downloads `data/scored.json`, `model/params.json` and `data/history.json` from this repository's `main` branch, caches them in the app's private storage and hands them to the page through `window.ipoRadarLoad`, so the pipeline updates without an app update. External links (Get help, Buy me a coffee, sources) open in the phone's browser. The `refresh` workflow is the app's data feed: it refetches the sources four times a day and commits the files the app downloads.
 
 ## How it is honest
 
@@ -27,6 +38,7 @@ The page is a single HTML file with the data inlined, so it works from GitHub Pa
 ## Layout
 
 ```
+app/                 Android app: WebView shell, pull-to-refresh, online data refresh, launcher icons
 site/index.html      page markup and styles (fragment: no <html>/<head>; the build wraps it)
 site/app.js          page logic: table, detail rows, what-if, planner, charts
 site/score.js        the scoring model in JS (mirrors model/*.py; parity-tested)
@@ -39,7 +51,8 @@ tools/ingest_research.py   merges hand-researched rows into the canonical files
 tools/build_site.py        inlines data + scripts → dist/index.html (Pages) and dist/artifact.html
 data/ipos.json       current pipeline   data/history.json  listed IPOs with outcomes (append-only)
 data/scored.json     pipeline + scores  model/params.json  fitted (or prior) model
-.github/workflows/refresh.yml   scheduled fetch → calibrate → score → build → Pages deploy
+.github/workflows/refresh.yml   scheduled fetch → calibrate → score → commit (the app's data feed)
+.github/workflows/android.yml   builds the debug APK and attaches it to the run
 ```
 
 ## Run it
@@ -60,11 +73,9 @@ python -m fetch.run --out data                        # current pipeline, GMP, s
 python -m fetch.history --years 2024 2025 2026        # calibration rows from the performance trackers
 ```
 
-## Publish as a website
+## Data feed setup
 
-1. Push this folder to a GitHub repository.
-2. Settings → Pages → Source: **GitHub Actions**. Settings → Actions → General → Workflow permissions: **Read and write**.
-3. Run the `refresh` workflow once from the Actions tab. It fetches, calibrates, builds and deploys; afterwards it runs four times a day on trading days.
+Settings → Actions → General → Workflow permissions: **Read and write**, then run the `refresh` workflow once from the Actions tab. Afterwards it runs four times a day on trading days and commits the refreshed data the app downloads.
 
 ## Verdict rules
 

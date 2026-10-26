@@ -1,0 +1,32 @@
+# Build the Android app. The debug APK is attached to every run as an artifact
+# (Actions tab → the run → Artifacts → ipo-radar-debug-apk) and is installable
+# on any phone with "install from unknown sources". A signed release build needs
+# keystore.properties, which is never committed.
+name: android
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["data/**", "model/params.json"]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK (runs tools/build_site.py into app assets first)
+        run: ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipo-radar-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

@@ -4,10 +4,25 @@
 (function () {
   'use strict';
   const S = window.IpoScore;
-  const DATA = JSON.parse(document.getElementById('data').textContent || '{}');
+  const INLINE = JSON.parse(document.getElementById('data').textContent || '{}');
+  // The Android shell (and any host) can hand in fresher data: window.ipoRadarLoad({live, params, history})
+  function slimHistory(rows) {
+    if (!Array.isArray(rows)) return rows || [];
+    return rows.map(r => {
+      if (r && r.listing === undefined && r.gain_pct !== undefined) return r;   // already slim
+      const lst = (r && r.listing) || {}; if (lst.gain_pct === null || lst.gain_pct === undefined) return null;
+      const g = r.gmp || {}; let pct = g.pct; if ((pct === null || pct === undefined) && g.rs !== null && g.rs !== undefined && r.issue_price) pct = 100 * Number(g.rs) / Number(r.issue_price);
+      return { name: r.name, board: r.board, listing_date: r.listing_date, gmp_pct: pct === null || pct === undefined ? null : Math.round(pct * 100) / 100, gain_pct: Math.round(Number(lst.gain_pct) * 100) / 100, basis: lst.gain_basis || 'close' };
+    }).filter(Boolean);
+  }
+  function boot(DATA) {
+  // a re-boot replaces the static controls so the old boot's listeners fall away
+  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot']) {
+    const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
+  }
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
   const PARAMS = DATA.params || null;
-  const HIST = DATA.history || [];
+  const HIST = slimHistory(DATA.history instanceof Object && DATA.history.rows ? DATA.history.rows : DATA.history);
   const TODAY = (LIVE.generated_at || new Date().toISOString()).slice(0, 10);
 
   // ------------------------------------------------------------ helpers ---
@@ -666,4 +681,11 @@
     showScreen(SCREENS.includes(h) ? h : (load('screen', 'today') || 'today'), { keepScroll: true });
   }
   start();
+  }
+  let booted = false;
+  window.ipoRadarLoad = function (payload) {
+    if (!payload || !payload.live) return;
+    try { boot(payload); } catch (e) { console.error('ipoRadarLoad failed', e); }
+  };
+  boot(INLINE); booted = true;
 })();

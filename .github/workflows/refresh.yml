@@ -1,9 +1,8 @@
-# Refresh the IPO data, re-calibrate the model, rebuild the page and publish it
-# to GitHub Pages. Runs on a schedule (market hours, IST) and on demand.
+# Refresh the IPO data, re-calibrate the model and commit the result. The Android
+# app downloads these committed files on launch and on pull-to-refresh, so this
+# job is the app's data feed. Runs on a schedule (market hours, IST) and on demand.
 #
-# One-time setup after pushing this repo:
-#   Settings → Pages → Source: "GitHub Actions"
-#   Settings → Actions → General → Workflow permissions: "Read and write"
+# One-time setup: Settings → Actions → General → Workflow permissions: "Read and write"
 name: refresh
 
 on:
@@ -13,11 +12,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths: ["fetch/**", "model/**", "tools/**", "site/**", ".github/workflows/refresh.yml"]
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: refresh
@@ -75,17 +73,3 @@ jobs:
             git pull --rebase --autostash origin main && git push && break
             sleep 5
           done
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: refresh
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
