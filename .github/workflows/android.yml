@@ -22,9 +22,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest already carries the Android SDK (ANDROID_HOME is set); AGP downloads
+      # the exact platform/build-tools it needs on first use.
       - name: Build debug APK (runs tools/build_site.py into app assets first)
-        run: ./gradlew --no-daemon assembleDebug
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: ipo-radar-debug-apk
