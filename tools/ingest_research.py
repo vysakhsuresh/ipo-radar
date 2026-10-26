@@ -62,7 +62,18 @@ def main(argv=None):
     for r in pool.values():
         r["status"] = derive_status(r, today)
     cutoff = (today - timedelta(days=30)).isoformat()
-    pipeline = [r for r in pool.values() if r["status"] != "listed" or (r.get("listing_date") or "0000") >= cutoff]
+
+    def junk(r: dict) -> bool:
+        """A name with nothing usable, or a 'closed' issue so old it must have listed by now."""
+        g = r.get("gmp") or {}
+        if r.get("issue_price") is None and g.get("rs") is None and not r.get("listing") and not r.get("open_date"):
+            return True
+        cd = to_date(r.get("close_date"))
+        if r["status"] == "closed" and cd and (today - cd).days > 15 and not r.get("listing"):
+            return True
+        return False
+
+    pipeline = [r for r in pool.values() if not junk(r) and (r["status"] != "listed" or (r.get("listing_date") or "0000") >= cutoff)]
     history = [r for r in pool.values() if r["status"] == "listed" and r.get("listing") and r["listing"].get("gain_pct") is not None]
     pipeline.sort(key=lambda r: (r.get("listing_date") or r.get("close_date") or "9999", r["name"]))
     history.sort(key=lambda r: (r.get("listing_date") or "0000", r["name"]))

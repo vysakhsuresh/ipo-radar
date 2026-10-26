@@ -271,7 +271,7 @@ def category_key(label: Any) -> str | None:
 def derive_status(row: dict, today: date) -> str:
     ld, cd, od = to_date(row.get("listing_date")), to_date(row.get("close_date")), to_date(row.get("open_date"))
     lst = row.get("listing") or {}
-    if (ld and ld <= today) or lst.get("open") is not None or lst.get("close") is not None:
+    if (ld and ld <= today) or any(lst.get(k) is not None for k in ("open", "close", "gain_pct")):
         return "listed"
     if cd and cd < today:
         return "closed"

@@ -40,6 +40,17 @@ def usable(row: dict) -> bool:
     return row.get("issue_price") not in (None, 0) and lst.get("gain_pct") is not None
 
 
+def informative(row: dict) -> bool:
+    """Has at least one model input (a GMP quote or a subscription figure).
+    Outcome-only rows (a name and a listing gain from a year-end roundup) feed
+    the base rates and the empirical table, but fitting on them would only
+    teach the model that 'the researcher found no GMP' predicts something."""
+    g = row.get("gmp") or {}
+    sub = row.get("subscription") or {}
+    return (g.get("rs") is not None or g.get("pct") is not None
+            or any(sub.get(k) is not None for k in ("qib", "nii", "retail", "total")))
+
+
 def build_matrix(rows: list[dict]):
     X = np.array([vector(features(r)) for r in rows], dtype=float)
     y_up = np.array([1.0 if (r["listing"]["gain_pct"] or 0) > 0 else 0.0 for r in rows])
@@ -166,12 +177,14 @@ def basis_counts(rows: list[dict]) -> dict:
 
 
 def calibrate(rows: list[dict]) -> dict:
-    rows = [r for r in rows if usable(r)]
+    all_rows = [r for r in rows if usable(r)]
+    rows = [r for r in all_rows if informative(r)]
     bc = basis_counts(rows)
     # debut-price gains (SME rows where no close was found) do not count toward
     # the threshold: the model's target is the listing-day close
     if bc["close"] + bc["reported"] < MIN_ROWS_TO_CALIBRATE:
-        out = prior_params(rows)
+        out = prior_params(all_rows)
+        out["n_rows_informative"] = len(rows)
         out["basis_counts"] = bc
         return _clean(out)
     X, y_up, y_gain = build_matrix(rows)
@@ -229,6 +242,8 @@ def calibrate(rows: list[dict]) -> dict:
                        for f, c, s in zip(FEATURE_NAMES, coef, scale)],
         "prior": {"logistic_raw": PRIOR_LOGISTIC_RAW, "gain_raw": PRIOR_GAIN_RAW},
         "basis_counts": bc,
+        "n_rows_informative": len(rows),
+        "n_rows_all": len(all_rows),
     }
 
 
@@ -247,8 +262,9 @@ def main(argv=None):
         f.write("\n")
     m = params["metrics"]
     if m is None:
-        print(f"PRIOR weights written: only {params['n_rows']} usable listings "
-              f"(need {MIN_ROWS_TO_CALIBRATE} to calibrate)")
+        print(f"PRIOR weights written: {params['n_rows']} listings with outcomes, "
+              f"{params.get('n_rows_informative', 0)} with GMP or subscription data "
+              f"(need {MIN_ROWS_TO_CALIBRATE} close-basis informative rows to calibrate)")
     else:
         print(f"fitted on {params['n_rows']} rows {params['date_range']}; CV AUC {m['auc']:.3f}, "
               f"Brier {m['brier']:.3f} (naive {m['brier_naive']:.3f}), ECE {m['ece']:.3f}, "

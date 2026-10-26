@@ -59,11 +59,13 @@
   function load(k, d) { try { const v = localStorage.getItem('ipo-radar:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 
   // -------------------------------------------------------------- state ---
+  // Delivery-sell schedules as published in Oct 2026 (zerodha.com/charges, groww.in/pricing/stocks,
+  // upstox.com/brokerage-charges, angelone.in/support/charges-and-cashbacks). DP charge incl. GST.
   const BROKERS = {
-    zerodha: { brokerage_pct: 0, brokerage_cap: 0, dp_charge: 15.34 },
-    groww:   { brokerage_pct: 0.1, brokerage_cap: 20, dp_charge: 20 },
-    upstox:  { brokerage_pct: 0.1, brokerage_cap: 20, dp_charge: 20 },
-    angel:   { brokerage_pct: 0.1, brokerage_cap: 20, dp_charge: 20 },
+    zerodha: { brokerage_pct: 0, brokerage_min: 0, brokerage_cap: 0, dp_charge: 15.34 },
+    groww:   { brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
+    upstox:  { brokerage_pct: 0, brokerage_min: 20, brokerage_cap: 20, dp_charge: 23.6 },
+    angel:   { brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
     custom:  {},
   };
   const state = {
@@ -358,7 +360,7 @@
     const p = state.plan;
     $('#p-capital').value = p.capital; $('#p-accounts').value = p.accounts; $('#p-target').value = p.target; $('#p-broker').value = p.broker;
     const c = state.costs;
-    $('#c-brok').value = c.brokerage_pct; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
+    $('#c-brok').value = c.brokerage_pct; $('#c-min').value = c.brokerage_min; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
     const out = $('#plan-result'); out.replaceChildren();
     const cands = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null && r.ipo.issue_price && r.ipo.lot_size);
     if (!cands.length) { out.append(el('p', { class: 'muted', text: 'Nothing is open or upcoming with a usable read right now, so there is nothing to plan. Issues that have closed cannot be applied to.' })); return; }
@@ -415,13 +417,13 @@
     $('#p-broker').addEventListener('change', () => { state.plan.broker = $('#p-broker').value; state.costs = costsFor(state.plan.broker); store('plan', state.plan); computeAll(); renderAll(); });
     const costUpd = () => {
       const c = state.costs;
-      c.brokerage_pct = Number($('#c-brok').value) || 0; c.brokerage_cap = Number($('#c-cap').value) || 0; c.dp_charge = Number($('#c-dp').value) || 0;
+      c.brokerage_pct = Number($('#c-brok').value) || 0; c.brokerage_min = Number($('#c-min').value) || 0; c.brokerage_cap = Number($('#c-cap').value) || 0; c.dp_charge = Number($('#c-dp').value) || 0;
       c.stt_pct = Number($('#c-stt').value) || 0; c.stcg_tax_pct = Number($('#c-tax').value) || 0; c.cess_pct = Number($('#c-cess').value) || 0;
       state.plan.broker = 'custom'; $('#p-broker').value = 'custom'; store('plan', state.plan);
-      store('customCosts', { brokerage_pct: c.brokerage_pct, brokerage_cap: c.brokerage_cap, dp_charge: c.dp_charge, stt_pct: c.stt_pct, stcg_tax_pct: c.stcg_tax_pct, cess_pct: c.cess_pct });
+      store('customCosts', { brokerage_pct: c.brokerage_pct, brokerage_min: c.brokerage_min, brokerage_cap: c.brokerage_cap, dp_charge: c.dp_charge, stt_pct: c.stt_pct, stcg_tax_pct: c.stcg_tax_pct, cess_pct: c.cess_pct });
       computeAll(); renderAll();
     };
-    for (const id of ['#c-brok', '#c-cap', '#c-dp', '#c-stt', '#c-tax', '#c-cess']) $(id).addEventListener('change', costUpd);
+    for (const id of ['#c-brok', '#c-min', '#c-cap', '#c-dp', '#c-stt', '#c-tax', '#c-cess']) $(id).addEventListener('change', costUpd);
   }
 
   // --------------------------------------------------------- calibration ---
@@ -561,7 +563,7 @@
       el('li', null, 'Warnings fire on: GMP at or below zero or under 5%; a GMP that fell sharply in the last few sessions; retail or QIB under-subscription at close; institution-only books (QIB 20x+ with HNI or retail under 2x); any SME issue (and SME under 10x); issues under ₹50 crore; a GMP quote older than three days.')));
     host.append(el('h3', { text: 'What this cannot know' }));
     host.append(el('ul', null,
-      el('li', null, 'GMP is an unregulated, unofficial quote from grey-market dealers. It can be thin, stale, or steered, especially for small SME issues. It is an input here, not the answer.'),
+      el('li', null, 'GMP is an unregulated, unofficial quote from grey-market dealers. It can be thin, stale, or steered, especially for small SME issues. It is an input here, not the answer. The record: in 2025, 56 of 101 mainboard IPOs listed below what their GMP implied; trackers that score it put the direction right roughly 72\u201383% of the time, with a median miss of about 3 percentage points on mainboard and about 20 on SME.'),
       el('li', null, 'A market shock on listing day (a bad global open, a sector-wide sell-off) is not in any pre-listing number.'),
       el('li', null, 'The model is fitted on ' + (PARAMS ? PARAMS.n_rows : 0) + ' listings. That is enough to rank issues and to flag gambles; it is not enough to promise a specific gain on a specific IPO.'),
       el('li', null, 'Expected profit is an average over many applications. Hitting a monthly figure depends mostly on how many accounts you apply from and how oversubscribed retail is, not on picking the single best IPO.')));

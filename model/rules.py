@@ -13,15 +13,30 @@ from dataclasses import dataclass
 RETAIL_MAX_APPLICATION = 200_000      # Rs 2 lakh: the retail (RII) category ceiling
 SNII_MIN = 200_000                    # small NII: above Rs 2 lakh ...
 SNII_MAX = 1_000_000                  # ... up to Rs 10 lakh; bNII above that
-SME_MIN_LOTS = 2                      # SEBI (2025): an SME IPO application must be at least two lots,
-                                      # so the minimum ticket is above Rs 2 lakh. VERIFY against the
-                                      # issue's RHP; some pre-reform issues still take one lot.
+SME_MIN_LOTS = 2                      # Individual investors must bid at least two lots in an SME IPO,
+                                      # with an application value above Rs 2 lakh, for issues opening on or
+                                      # after 2025-07-01 (SEBI board, Jan 2025; NSE circular IPO68604:
+                                      # https://nsearchives.nseindia.com/content/circulars/IPO68604.pdf ;
+                                      # https://www.sebi.gov.in/sebi_data/meetingfiles/jan-2025/1735725342588_1.pdf).
+                                      # The same package removed cut-off bids and bid modification for SME issues.
 
 
 def min_lots_for(board: str) -> int:
     return SME_MIN_LOTS if board == "sme" else 1
 
+# --- listing-day price bands (SEBI CIR/MRD/DP/02/2012; still in force Oct 2026) ---
+#   issue size > Rs 250 crore: 20% band around the pre-open equilibrium price
+#   issue size <= Rs 250 crore (every SME issue): 5% band, trade-for-trade for 10 days
+#   SME pre-open opening price capped at +90% over issue price (NSE from 2024-07-04)
+#   listing day: special pre-open 09:00-09:45, matching to 09:55, normal trading 10:00
+LISTING_BAND_THRESHOLD_CR = 250
+
 # --- listing-day sale costs (defaults; broker-specific ones are overridable) ---
+# Verified Oct 2026: STT 0.1% on delivery sell (Zerodha charges page); NSE transaction
+# charge 0.00297% from 2024-10-01 (BSE 0.00375%); SEBI fee Rs 10/crore; stamp duty on a
+# sell 0 (0.015% on the buy side only); GST 18% on brokerage + exchange + SEBI charges;
+# Zerodha DP charge Rs 15.34 per scrip per day incl. GST; STCG u/s 111A 20% for transfers
+# on/after 2024-07-23 (incometaxindia.gov.in) + 4% cess.
 @dataclass
 class CostConfig:
     brokerage_pct: float = 0.0          # % of sell value (0 for most discount brokers on delivery sells)
@@ -96,6 +111,13 @@ def p_allotment(sub: float | None, lots_bid: int = 1, board: str = "mainboard", 
     `sub` is the category's times-subscribed figure. None → unknown. While
     bidding is still open the figure is provisional: an under-filled book on
     day one says nothing about day three, so that case is reported as unknown.
+
+    1/s is a FLOOR: it assumes every applicant bid one lot. When applicants
+    bid several lots on average (L lots), the applicant-level oversubscription
+    is s/L and everyone's chance of the minimum lot rises to min(1, L/s). In a
+    small oversubscription (s/L <= 1) every applicant gets the minimum lot and
+    the balance goes proportionately to multi-lot bidders (ICDR; see
+    https://www.business-standard.com/article/markets/how-ipo-shares-gets-allotted-to-retail-investors-115122100606_1.html).
     """
     if sub is None:
         return {"p_min_lot": None, "expected_lots": None, "basis": "no subscription data"}
