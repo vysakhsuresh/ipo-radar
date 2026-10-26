@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -19,7 +21,7 @@ android {
     // the release build stays unsigned instead of failing (same as Dawn Patrol).
     signingConfigs {
         create("release") {
-            val props = java.util.Properties()
+            val props = Properties()
             val f = rootProject.file("keystore.properties")
             if (f.exists()) {
                 f.inputStream().use { props.load(it) }
