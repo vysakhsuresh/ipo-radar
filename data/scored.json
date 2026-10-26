@@ -4416,14 +4416,14 @@
      "min_lots": 2
     },
     "verdict": {
-     "tier": "apply",
-     "label": "Apply",
+     "tier": "lean",
+     "label": "Lean apply",
      "reasons": [
       "GMP +40.9% of the issue price.",
       "QIB 119.3x, NII 0.1x, retail 1.1x (final)"
      ],
      "warnings": [],
-     "gamble": null
+     "gamble": "possible"
     },
     "confidence": "medium",
     "flags": [],
@@ -5560,14 +5560,14 @@
      "min_lots": 2
     },
     "verdict": {
-     "tier": "apply",
-     "label": "Apply",
+     "tier": "lean",
+     "label": "Lean apply",
      "reasons": [
       "GMP +14.0% of the issue price.",
       "QIB 41.9x, NII 86.4x, retail –x (final)"
      ],
      "warnings": [],
-     "gamble": null
+     "gamble": "possible"
     },
     "confidence": "medium",
     "flags": [

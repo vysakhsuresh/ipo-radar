@@ -71,7 +71,7 @@
   const state = {
     board: 'all', status: 'active', hideNodata: false, sort: 'verdict', open: null,
     edits: {},                                   // id → {gmp_rs, qib, nii, retail}
-    plan: Object.assign({ capital: 200000, accounts: 1, target: 25000, broker: 'zerodha', picked: null }, load('plan', {})),
+    plan: Object.assign({ capital: 200000, accounts: 1, target: 25000, broker: 'zerodha', picked: null, snapshot: null }, load('plan', {})),
     costs: null,
   };
   function costsFor(brokerKey) {
@@ -81,6 +81,10 @@
     return c;
   }
   state.costs = costsFor(state.plan.broker);
+  // ticks belong to the snapshot they were made on; a refreshed pipeline starts from the defaults again
+  if (!Array.isArray(state.plan.picked) || state.plan.snapshot !== (LIVE.generated_at || null)) { state.plan.picked = null; state.plan.snapshot = LIVE.generated_at || null; }
+  for (const k of ['capital', 'accounts', 'target']) if (!Number.isFinite(Number(state.plan[k]))) state.plan[k] = { capital: 200000, accounts: 1, target: 25000 }[k];
+  state.plan.accounts = Math.min(10, Math.max(1, Math.round(Number(state.plan.accounts) || 1)));
 
   function effectiveIpo(ipo) {
     const e = state.edits[ipo.id];
@@ -98,6 +102,14 @@
       const score = PARAMS ? S.scoreIpo(eff, PARAMS, LIVE.market, state.costs, TODAY) : null;
       return { ipo, eff, score, edited: !!state.edits[ipo.id] };
     });
+  }
+
+  // ---------------------------------------------------------- focus keep ---
+  // Re-rendering replaces the DOM; put keyboard focus back on the element with the same id.
+  function keepFocus(render) {
+    const id = document.activeElement && document.activeElement.id;
+    render();
+    if (id) { const n = document.getElementById(id); if (n && typeof n.focus === 'function') n.focus({ preventScroll: true }); }
   }
 
   // -------------------------------------------------------------- header ---
@@ -145,6 +157,7 @@
     if (state.hideNodata) rows = rows.filter(r => !(r.score && r.score.verdict.tier === 'nodata') || r.ipo.status === 'listed');
     const key = {
       verdict: r => [STATUS_ORDER[r.ipo.status] ?? 9, r.score ? ORDER[r.score.verdict.tier] : 9, -(r.score && r.score.ev.ev !== null ? r.score.ev.ev : -1e9)],
+      tier: r => [r.score ? ORDER[r.score.verdict.tier] : 9, -(r.score && r.score.p_up !== null ? r.score.p_up : -1)],
       ev: r => [-(r.score && r.score.ev.ev !== null ? r.score.ev.ev : -1e9)],
       p: r => [-(r.score && r.score.p_up !== null ? r.score.p_up : -1)],
       date: r => [r.ipo.listing_date || r.ipo.close_date || '9999'],
@@ -192,7 +205,7 @@
     if (!rows.length) { body.append(el('tr', null, el('td', { colspan: 9, class: 'empty' }, LIVE.ipos.length ? 'Nothing matches these filters.' : 'No IPO data in this snapshot yet.'))); return; }
     for (const r of rows) {
       const ipo = r.eff, s = r.score;
-      const tr = el('tr', { class: 'row', tabindex: 0, 'aria-expanded': state.open === ipo.id ? 'true' : 'false', 'data-id': ipo.id });
+      const tr = el('tr', { class: 'row', id: 'row-' + ipo.id, tabindex: 0, 'aria-expanded': state.open === ipo.id ? 'true' : 'false', 'data-id': ipo.id });
       // name
       const name = el('td', { class: 'name', 'data-l': 'IPO' }, el('div', { class: 'n', text: ipo.name }));
       const chips = el('div', { class: 'chips' },
@@ -291,7 +304,7 @@
       body.append(dtr);
     }
   }
-  function toggle(id) { state.open = state.open === id ? null : id; renderTable(); }
+  function toggle(id) { state.open = state.open === id ? null : id; keepFocus(renderTable); }
   function detail(r) {
     const ipo = r.eff, s = r.score, sub = ipo.subscription || {};
     const d = el('div', { class: 'detail' });
@@ -304,8 +317,9 @@
     c1.append(ul);
     if (s && s.similar && s.similar.n >= 5 && s.similar.lo !== null && s.similar.lo !== undefined) c1.append(el('p', { class: 'small ink2' }, 'Past ' + (ipo.board === 'sme' ? 'SME' : 'mainboard') + ' IPOs with GMP ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' closed above issue price on day one; median ' + pct(s.similar.median_gain, 0) + ', worst tenth ' + pct(s.similar.p10_gain, 0) + '.'));
     const srcs = ipo.sources || {};
-    const links = Object.keys(srcs).filter(k => /^https?:/.test(srcs[k]));
-    if (links.length) { const sd = el('div', { class: 'srcs' }, el('span', { class: 'muted', text: 'Sources:' })); const seen = new Set(); for (const k of links) { if (seen.has(srcs[k])) continue; seen.add(srcs[k]); sd.append(el('a', { href: srcs[k], target: '_blank', rel: 'noopener', text: new URL(srcs[k]).hostname.replace(/^www\./, '') })); } c1.append(sd); }
+    const links = [];
+    for (const k of Object.keys(srcs)) { try { const u = new URL(String(srcs[k])); if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname) links.push(u); } catch (e) { /* not a URL */ } }
+    if (links.length) { const sd = el('div', { class: 'srcs' }, el('span', { class: 'muted', text: 'Sources:' })); const seen = new Set(); for (const u of links) { if (seen.has(u.href)) continue; seen.add(u.href); sd.append(el('a', { href: u.href, target: '_blank', rel: 'noopener', text: u.hostname.replace(/^www\./, '') })); } c1.append(sd); }
     d.append(c1);
     // money
     const c2 = el('div');
@@ -325,7 +339,7 @@
         kv('Chance of allotment', pct0(s.allotment.p_min_lot));
         kv('Expected value of applying', inr(s.ev.ev, { plus: true }));
       }
-      if (s.ev.lots_affordable > 1) kv('Lots within the ₹2 lakh retail cap', String(s.ev.lots_affordable));
+      if (s.ev.lots_affordable > (s.ev.min_lots || 1)) kv('Lots within the ₹2 lakh retail cap', String(s.ev.lots_affordable));
       c2.append(dl);
       c2.append(el('p', { class: 'small muted', text: s.allotment && s.allotment.basis ? s.allotment.basis + '.' : '' }));
     } else c2.append(el('p', { class: 'muted small', text: 'Needs an issue price, a lot size and some signal.' }));
@@ -342,7 +356,7 @@
     const iR = inp('retail', 'Retail x', e.retail !== undefined ? e.retail : sub.retail, 0.1);
     c3.append(wi);
     const btns = el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap' });
-    btns.append(el('button', { class: 'btn primary small', type: 'button', onclick: () => {
+    btns.append(el('button', { class: 'btn primary small', type: 'button', id: 'wi-go-' + ipo.id, onclick: () => {
       const ed = {};
       const src = r.ipo, ssub = src.subscription || {}, sg = src.gmp || {};
       const num = i => i.value === '' ? undefined : Number(i.value);
@@ -352,9 +366,9 @@
       if (differs(num(iN), ssub.nii)) ed.nii = num(iN);
       if (differs(num(iR), ssub.retail)) ed.retail = num(iR);
       if (Object.keys(ed).length) state.edits[ipo.id] = ed; else delete state.edits[ipo.id];
-      computeAll(); renderAll();
+      computeAll(); keepFocus(renderAll);
     } }, 'Recompute'));
-    btns.append(el('button', { class: 'btn small', type: 'button', onclick: () => { delete state.edits[ipo.id]; computeAll(); renderAll(); } }, 'Reset'));
+    btns.append(el('button', { class: 'btn small', type: 'button', id: 'wi-reset-' + ipo.id, onclick: () => { delete state.edits[ipo.id]; computeAll(); keepFocus(renderAll); } }, 'Reset'));
     c3.append(btns);
     c3.append(el('p', { class: 'small muted', text: 'Type today’s GMP or the latest subscription figures and the row above updates. Edits live only in this tab.' }));
     d.append(c3);
@@ -362,11 +376,15 @@
   }
 
   // ------------------------------------------------------------- planner ---
+  let plannerInputsSet = false;
+  function writePlannerInputs() {
+    const p = state.plan, c = state.costs;
+    $('#p-capital').value = p.capital; $('#p-accounts').value = p.accounts; $('#p-target').value = p.target; $('#p-broker').value = p.broker;
+    $('#c-brok').value = c.brokerage_pct; $('#c-min').value = c.brokerage_min; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
+  }
   function renderPlanner() {
     const p = state.plan;
-    $('#p-capital').value = p.capital; $('#p-accounts').value = p.accounts; $('#p-target').value = p.target; $('#p-broker').value = p.broker;
-    const c = state.costs;
-    $('#c-brok').value = c.brokerage_pct; $('#c-min').value = c.brokerage_min; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
+    if (!plannerInputsSet) { writePlannerInputs(); plannerInputsSet = true; }
     const out = $('#plan-result'); out.replaceChildren();
     const cands = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null && r.ipo.issue_price && r.ipo.lot_size);
     if (!cands.length) { out.append(el('p', { class: 'muted', text: 'Nothing is open or upcoming with a usable read right now, so there is nothing to plan. Issues that have closed cannot be applied to.' })); return; }
@@ -398,12 +416,12 @@
     if (anyUnknown) vs.push('Some ticked IPOs have no subscription figures yet, so their allotment odds (and expected profit) are not counted.');
     out.append(el('p', { class: 'vs', text: vs.join(' ') }));
     const t = el('table', { class: 'plan' });
-    t.append(el('thead', null, el('tr', null, el('th', { text: '' }), el('th', { text: 'IPO' }), el('th', { class: 'r', text: 'Per lot' }), el('th', { class: 'r', text: 'Allotment' }), el('th', { class: 'r', text: 'If allotted' }), el('th', { class: 'r', text: 'Expected' }), el('th', { text: 'Verdict' }))));
+    t.append(el('thead', null, el('tr', null, el('th', { text: '' }), el('th', { text: 'IPO' }), el('th', { class: 'r', text: 'Minimum ticket' }), el('th', { class: 'r', text: 'Allotment' }), el('th', { class: 'r', text: 'If allotted' }), el('th', { class: 'r', text: 'Expected' }), el('th', { text: 'Verdict' }))));
     const tb = el('tbody');
     for (const q of rows) {
       const cb = el('input', { type: 'checkbox', id: 'pk-' + q.r.ipo.id, 'aria-label': 'Include ' + q.r.ipo.name });
       cb.checked = q.on;
-      cb.addEventListener('change', () => { const set = new Set(state.plan.picked); if (cb.checked) set.add(q.r.ipo.id); else set.delete(q.r.ipo.id); state.plan.picked = [...set]; store('plan', state.plan); renderPlanner(); });
+      cb.addEventListener('change', () => { const set = new Set(state.plan.picked); if (cb.checked) set.add(q.r.ipo.id); else set.delete(q.r.ipo.id); state.plan.picked = [...set]; store('plan', state.plan); keepFocus(renderPlanner); });
       tb.append(el('tr', null, el('td', null, cb), el('td', null, q.r.ipo.name, ' ', el('span', { class: 'muted small', text: q.r.ipo.board === 'sme' ? 'SME' : '' })),
         el('td', { class: 'r num', text: inr(q.inv) }), el('td', { class: 'r num', text: q.pa === null ? '?' : pct0(q.pa) }),
         el('td', { class: 'r num ' + (q.evIf > 0 ? 'pos' : 'neg'), text: inr(q.evIf, { plus: true }) }), el('td', { class: 'r num', text: q.ev1 === null ? '?' : inr(q.ev1 * accounts, { plus: true }) }),
@@ -416,18 +434,23 @@
   }
   function bindPlanner() {
     const upd = () => {
-      state.plan.capital = Number($('#p-capital').value) || 0; state.plan.accounts = Number($('#p-accounts').value) || 1; state.plan.target = Number($('#p-target').value) || 0;
+      // an empty box is someone mid-edit: leave the stored value alone until a number arrives
+      const cap = $('#p-capital').value, acc = $('#p-accounts').value, tgt = $('#p-target').value;
+      if (cap !== '') state.plan.capital = Math.max(0, Number(cap) || 0);
+      if (acc !== '') state.plan.accounts = Math.min(10, Math.max(1, Math.round(Number(acc) || 1)));
+      if (tgt !== '') state.plan.target = Math.max(0, Number(tgt) || 0);
       store('plan', state.plan); renderPlanner();
     };
     for (const id of ['#p-capital', '#p-accounts', '#p-target']) $(id).addEventListener('input', upd);
-    $('#p-broker').addEventListener('change', () => { state.plan.broker = $('#p-broker').value; state.costs = costsFor(state.plan.broker); store('plan', state.plan); computeAll(); renderAll(); });
+    $('#p-accounts').addEventListener('change', () => { $('#p-accounts').value = state.plan.accounts; });
+    $('#p-broker').addEventListener('change', () => { state.plan.broker = $('#p-broker').value; state.costs = costsFor(state.plan.broker); store('plan', state.plan); writePlannerInputs(); computeAll(); keepFocus(renderAll); });
     const costUpd = () => {
       const c = state.costs;
       c.brokerage_pct = Number($('#c-brok').value) || 0; c.brokerage_min = Number($('#c-min').value) || 0; c.brokerage_cap = Number($('#c-cap').value) || 0; c.dp_charge = Number($('#c-dp').value) || 0;
       c.stt_pct = Number($('#c-stt').value) || 0; c.stcg_tax_pct = Number($('#c-tax').value) || 0; c.cess_pct = Number($('#c-cess').value) || 0;
       state.plan.broker = 'custom'; $('#p-broker').value = 'custom'; store('plan', state.plan);
       store('customCosts', { brokerage_pct: c.brokerage_pct, brokerage_min: c.brokerage_min, brokerage_cap: c.brokerage_cap, dp_charge: c.dp_charge, stt_pct: c.stt_pct, stcg_tax_pct: c.stcg_tax_pct, cess_pct: c.cess_pct });
-      computeAll(); renderAll();
+      computeAll(); keepFocus(renderAll);
     };
     for (const id of ['#c-brok', '#c-min', '#c-cap', '#c-dp', '#c-stt', '#c-tax', '#c-cess']) $(id).addEventListener('change', costUpd);
   }
@@ -440,8 +463,9 @@
   function chartGmp() {
     const host = $('#chart-gmp'); host.replaceChildren();
     host.append(el('h3', { text: 'What GMP promised vs what listing day delivered' }));
-    const pts = HIST.filter(h => h.gmp_pct !== null && h.gmp_pct !== undefined && h.gain_pct !== null && h.gain_pct !== undefined);
-    if (pts.length < 10) { host.append(el('p', { class: 'muted small', text: 'Not enough past listings with a recorded GMP to draw this yet.' })); return; }
+    const pts = HIST.filter(h => h.gmp_pct !== null && h.gmp_pct !== undefined && h.gain_pct !== null && h.gain_pct !== undefined && (h.basis === 'close' || h.basis === 'reported'));
+    const skipped = HIST.filter(h => h.gmp_pct !== null && h.gmp_pct !== undefined && h.gain_pct !== null && h.gain_pct !== undefined).length - pts.length;
+    if (pts.length < 10) { host.append(el('p', { class: 'muted small', text: 'Not enough past listings with both a recorded GMP and a listing-day close to draw this yet' + (skipped ? ' (' + skipped + ' more have only a debut price).' : '.') })); return; }
     const W = 520, H = 340, m = { t: 12, r: 14, b: 38, l: 46 };
     const xs = pts.map(p => p.gmp_pct), ys = pts.map(p => p.gain_pct);
     const xlo = Math.max(-30, Math.min(...xs) - 5), xhi = Math.min(160, Math.max(...xs) + 5);
@@ -474,7 +498,7 @@
     });
     svg.addEventListener('pointerleave', hideTip);
     host.append(svg);
-    host.append(el('div', { class: 'legend' }, el('span', null, el('i', { style: 'background:var(--series-main)' }), 'Mainboard'), el('span', null, el('i', { style: 'background:var(--series-sme)' }), 'SME'), el('span', { class: 'muted', text: pts.length + ' listings' })));
+    host.append(el('div', { class: 'legend' }, el('span', null, el('i', { style: 'background:var(--series-main)' }), 'Mainboard'), el('span', null, el('i', { style: 'background:var(--series-sme)' }), 'SME'), el('span', { class: 'muted', text: pts.length + ' listings with a recorded close' + (skipped ? '; ' + skipped + ' with only a debut price left out' : '') })));
     const above = pts.filter(p => p.gmp_pct > 0 && p.gain_pct <= 0).length, posG = pts.filter(p => p.gmp_pct > 0).length;
     host.append(el('p', { class: 'small ink2', text: 'Of the ' + posG + ' IPOs whose GMP was positive, ' + above + ' (' + Math.round(100 * above / Math.max(1, posG)) + '%) still closed at or below the issue price on listing day. The spread around the dashed line is the honest size of the uncertainty.' }));
     host.append(tableView('Table: GMP vs listing gain', ['IPO', 'Board', 'Listed', 'GMP %', 'Gain %'], pts.slice().sort((a, b) => (b.listing_date || '') < (a.listing_date || '') ? -1 : 1).map(p => [p.name, p.board, p.listing_date || '', p.gmp_pct.toFixed(1), p.gain_pct.toFixed(1)])));
@@ -561,7 +585,7 @@
       el('li', null, 'Family members’ demat accounts each count as one application in their own name. Multiple applications from one PAN are rejected.')));
     host.append(el('h3', { text: 'Verdict rules' }));
     host.append(el('ul', null,
-      el('li', null, el('b', null, 'Apply'), ': chance of gain 75% or more, middle gain at least 5%, positive expected value, and no warnings.'),
+      el('li', null, el('b', null, 'Apply'), ': chance of gain 75% or more, middle gain at least 5%, positive expected value, and no warnings. Mainboard only: an SME issue tops out at Lean apply because its outcomes are too wide for a full call.'),
       el('li', null, el('b', null, 'Lean apply'), ': chance 60% or more with at most one warning, or a strong GMP-only read before subscription data exists.'),
       el('li', null, el('b', null, 'Coin flip'), ': 40–60%, or a stronger read pulled down by two or more warnings. A possible gamble.'),
       el('li', null, el('b', null, 'Avoid'), ': under 40% or negative expected value. A sure gamble: the odds are against you before you start.'),

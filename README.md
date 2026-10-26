@@ -66,7 +66,7 @@ python -m fetch.history --years 2024 2025 2026        # calibration rows from th
 
 | Verdict | Rule |
 |---|---|
-| Apply | chance ≥ 75%, middle gain ≥ 5%, positive expected value, no warnings |
+| Apply | chance ≥ 75%, middle gain ≥ 5%, positive expected value, no warnings; mainboard only (an SME issue tops out at Lean apply) |
 | Lean apply | chance ≥ 60% with at most one warning; or a strong GMP-only read before subscription data |
 | Coin flip | 40–60%, or a stronger read pulled down by two or more warnings |
 | Avoid | under 40% or negative expected value |

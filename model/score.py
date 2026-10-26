@@ -17,6 +17,16 @@ from datetime import date
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
+
+def iso_date(s) -> date | None:
+    """A real calendar date in YYYY-MM-DD form, else None. KEEP IN STEP WITH score.js isoDate."""
+    if not isinstance(s, str) or not ISO_DATE.match(s):
+        return None
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return None
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model.features import FEATURE_NAMES, features, vector, gmp_pct_of, gmp_trend_of, gmp_history_of, _f  # noqa: E402
 from model.rules import CostConfig, expected_value_of_application, retail_lots_affordable  # noqa: E402
@@ -89,8 +99,12 @@ def gmp_is_unquoted(ipo: dict) -> bool:
 
 
 def data_quality(ipo: dict, today: str) -> tuple[str, list[str]]:
-    """How much should anyone trust this row? Returns (confidence, flags)."""
-    flags = list(ipo.get("flags") or [])
+    """How much should anyone trust this row? Returns (confidence, derived flags).
+
+    Only flags computed HERE drive the scoring; `ipo["flags"]` from the data
+    file is informational and is merged into the output afterwards, so a
+    source cannot steer a verdict by shipping a token such as "gmp_stale"."""
+    flags: list[str] = []
     sub = ipo.get("subscription") or {}
     gmp = ipo.get("gmp") or {}
     status = ipo.get("status")
@@ -98,15 +112,11 @@ def data_quality(ipo: dict, today: str) -> tuple[str, list[str]]:
         ipo = dict(ipo, gmp=dict(gmp, rs=None, pct=None))
         gmp = ipo["gmp"]
         flags.append("gmp_unquoted")
-    has_sub = any(sub.get(k) is not None for k in ("qib", "nii", "retail", "total"))
+    has_sub = any(_f(sub.get(k)) is not None for k in ("qib", "nii", "retail", "total"))
     has_gmp = gmp_pct_of(ipo) is not None
-    if gmp.get("as_of") and today and ISO_DATE.match(str(gmp["as_of"])) and ISO_DATE.match(str(today)):
-        try:
-            age = (date.fromisoformat(today) - date.fromisoformat(gmp["as_of"])).days
-            if age >= 3:
-                flags.append("gmp_stale")
-        except ValueError:
-            pass
+    d_asof, d_today = iso_date(gmp.get("as_of")), iso_date(today)
+    if d_asof and d_today and (d_today - d_asof).days >= 3:
+        flags.append("gmp_stale")
     if not has_gmp and not has_sub:
         return "none", flags + ["no_gmp_no_sub"]
     if status == "closed" and has_sub and has_gmp:
@@ -191,6 +201,8 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
         tier = "coinflip"
     if g is not None and g <= 0 and tier in ("apply", "lean"):
         tier = "coinflip"                         # a discount GMP is never an apply
+    if board == "sme" and tier == "apply":
+        tier = "lean"                             # SME outcomes are too wide for a full Apply
     early = confidence == "low" or (status == "open" and confidence == "medium")
     if early and status != "closed":
         # before the books are final an early lean is useful, a verdict is not
@@ -242,9 +254,10 @@ def score_ipo(ipo: dict, params: dict, market: dict | None = None, cfg: CostConf
         ev = {"ev": None, "ev_if_allotted": None, "downside_if_allotted": None, "allotment": {"p_min_lot": None, "basis": "price or lot unknown"}}
     sim = similar_past(ipo, params)
     v = verdict(ipo, p_up, gain, ev, confidence, flags, feat)
+    shown = sorted(set(flags) | {str(x) for x in (ipo.get("flags") or []) if isinstance(x, str)})
     return {"p_up": p_up, "gain": gain, "similar": sim, "allotment": ev.get("allotment"),
             "ev": {k: ev.get(k) for k in ("ev", "ev_if_allotted", "downside_if_allotted", "invested_if_allotted", "lots_affordable", "min_lots")},
-            "verdict": v, "confidence": confidence, "flags": sorted(set(flags)), "features": feat}
+            "verdict": v, "confidence": confidence, "flags": shown, "features": feat}
 
 
 def main(argv=None):

@@ -180,10 +180,14 @@
     return null;
   }
 
-  function daysBetween(a, b) { // ISO dates → whole days (a - b)
-    const da = Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10));
-    const db = Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10));
-    return Math.round((da - db) / 86400000);
+  function isoDate(s) { // a real calendar date in YYYY-MM-DD form → UTC ms, else null
+    if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    const y = +s.slice(0, 4), m = +s.slice(5, 7), d = +s.slice(8, 10);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    const t = Date.UTC(y, m - 1, d);
+    const dt = new Date(t);
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null; // rolled over
+    return t;
   }
 
   function gmpIsUnquoted(ipo) {
@@ -195,16 +199,15 @@
   }
 
   function dataQuality(ipo, today) {
-    const flags = (ipo.flags || []).slice();
+    const flags = [];
     const sub = ipo.subscription || {};
     let gmp = ipo.gmp || {};
     const status = ipo.status;
     if (gmpIsUnquoted(ipo)) { gmp = Object.assign({}, gmp, { rs: null, pct: null }); ipo = Object.assign({}, ipo, { gmp }); flags.push('gmp_unquoted'); }
-    const hasSub = ['qib', 'nii', 'retail', 'total'].some(k => sub[k] !== null && sub[k] !== undefined);
+    const hasSub = ['qib', 'nii', 'retail', 'total'].some(k => f(sub[k]) !== null);
     const hasGmp = gmpPctOf(ipo) !== null;
-    if (gmp.as_of && today && /^\d{4}-\d{2}-\d{2}$/.test(gmp.as_of) && /^\d{4}-\d{2}-\d{2}$/.test(today)) {
-      if (daysBetween(today, gmp.as_of) >= 3) flags.push('gmp_stale');
-    }
+    const tAsof = isoDate(gmp.as_of), tToday = isoDate(today);
+    if (tAsof !== null && tToday !== null && Math.round((tToday - tAsof) / 86400000) >= 3) flags.push('gmp_stale');
     if (!hasGmp && !hasSub) return ['none', flags.concat(['no_gmp_no_sub'])];
     if (status === 'closed' && hasSub && hasGmp) return ['high', flags];
     if (status === 'open' && hasSub) return ['medium', flags.concat(['sub_partial'])];
@@ -263,6 +266,7 @@
     else tier = 'avoid';
     if (hard >= 2 && (tier === 'apply' || tier === 'lean')) tier = 'coinflip';
     if (g !== null && g <= 0 && (tier === 'apply' || tier === 'lean')) tier = 'coinflip';
+    if (board === 'sme' && tier === 'apply') tier = 'lean';
     const early = confidence === 'low' || (status === 'open' && confidence === 'medium');
     if (early && status !== 'closed') {
       if (tier === 'apply') tier = 'lean';
@@ -301,7 +305,7 @@
     }
     const sim = similarPast(ipo, params);
     const v = verdict(ipo, pUp, gain, ev, confidence, flags);
-    const uniq = Array.from(new Set(flags)).sort();
+    const uniq = Array.from(new Set(flags.concat((ipo.flags || []).filter(x => typeof x === 'string')))).sort();
     return { p_up: pUp, gain, similar: sim, allotment: ev.allotment,
       ev: { ev: ev.ev === undefined ? null : ev.ev, ev_if_allotted: ev.ev_if_allotted === undefined ? null : ev.ev_if_allotted,
         downside_if_allotted: ev.downside_if_allotted === undefined ? null : ev.downside_if_allotted,

@@ -214,6 +214,81 @@
    "subscription": {
     "total": 3
    }
+  },
+  {
+   "id": "e11",
+   "name": "Bogus Source Flags",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 1119,
+   "lot_size": 12,
+   "issue_size_cr": 30213,
+   "flags": [
+    "gmp_stale",
+    "gmp_unquoted"
+   ],
+   "gmp": {
+    "rs": 246,
+    "as_of": "2026-10-26"
+   },
+   "subscription": {
+    "qib": 70.55,
+    "nii": 14,
+    "retail": 2.72,
+    "total": 22.19
+   },
+   "sources": {
+    "ref1": "https://",
+    "ref2": "notaurl"
+   }
+  },
+  {
+   "id": "e12",
+   "name": "Rolled Over Date",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 100,
+   "lot_size": 150,
+   "issue_size_cr": 900,
+   "gmp": {
+    "rs": 20,
+    "as_of": "2026-10-00"
+   },
+   "subscription": {
+    "qib": 40,
+    "nii": 12,
+    "retail": 4,
+    "total": 15
+   }
+  },
+  {
+   "id": "e13",
+   "name": "Strong SME",
+   "board": "sme",
+   "status": "closed",
+   "issue_price": 120,
+   "lot_size": 1000,
+   "issue_size_cr": 120,
+   "gmp": {
+    "rs": 48,
+    "as_of": "2026-10-26",
+    "history": [
+     {
+      "date": "2026-10-22",
+      "rs": 40
+     },
+     {
+      "date": "2026-10-26",
+      "rs": 48
+     }
+    ]
+   },
+   "subscription": {
+    "qib": 60,
+    "nii": 120,
+    "retail": 80,
+    "total": 85
+   }
   }
  ]
 }

@@ -8,7 +8,7 @@
 :root {
   --bg: #f4f6f4; --surface: #ffffff; --surface-2: #eef2ef; --ink: #15191b; --ink-2: #4a5458; --muted: #7b8689;
   --hair: #dfe4e0; --hair-2: #cdd4cf;
-  --accent: #0b6e6d; --accent-ink: #0b6e6d; --accent-soft: #d8eeec;
+  --accent: #0b6e6d; --accent-ink: #0b6e6d; --accent-soft: #d8eeec; --on-accent: #ffffff;
   --good: #0a7d2c; --good-fill: #0ca30c; --good-soft: #e1f3e4;
   --warn: #8a5a0b; --warn-fill: #fab219; --warn-soft: #fdf0d0;
   --crit: #b3261e; --crit-fill: #d03b3b; --crit-soft: #fbe3e1;
@@ -21,7 +21,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0f1314; --surface: #171c1e; --surface-2: #1e2527; --ink: #e8ecea; --ink-2: #b3bcba; --muted: #8b9694;
     --hair: #27302f; --hair-2: #344040;
-    --accent: #3fbfb9; --accent-ink: #5fd0ca; --accent-soft: #123736;
+    --accent: #3fbfb9; --accent-ink: #5fd0ca; --accent-soft: #123736; --on-accent: #0f1314;
     --good: #4ccf6a; --good-fill: #0ca30c; --good-soft: #10301a;
     --warn: #f3bf4a; --warn-fill: #fab219; --warn-soft: #3a2b08;
     --crit: #f27b70; --crit-fill: #e05a52; --crit-soft: #3b1614;
@@ -33,7 +33,7 @@
 :root[data-theme="dark"] {
   --bg: #0f1314; --surface: #171c1e; --surface-2: #1e2527; --ink: #e8ecea; --ink-2: #b3bcba; --muted: #8b9694;
   --hair: #27302f; --hair-2: #344040;
-  --accent: #3fbfb9; --accent-ink: #5fd0ca; --accent-soft: #123736;
+  --accent: #3fbfb9; --accent-ink: #5fd0ca; --accent-soft: #123736; --on-accent: #0f1314;
   --good: #4ccf6a; --good-fill: #0ca30c; --good-soft: #10301a;
   --warn: #f3bf4a; --warn-fill: #fab219; --warn-soft: #3a2b08;
   --crit: #f27b70; --crit-fill: #e05a52; --crit-soft: #3b1614;
@@ -151,7 +151,7 @@ td.name .dates { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 .whatif label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
 .whatif input { width: 100%; padding: 4px 6px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); }
 .btn { background: var(--surface); border: 1px solid var(--hair-2); border-radius: var(--radius); padding: 5px 10px; cursor: pointer; color: var(--ink); }
-.btn.primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 500; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 500; }
 .btn.small { font-size: 12px; padding: 3px 8px; }
 
 /* planner */
@@ -248,7 +248,8 @@ table.data th { color: var(--muted); font-weight: 500; }
       </div>
       <label><input type="checkbox" id="f-nodata"> Hide “not enough data”</label>
       <label>Sort <select id="f-sort">
-        <option value="verdict">by verdict</option>
+        <option value="verdict">by status, then verdict</option>
+        <option value="tier">by verdict only</option>
         <option value="ev">by worth per application</option>
         <option value="p">by chance of gain</option>
         <option value="date">by date</option>
@@ -268,7 +269,7 @@ table.data th { color: var(--muted); font-weight: 500; }
   <section id="planner">
     <div class="sec-head">
       <h2>Can this make ₹25,000 a month?</h2>
-      <p>One application per demat account, one lot each (when retail is oversubscribed, bidding more lots does not improve the lottery). Expected profit = chance of allotment × profit on one lot after charges and tax, summed over the IPOs you tick.</p>
+      <p>One minimum application per demat account: one lot on the mainboard, two lots on SME (when retail is oversubscribed, bidding more lots does not improve the lottery). Expected profit = chance of allotment × profit on that minimum ticket after charges and tax, summed over the IPOs you tick.</p>
     </div>
     <div class="planner">
       <div class="panel" id="plan-inputs">

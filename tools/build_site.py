@@ -55,9 +55,11 @@ def main(argv=None):
             continue
         slim.append({"name": r.get("name"), "board": r.get("board"), "listing_date": r.get("listing_date"),
                      "gmp_pct": (round(gmp_pct_of(r), 2) if gmp_pct_of(r) is not None else None),
-                     "gain_pct": round(float(lst["gain_pct"]), 2)})
+                     "gain_pct": round(float(lst["gain_pct"]), 2), "basis": lst.get("gain_basis") or "close"})
     payload = json.dumps({"live": live, "params": params, "history": slim}, ensure_ascii=False, separators=(",", ":"))
-    payload = payload.replace("</", "<\\/")
+    # '<' never appears raw inside the data block: that defeats '</script>', '<!--' and
+    # '<script' sequences hidden in a scraped company name or note (valid JSON either way)
+    payload = payload.replace("<", "\\u003c")
 
     page = read(os.path.join(ROOT, "site", "index.html"))
     page = page.replace('<script id="data" type="application/json">{}</script>',
