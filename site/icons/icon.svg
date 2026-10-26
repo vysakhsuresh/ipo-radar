@@ -1,54 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
-      <stop offset="0" stop-color="#128c89"/>
-      <stop offset="0.6" stop-color="#0a5f5d"/>
-      <stop offset="1" stop-color="#05302f"/>
-    </radialGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
-      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="sweep" gradientUnits="userSpaceOnUse" x1="256" y1="276" x2="470" y2="170">
-      <stop offset="0" stop-color="#8ff2ea" stop-opacity="0.05"/>
-      <stop offset="1" stop-color="#8ff2ea" stop-opacity="0.6"/>
-    </linearGradient>
-    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#ffe066" stop-opacity="0.75"/>
-      <stop offset="1" stop-color="#ffe066" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <clipPath id="round"><rect width="512" height="512" rx="112"/></clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1aa89c"/><stop offset="1" stop-color="#0b3f52"/></linearGradient>
+    <linearGradient id="trail" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#ffffff" stop-opacity="0.9"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff7f3"/></linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff7a3d"/></linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect width="512" height="512" rx="112" fill="url(#sheen)"/>
-  <g clip-path="url(#round)">
-    <!-- rings -->
-    <g fill="none" stroke="#b9f3ee" stroke-linecap="round">
-      <circle cx="256" cy="276" r="66" stroke-width="7" stroke-opacity="0.55"/>
-      <circle cx="256" cy="276" r="132" stroke-width="7" stroke-opacity="0.4"/>
-      <circle cx="256" cy="276" r="198" stroke-width="7" stroke-opacity="0.28"/>
-    </g>
-    <!-- crosshair, fainter than rings -->
-    <g stroke="#b9f3ee" stroke-opacity="0.22" stroke-width="5" stroke-linecap="round">
-      <line x1="48" y1="276" x2="464" y2="276"/>
-      <line x1="256" y1="68" x2="256" y2="484"/>
-    </g>
-    <!-- sweep wedge: 75 degrees, bright at the beam -->
-    <path d="M256 276 L256 66 A210 210 0 0 1 459 222 Z" fill="url(#sweep)"/>
-    <!-- beam -->
-    <line x1="256" y1="276" x2="256" y2="66" stroke="#eafffd" stroke-width="11" stroke-linecap="round" filter="url(#glow)"/>
-    <!-- the blip: a rising candle caught in the sweep -->
-    <circle cx="344" cy="212" r="92" fill="url(#halo)"/>
-    <g filter="url(#glow)">
-      <line x1="344" y1="130" x2="344" y2="298" stroke="#fff6cc" stroke-width="13" stroke-linecap="round"/>
-      <rect x="312" y="162" width="64" height="104" rx="14" fill="#ffd23f" stroke="#fff6cc" stroke-width="7"/>
-    </g>
-    <!-- centre -->
-    <circle cx="256" cy="276" r="24" fill="#083f3e" stroke="#eafffd" stroke-width="7"/>
-    <circle cx="256" cy="276" r="8" fill="#eafffd"/>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- rising chart trail -->
+  <path d="M86 400 L170 330 L226 352 L300 244 L352 262 L410 150" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M86 400 L170 330 L226 352 L300 244 L352 262 L410 150" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- rocket at the end of the line, tilted up-right -->
+  <g transform="translate(410 150) rotate(45) scale(1.15)">
+    <ellipse cx="0" cy="88" rx="28" ry="46" fill="url(#flame)" filter="url(#soft)" opacity=".9"/>
+    <path d="M0 -92 C 36 -60 44 -4 40 50 L 20 64 L -20 64 L -40 50 C -44 -4 -36 -60 0 -92 Z" fill="url(#body)"/>
+    <path d="M-40 20 L-72 60 L-36 56 Z" fill="#ffd23f"/><path d="M40 20 L72 60 L36 56 Z" fill="#ffd23f"/>
+    <circle cx="0" cy="-10" r="16" fill="#0b6e6d"/><circle cx="0" cy="-10" r="9" fill="#9fe8e3"/>
+    <path d="M-20 64 Q0 100 20 64 Z" fill="url(#flame)"/>
   </g>
+  <circle cx="86" cy="400" r="14" fill="#ffd23f"/>
 </svg>
