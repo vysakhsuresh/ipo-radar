@@ -17,7 +17,7 @@
   }
   function boot(DATA) {
   // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot']) {
+  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status']) {
     const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
   }
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
@@ -388,6 +388,7 @@
       computeAll(); keepFocus(renderAll);
     } }, 'Recompute'));
     btns.append(el('button', { class: 'btn small', type: 'button', id: 'wi-reset-' + ipo.id, onclick: () => { delete state.edits[ipo.id]; computeAll(); keepFocus(renderAll); } }, 'Reset'));
+    btns.append(el('button', { class: 'btn small', type: 'button', id: 'share-' + ipo.id, onclick: () => shareText(readText(r), ipo.name + ' · IPO Radar') }, 'Share this read'));
     c3.append(btns);
     c3.append(el('p', { class: 'small muted', text: 'Type today’s GMP or the latest subscription figures and the row above updates. Edits live only in this tab.' }));
     d.append(c3);
@@ -623,6 +624,93 @@
     host.append(el('p', { class: 'small ink2', text: 'Snapshot generated ' + (LIVE.generated_at || 'unknown') + '. ' + (hosts.length ? 'Sources read this refresh: ' + hosts.join(', ') + '.' : 'Source list is in the repository’s data/ipos.json.') + ' Subscription figures are the exchanges’ published multiples; GMP figures are what the grey-market trackers published on the stated date.' }));
   }
 
+  // -------------------------------------------------------- native bridge ---
+  const N = (typeof window.IpoNative === 'object' && window.IpoNative) ? window.IpoNative : null;
+  let STATUS = null;
+  function fmtTime(ms) { if (!ms) return null; const d = new Date(ms); return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  function renderStatus() {
+    const host = $('#status .in'); host.replaceChildren();
+    const gen = LIVE.generated_at ? new Date(LIVE.generated_at) : null;
+    host.append(el('span', null, 'Data as of ', el('b', null, gen ? gen.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'unknown')));
+    if (STATUS) {
+      if (STATUS.downloaded_at) host.append(el('span', null, 'downloaded ', el('b', null, fmtTime(STATUS.downloaded_at))));
+      else host.append(el('span', { class: 'muted', text: 'bundled with the app' }));
+      if (STATUS.refreshing) host.append(el('span', { class: 'badge ok' }, el('i', { class: 'spin' }), 'refreshing'));
+      else if (STATUS.online === false) host.append(el('span', { class: 'badge off', text: 'offline, showing last data' }));
+      else if (STATUS.error) host.append(el('span', { class: 'badge err', text: 'last refresh failed' }));
+      if (STATUS.schedule_hours > 0) host.append(el('span', { class: 'muted small', text: 'auto every ' + STATUS.schedule_hours + ' h' }));
+    } else {
+      const ageH = gen ? (Date.now() - gen.getTime()) / 36e5 : null;
+      if (ageH !== null && ageH > 30) host.append(el('span', { class: 'badge off', text: Math.round(ageH / 24) + ' days old' }));
+    }
+    host.append(el('span', { class: 'spacer' }));
+    if (N) host.append(el('button', { class: 'btn small', type: 'button', id: 'st-refresh', onclick: () => { try { N.refresh(); } catch (e) { /* ignore */ } } }, 'Refresh'));
+  }
+  window.ipoRadarStatus = function (st) { STATUS = st || null; renderStatus(); renderSettings(); };
+  if (N) { try { STATUS = JSON.parse(N.status()); } catch (e) { STATUS = null; } }
+
+  function shareText(text, subject) {
+    if (N) { try { N.shareText(text, subject); return; } catch (e) { /* fall through */ } }
+    if (navigator.share) { navigator.share({ title: subject, text }).catch(() => {}); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => alertNote('Copied to clipboard')).catch(() => alertNote('Copy failed'));
+  }
+  function shareFile(name, mime, content) {
+    if (N) { try { N.shareFile(name, mime, content); return; } catch (e) { /* fall through */ } }
+    if (navigator.share && window.File) { try { const f = new File([content], name, { type: mime }); if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name }).catch(() => {}); return; } } catch (e) { /* fall through */ } }
+    shareText(content, name);
+  }
+  function alertNote(msg) { const n = $('#s-note'); if (n) { n.textContent = msg; setTimeout(() => { if (n.textContent === msg) n.textContent = ''; }, 2500); } }
+  function readText(r) {
+    const ipo = r.eff, s = r.score; const lines = [];
+    lines.push(ipo.name + ' (' + (ipo.board === 'sme' ? 'SME' : 'Mainboard') + ' IPO)');
+    if (ipo.open_date || ipo.close_date) lines.push('Bids ' + dlong(ipo.open_date) + ' to ' + dlong(ipo.close_date) + (ipo.listing_date ? ', lists ' + dlong(ipo.listing_date) : ''));
+    if (ipo.issue_price && ipo.lot_size) lines.push('Price ₹' + ipo.issue_price + ' × ' + ipo.lot_size + (s && s.ev && s.ev.min_lots > 1 ? ' × ' + s.ev.min_lots + ' lots' : '') + ' = ' + inr(s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : ipo.issue_price * ipo.lot_size));
+    const g = s && s.flags.includes('gmp_unquoted') ? null : S.gmpPctOf(ipo);
+    if (g !== null) lines.push('GMP ' + pct(g, 1));
+    const sub = ipo.subscription || {};
+    if (sub.qib !== null && sub.qib !== undefined) lines.push('Subscription: QIB ' + x(sub.qib) + ', NII ' + x(sub.nii) + ', retail ' + x(sub.retail) + ', total ' + x(sub.total));
+    if (s && s.p_up !== null) lines.push('Chance of a listing gain: ' + pct0(s.p_up) + (s.gain ? ' · likely gain ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0) + ' (middle ' + pct(s.gain.p50, 0) + ')' : ''));
+    if (s && s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined) lines.push('Allotment odds: ' + (s.allotment.p_min_lot >= 0.999 ? 'full' : '1 in ' + (1 / s.allotment.p_min_lot).toFixed(1)));
+    if (s && s.ev.ev !== null && s.ev.ev !== undefined) lines.push('Worth per application after charges & tax: ' + inr(s.ev.ev, { plus: true }) + ' (if allotted ' + inr(s.ev.ev_if_allotted, { plus: true }) + ')');
+    if (s) { lines.push('Verdict: ' + s.verdict.label + (s.verdict.gamble ? ' (' + s.verdict.gamble + ' gamble)' : '')); for (const w of s.verdict.warnings) lines.push('⚠ ' + w); }
+    lines.push('— IPO Radar, data as of ' + (LIVE.generated_at || '').slice(0, 16).replace('T', ' ') + '. Not investment advice.');
+    return lines.join('\n');
+  }
+  function shortlistText() {
+    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
+      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up));
+    const lines = ['IPO Radar shortlist, ' + (LIVE.generated_at || '').slice(0, 10)];
+    for (const r of rows) lines.push('• ' + r.eff.name + (r.ipo.board === 'sme' ? ' (SME)' : '') + ': ' + r.score.verdict.label + ', ' + pct0(r.score.p_up) + ' chance' + (r.score.ev.ev !== null && r.score.ev.ev !== undefined ? ', worth ' + inr(r.score.ev.ev, { plus: true }) : '') + (r.ipo.status === 'open' ? ', closes ' + dshort(r.ipo.close_date) : ', opens ' + dshort(r.ipo.open_date)));
+    lines.push('Not investment advice. Chances come from a model on past listings; GMP is unofficial.');
+    return lines.join('\n');
+  }
+  function csvText() {
+    const esc = v => { const t = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+    const head = ['name', 'board', 'status', 'open_date', 'close_date', 'listing_date', 'issue_price', 'lot_size', 'min_lots', 'gmp_rs', 'gmp_pct', 'sub_qib', 'sub_nii', 'sub_retail', 'sub_total', 'chance_of_gain', 'gain_p10', 'gain_p50', 'gain_p90', 'allotment_p', 'worth_per_application', 'verdict', 'gamble', 'listing_gain_pct'];
+    const out = [head.join(',')];
+    for (const r of SCORED) {
+      const i = r.eff, s = r.score || {}, g = i.gmp || {}, sub = i.subscription || {};
+      out.push([i.name, i.board, i.status, i.open_date, i.close_date, i.listing_date, i.issue_price, i.lot_size, i.min_lots, g.rs, S.gmpPctOf(i), sub.qib, sub.nii, sub.retail, sub.total,
+        s.p_up, s.gain && s.gain.p10, s.gain && s.gain.p50, s.gain && s.gain.p90, s.allotment && s.allotment.p_min_lot, s.ev && s.ev.ev, s.verdict && s.verdict.tier, s.verdict && s.verdict.gamble, i.listing && i.listing.gain_pct].map(esc).join(','));
+    }
+    return out.join('\n');
+  }
+  function renderSettings() {
+    const sel = $('#s-schedule'), chk = $('#s-notify'), note = $('#s-note');
+    if (!sel) return;
+    if (!N) { sel.disabled = true; chk.disabled = true; if (!note.textContent) note.textContent = 'Background refresh and notifications work in the Android app; this page shows the snapshot it was built with.'; return; }
+    if (STATUS) { sel.value = String(STATUS.schedule_hours || 0); chk.checked = !!STATUS.notify; if (!note.textContent) note.textContent = 'App version ' + (STATUS.version || '?') + (STATUS.downloaded_at ? ' · last download ' + fmtTime(STATUS.downloaded_at) : ''); }
+  }
+  function bindSettings() {
+    const sel = $('#s-schedule'), chk = $('#s-notify');
+    if (sel) sel.addEventListener('change', () => { if (N) { try { N.setSchedule(Number(sel.value) || 0); } catch (e) { /* ignore */ } } });
+    if (chk) chk.addEventListener('change', () => { if (N) { try { N.setNotify(!!chk.checked); } catch (e) { /* ignore */ } } });
+    const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
+    if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
+    if (b2) b2.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText()));
+    if (b3) b3.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.json', 'application/json', JSON.stringify({ generated_at: LIVE.generated_at, market: LIVE.market, ipos: SCORED.map(r => ({ ...r.eff, score: r.score })) })));
+  }
+
   // ------------------------------------------------------------ screens ---
   const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method', 'about'];
   function showScreen(name, opts) {
@@ -647,7 +735,7 @@
     if (!rows.length) { host.append(el('p', { class: 'muted', text: 'Nothing open or upcoming has a usable read right now.' })); return; }
     for (const r of rows) {
       const s = r.score, ipo = r.eff;
-      const card = el('button', { class: 'pick', type: 'button', onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
+      const card = el('button', { class: 'pick', type: 'button', id: 'pick-' + ipo.id, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
       card.append(el('div', { class: 'n' }, ipo.name, ' ', el('span', { class: 'chip', text: ipo.board === 'sme' ? 'SME' : 'Mainboard' })));
       card.append(el('div', null, el('span', { class: 'verdict ' + s.verdict.tier, text: s.verdict.label }), s.verdict.gamble ? el('span', { class: 'gamble ' + s.verdict.gamble, style: 'display:inline;margin-left:8px', text: s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble' }) : null));
       const m = el('div', { class: 'm' });
@@ -658,6 +746,7 @@
       card.append(m);
       host.append(card);
     }
+    host.append(el('button', { class: 'pick', type: 'button', id: 'pick-share', style: 'justify-content:center;align-content:center;color:var(--accent-ink);font-weight:600', onclick: () => shareText(shortlistText(), 'IPO Radar shortlist') }, 'Share this shortlist'));
   }
 
   // ------------------------------------------------------------- wiring ---
@@ -671,8 +760,8 @@
   }
   function start() {
     computeAll();
-    bindFilters(); bindPlanner(); bindScreens(); bindContact();
-    renderAll();
+    bindFilters(); bindPlanner(); bindScreens(); bindContact(); bindSettings();
+    renderAll(); renderStatus(); renderSettings();
     $('#cal-lede').textContent = !PARAMS ? 'No calibration data in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'Fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + '. Every number below is out of sample: the model was scored on IPOs it was not trained on.'
       : 'Not fitted yet. The weights are documented priors (GMP first, then institutional demand, then the rest). The history holds ' + PARAMS.n_rows + ' listings with outcomes' + (PARAMS.date_range[0] ? ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1]) : '') + ', of which ' + (PARAMS.n_rows_gating || 0) + ' have both a model input (GMP or subscription) and a closing-price outcome. Once that count reaches ' + (PARAMS.min_rows_to_calibrate || 120) + ', each refresh fits the model to the data, shrunk toward these priors, and reports out-of-sample accuracy here.';

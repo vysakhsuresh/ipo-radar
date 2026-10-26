@@ -75,6 +75,22 @@ nav.screens button[aria-current="page"] { color: var(--accent-ink); background: 
 .rail .contact { font-size: 11px; color: var(--muted); padding: 0 8px; display: grid; gap: 2px; }
 .rail .contact a { color: var(--ink-2); text-decoration: none; }
 .screen[hidden] { display: none; }
+.status { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8; background: var(--surface); border-bottom: 1px solid var(--hair); font-size: 12px; color: var(--ink-2); }
+.status .in { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 7px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.status b { color: var(--ink); font-weight: 600; }
+.status .badge { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-weight: 600; font-size: 11px; }
+.status .badge.off { background: var(--warn-soft); color: var(--warn); }
+.status .badge.err { background: var(--crit-soft); color: var(--crit); }
+.status .badge.ok { background: var(--good-soft); color: var(--good); }
+.status .spacer { flex: 1; }
+.status .btn.small { padding: 3px 10px; }
+.status .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .status .spin { animation: none; } }
+.settings { display: grid; gap: 10px; }
+.settings .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.settings select { padding: 6px 8px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); }
+.share-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .today { display: grid; gap: 20px; }
 .picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
 .pick { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; }
@@ -273,7 +289,7 @@ table.data th { color: var(--muted); font-weight: 500; }
     <button type="button" data-screen="planner"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15v3"/></svg><span>Planner</span></button>
     <button type="button" data-screen="calibration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3M20 16V5"/></svg><span>Evidence</span></button>
     <button type="button" data-screen="method"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg><span>Method</span></button>
-    <button type="button" data-screen="about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></svg><span>About</span></button>
+    <button type="button" data-screen="about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></svg><span>More</span></button>
   </nav>
   <div class="spacer"></div>
   <div class="support">
@@ -281,6 +297,8 @@ table.data th { color: var(--muted); font-weight: 500; }
     <a class="btn-coffee" href="https://www.buymeacoffee.com/layerbit" target="_blank" rel="noopener">☕ Buy me a coffee</a>
   </div>
 </aside>
+<div style="min-width:0">
+<div class="status" id="status"><div class="in"><span id="st-data">Bundled snapshot</span><span class="spacer"></span></div></div>
 <div class="wrap">
   <section class="screen today" id="screen-today">
   <header class="head">
@@ -390,7 +408,16 @@ table.data th { color: var(--muted); font-weight: 500; }
     <div class="method" id="method-body"></div>
   </section>
   <section class="screen about" id="screen-about" hidden>
-    <div class="sec-head"><h2>About IPO Radar</h2></div>
+    <div class="sec-head"><h2>Settings</h2><p>Refreshing never sends anything; the app only downloads three public files from the IPO Radar repository.</p></div>
+    <div class="panel settings" id="settings">
+      <div class="row"><b>Refresh</b><span class="muted">automatically on every open and when you come back to the app; pull down or tap Refresh at the top any time.</span></div>
+      <div class="row"><label for="s-schedule">Also refresh in the background</label>
+        <select id="s-schedule"><option value="0">Off</option><option value="3">Every 3 hours</option><option value="6">Every 6 hours</option><option value="12">Every 12 hours</option><option value="24">Once a day</option></select></div>
+      <div class="row"><label><input type="checkbox" id="s-notify"> Notify me when a background refresh brings new data</label></div>
+      <div class="row small muted" id="s-note"></div>
+      <div class="share-row"><button type="button" class="btn small" id="share-shortlist">Share today's shortlist</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
+    </div>
+    <div class="sec-head" style="margin-top:8px"><h2>About IPO Radar</h2></div>
     <div class="about-grid">
       <div class="panel">
         <h3>What it is</h3>
@@ -413,7 +440,8 @@ table.data th { color: var(--muted); font-weight: 500; }
       </div>
     </div>
   </section>
-  <footer class="foot"><span>IPO Radar · a Layerbit tool</span><a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a><button type="button" class="linklike" data-goto="about">About &amp; contact</button></footer>
+  <footer class="foot"><span>IPO Radar · a Layerbit tool</span><a href="https://layerbit.co.in/" target="_blank" rel="noopener">layerbit.co.in</a><button type="button" class="linklike" data-goto="about">Settings, about &amp; contact</button></footer>
+</div>
 </div>
 </div>
 <div class="tip" id="tip" hidden></div>

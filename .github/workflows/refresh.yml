@@ -7,8 +7,8 @@ name: refresh
 
 on:
   schedule:
-    # 03:30, 06:30, 09:30, 12:30 UTC = 09:00, 12:00, 15:00, 18:00 IST, Mon-Sat
-    - cron: "30 3,6,9,12 * * 1-6"
+    # every hour from 09:00 to 18:00 IST (03:30 to 12:30 UTC), Mon-Sat: bidding windows
+    - cron: "30 3-12 * * 1-6"
   workflow_dispatch:
   push:
     branches: [main]

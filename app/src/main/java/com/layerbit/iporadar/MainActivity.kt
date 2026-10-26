@@ -1,31 +1,39 @@
 package com.layerbit.iporadar
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebViewAssetLoader
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.concurrent.Executors
 
 /**
- * IPO Radar is the web page in site/, bundled into the APK (assets/www) so it
- * works with no network, plus a refresh of the three data files from the
- * repository whenever the app opens or the user pulls down. Nothing leaves the
- * phone: the only requests are GETs for public JSON files.
+ * IPO Radar: the web page in site/, bundled into the APK (assets/www) so it works
+ * with no network, plus a refresh of the data files from the repository on open,
+ * on return, on pull-down, on the Refresh button and on the schedule the person
+ * picks in Settings. Nothing leaves the phone except GETs of public JSON files
+ * and whatever the person chooses to share.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -33,17 +41,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipe: SwipeRefreshLayout
     private val io = Executors.newSingleThreadExecutor()
     private var pageReady = false
+    private var refreshing = false
+    private var lastAutoRefresh = 0L
 
     companion object {
-        // Served from a private https origin so localStorage and relative fetches behave.
         private const val ORIGIN = "https://appassets.androidplatform.net"
         private const val START = "$ORIGIN/assets/www/index.html"
-        private const val RAW = "https://raw.githubusercontent.com/vysakhsuresh/ipo-radar/main/"
-        private val FILES = mapOf(
-            "live" to "data/scored.json",
-            "params" to "model/params.json",
-            "history" to "data/history.json",
-        )
+        private const val AUTO_REFRESH_GAP_MS = 10 * 60 * 1000L   // on-resume refresh at most every 10 minutes
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -73,16 +77,15 @@ class MainActivity : AppCompatActivity() {
                 loader.shouldInterceptRequest(request.url)
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val url = request.url
-                if (url.host == "appassets.androidplatform.net") return false
-                // Get help, Buy me a coffee, source links: hand them to the browser.
-                runCatching { startActivity(Intent(Intent.ACTION_VIEW, url)) }
+                if (request.url.host == "appassets.androidplatform.net") return false
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, request.url)) }
                 return true
             }
 
             override fun onPageFinished(view: WebView, url: String) {
                 pageReady = true
-                applyCachedData()
+                DataFeed.cached(this@MainActivity)?.let { inject(it) }
+                pushStatus(null)
                 refresh(manual = false)
             }
         }
@@ -95,70 +98,103 @@ class MainActivity : AppCompatActivity() {
                 if (web.canGoBack()) web.goBack() else { isEnabled = false; onBackPressedDispatcher.onBackPressed() }
             }
         })
+        RefreshWorker.schedule(this, DataFeed.prefs(this).getInt(DataFeed.KEY_SCHEDULE_HOURS, 0))
         web.loadUrl(START)
     }
 
-    /** The page calls these; keep the surface tiny. */
-    inner class Bridge {
-        @android.webkit.JavascriptInterface
-        fun refresh() { runOnUiThread { refresh(manual = true) } }
-
-        @android.webkit.JavascriptInterface
-        fun openExternal(url: String) {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-        }
-
-        @android.webkit.JavascriptInterface
-        fun platform(): String = "android"
+    override fun onResume() {
+        super.onResume()
+        // coming back to the app counts as opening it, but not more than every ten minutes
+        if (pageReady && System.currentTimeMillis() - lastAutoRefresh > AUTO_REFRESH_GAP_MS) refresh(manual = false)
     }
 
-    private fun cacheFile(key: String) = File(filesDir, "ipo-$key.json")
+    private fun online(): Boolean {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
 
-    /** Push the last downloaded data (if any) into the page before going online. */
-    private fun applyCachedData() {
-        val parts = FILES.keys.mapNotNull { k -> cacheFile(k).takeIf { it.exists() }?.let { k to it.readText() } }
-        if (parts.size == FILES.size) inject(parts.toMap())
+    /** What the page's status strip shows. */
+    private fun statusJson(error: String?): JSONObject {
+        val p = DataFeed.prefs(this)
+        return JSONObject()
+            .put("platform", "android")
+            .put("version", runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrDefault("?"))
+            .put("downloaded_at", p.getLong(DataFeed.KEY_DOWNLOADED_AT, 0L))
+            .put("generated_at", p.getString(DataFeed.KEY_GENERATED_AT, "") ?: "")
+            .put("schedule_hours", p.getInt(DataFeed.KEY_SCHEDULE_HOURS, 0))
+            .put("notify", p.getBoolean(DataFeed.KEY_NOTIFY, false))
+            .put("online", online())
+            .put("refreshing", refreshing)
+            .put("error", error ?: p.getString(DataFeed.KEY_LAST_ERROR, null))
+    }
+
+    private fun pushStatus(error: String?) {
+        if (!pageReady) return
+        web.evaluateJavascript("window.ipoRadarStatus && window.ipoRadarStatus(" + statusJson(error) + ")", null)
     }
 
     private fun inject(parts: Map<String, String>) {
         if (!pageReady) return
         val payload = JSONObject()
-        for ((k, v) in parts) payload.put(k, JSONObject.wrap(org.json.JSONTokener(v).nextValue()))
-        web.evaluateJavascript("window.ipoRadarLoad && window.ipoRadarLoad(" + payload.toString() + ")", null)
+        for ((k, v) in parts) payload.put(k, JSONObject.wrap(JSONTokener(v).nextValue()))
+        web.evaluateJavascript("window.ipoRadarLoad && window.ipoRadarLoad(" + payload + ")", null)
     }
 
     private fun refresh(manual: Boolean) {
+        if (refreshing) return
+        refreshing = true
+        lastAutoRefresh = System.currentTimeMillis()
         if (manual) swipe.isRefreshing = true
+        pushStatus(null)
         io.execute {
-            val got = HashMap<String, String>()
-            var ok = true
-            for ((k, path) in FILES) {
-                val text = download(RAW + path)
-                if (text == null) { ok = false; break }
-                got[k] = text
-            }
+            val r = DataFeed.refresh(this)
             runOnUiThread {
+                refreshing = false
                 swipe.isRefreshing = false
-                if (ok) {
-                    for ((k, v) in got) cacheFile(k).writeText(v)
-                    inject(got)
-                    if (manual) Toast.makeText(this, R.string.refreshing, Toast.LENGTH_SHORT).show()
-                } else if (manual) {
-                    Toast.makeText(this, R.string.refresh_failed, Toast.LENGTH_SHORT).show()
-                }
+                if (r.ok) DataFeed.cached(this)?.let { inject(it) }
+                pushStatus(if (r.ok) null else (r.error ?: "refresh failed"))
             }
         }
     }
 
-    private fun download(url: String): String? = runCatching {
-        val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = 15000; c.readTimeout = 20000
-        c.setRequestProperty("Accept", "application/json")
-        try {
-            if (c.responseCode != 200) return null
-            c.inputStream.bufferedReader().use { it.readText() }
-        } finally { c.disconnect() }
-    }.getOrNull()
+    private fun shareText(text: String, subject: String) {
+        val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_SUBJECT, subject).putExtra(Intent.EXTRA_TEXT, text)
+        runCatching { startActivity(Intent.createChooser(i, subject)) }
+    }
+
+    private fun shareFile(name: String, mime: String, content: String) {
+        val dir = File(cacheDir, "shared").apply { mkdirs() }
+        val f = File(dir, name).apply { writeText(content) }
+        val uri = FileProvider.getUriForFile(this, "$packageName.files", f)
+        val i = Intent(Intent.ACTION_SEND).setType(mime).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        runCatching { startActivity(Intent.createChooser(i, name)) }
+    }
+
+    /** The page calls these; keep the surface tiny and every argument a plain string or number. */
+    inner class Bridge {
+        @JavascriptInterface fun platform(): String = "android"
+        @JavascriptInterface fun status(): String = statusJson(null).toString()
+        @JavascriptInterface fun refresh() { runOnUiThread { refresh(manual = true) } }
+        @JavascriptInterface fun openExternal(url: String) { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }
+        @JavascriptInterface fun shareText(text: String, subject: String) { runOnUiThread { this@MainActivity.shareText(text, subject) } }
+        @JavascriptInterface fun shareFile(name: String, mime: String, content: String) { runOnUiThread { this@MainActivity.shareFile(name, mime, content) } }
+
+        @JavascriptInterface fun setSchedule(hours: Int) {
+            DataFeed.prefs(this@MainActivity).edit().putInt(DataFeed.KEY_SCHEDULE_HOURS, hours).apply()
+            RefreshWorker.schedule(this@MainActivity, hours)
+            runOnUiThread { pushStatus(null) }
+        }
+
+        @JavascriptInterface fun setNotify(on: Boolean) {
+            DataFeed.prefs(this@MainActivity).edit().putBoolean(DataFeed.KEY_NOTIFY, on).apply()
+            if (on && Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7) }
+            }
+            runOnUiThread { pushStatus(null) }
+        }
+    }
 
     override fun onDestroy() {
         io.shutdown()
