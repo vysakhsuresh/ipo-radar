@@ -159,6 +159,14 @@ td.name .dates { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 .chip.st-open { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
 .chip.st-closed { background: var(--surface-2); }
 .chip.st-listed { background: var(--surface-2); }
+.star { background: transparent; border: 1px solid var(--hair-2); border-radius: 999px; padding: 1px 8px; font-size: 11px; cursor: pointer; color: var(--ink-2); font-weight: 500; }
+.star[aria-pressed="true"] { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.watch-list { display: grid; gap: 6px; }
+.watch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); }
+.watch-row .n { font-weight: 600; min-width: 0; }
+.watch-row .due { font-size: 12px; color: var(--ink-2); }
+.watch-row .due.today { color: var(--crit); font-weight: 600; }
+.watch-row .spacer { flex: 1; }
 .verdict { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 3px 8px; border-radius: 999px; font-size: 12px; white-space: nowrap; max-width: 100%; }
 .verdict::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
 .verdict.apply { background: var(--good-soft); color: var(--good); }
@@ -311,6 +319,10 @@ table.data th { color: var(--muted); font-weight: 500; }
 
   <div class="tiles" id="tiles"></div>
   <div>
+    <div class="sec-head"><h2>Watchlist</h2><p>IPOs you starred, with their next deadline. The app can remind you on the morning of the last bidding day (Settings in More).</p></div>
+    <div class="watch-list" id="watchlist" style="margin-top:10px"></div>
+  </div>
+  <div>
     <div class="sec-head"><h2>Shortlist</h2><p>Open or upcoming issues the model leans toward, best first. Tap one to open its row in the pipeline.</p></div>
     <div class="picks" id="picks" style="margin-top:10px"></div>
   </div>
@@ -331,6 +343,7 @@ table.data th { color: var(--muted); font-weight: 500; }
         <button type="button" data-v="active" aria-pressed="true">Open, upcoming &amp; awaiting listing</button>
         <button type="button" data-v="open" aria-pressed="false">Open now</button>
         <button type="button" data-v="listed" aria-pressed="false">Listed recently</button>
+        <button type="button" data-v="watch" aria-pressed="false">Watching</button>
         <button type="button" data-v="all" aria-pressed="false">Everything</button>
       </div>
       <label><input type="checkbox" id="f-nodata"> Hide “not enough data”</label>
@@ -414,6 +427,8 @@ table.data th { color: var(--muted); font-weight: 500; }
       <div class="row"><label for="s-schedule">Also refresh in the background</label>
         <select id="s-schedule"><option value="0">Off</option><option value="3">Every 3 hours</option><option value="6">Every 6 hours</option><option value="12">Every 12 hours</option><option value="24">Once a day</option></select></div>
       <div class="row"><label><input type="checkbox" id="s-notify"> Notify me when a background refresh brings new data</label></div>
+      <div class="row"><label for="s-reminder">Watchlist reminder on the last bidding day, at</label>
+        <select id="s-reminder"><option value="-1">Off</option><option value="9">9:00 am</option><option value="10">10:00 am</option><option value="12">12:00 noon</option><option value="14">2:00 pm</option><option value="16">4:00 pm (bids close at 5)</option></select></div>
       <div class="row small muted" id="s-note"></div>
       <div class="share-row"><button type="button" class="btn small" id="share-shortlist">Share today's shortlist</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
     </div>

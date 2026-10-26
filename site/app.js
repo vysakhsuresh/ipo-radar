@@ -111,6 +111,37 @@
     return c;
   }
   let SCORED = [];
+  const WATCH = new Set((() => { try { if (N && STATUS && Array.isArray(STATUS.watchlist)) return STATUS.watchlist; } catch (e) { /* ignore */ } return load('watch', []); })());
+  function saveWatch() { const ids = [...WATCH]; store('watch', ids); if (N) { try { N.setWatchlist(JSON.stringify(ids)); } catch (e) { /* ignore */ } } }
+  function toggleWatch(id) { if (WATCH.has(id)) WATCH.delete(id); else WATCH.add(id); saveWatch(); keepFocus(renderAll); }
+  function starButton(ipo) {
+    const on = WATCH.has(ipo.id);
+    return el('button', { class: 'star', type: 'button', id: 'star-' + ipo.id, 'aria-pressed': on ? 'true' : 'false', 'aria-label': (on ? 'Stop watching ' : 'Watch ') + ipo.name, onclick: (ev) => { ev.stopPropagation(); toggleWatch(ipo.id); } }, on ? '★ Watching' : '☆ Watch');
+  }
+  function dueText(ipo) {
+    const dc = daysFrom(ipo.close_date), dl = daysFrom(ipo.listing_date), dopen = daysFrom(ipo.open_date);
+    if (ipo.status === 'listed') return { t: 'Listed ' + dshort(ipo.listing_date), cls: '' };
+    if (ipo.status === 'upcoming') return { t: dopen === 0 ? 'Bidding opens today' : dopen !== null && dopen > 0 ? 'Opens ' + dshort(ipo.open_date) + ' (in ' + dopen + ' day' + (dopen > 1 ? 's' : '') + ')' : 'Opens ' + dshort(ipo.open_date), cls: '' };
+    if (ipo.status === 'open') { if (dc === 0) return { t: 'Last bidding day: closes today', cls: 'today' }; if (dc === 1) return { t: 'Bids close tomorrow', cls: 'today' }; if (dc !== null) return { t: 'Bids close ' + dshort(ipo.close_date) + ' (in ' + dc + ' days)', cls: '' }; return { t: 'Bidding open', cls: '' }; }
+    if (dl === 0) return { t: 'Lists today', cls: 'today' }; if (dl === 1) return { t: 'Lists tomorrow', cls: 'today' };
+    return { t: 'Bids closed; lists ' + dshort(ipo.listing_date), cls: '' };
+  }
+  function renderWatchlist() {
+    const host = $('#watchlist'); if (!host) return; host.replaceChildren();
+    const rows = SCORED.filter(r => WATCH.has(r.ipo.id)).sort((a, b) => ((a.ipo.close_date || a.ipo.listing_date || '9999') < (b.ipo.close_date || b.ipo.listing_date || '9999') ? -1 : 1));
+    if (!rows.length) { host.append(el('p', { class: 'muted small', text: 'Nothing starred yet. Tap ☆ Watch on any IPO in the pipeline.' })); return; }
+    for (const r of rows) {
+      const ipo = r.eff, s = r.score, due = dueText(ipo);
+      const row = el('div', { class: 'watch-row' });
+      row.append(el('span', { class: 'n', text: ipo.name }));
+      if (s && s.p_up !== null && ipo.status !== 'listed') row.append(el('span', { class: 'verdict ' + s.verdict.tier, text: s.verdict.label }), el('span', { class: 'small num ink2', text: pct0(s.p_up) + ' chance' }));
+      row.append(el('span', { class: 'due ' + due.cls, text: due.t }));
+      row.append(el('span', { class: 'spacer' }));
+      row.append(el('button', { class: 'btn small', type: 'button', id: 'wgo-' + ipo.id, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } }, 'Open'));
+      row.append(starButton(ipo));
+      host.append(row);
+    }
+  }
   function computeAll() {
     SCORED = LIVE.ipos.map(ipo => {
       const eff = effectiveIpo(ipo);
@@ -168,7 +199,7 @@
   const ORDER = { apply: 0, lean: 1, coinflip: 2, watch: 3, avoid: 4, nodata: 5 };
   const STATUS_ORDER = { open: 0, closed: 1, upcoming: 2, listed: 3 };
   function visible() {
-    let rows = SCORED.filter(r => (state.board === 'all' || r.ipo.board === state.board) && (state.status === 'all' || (state.status === 'active' ? r.ipo.status !== 'listed' : r.ipo.status === state.status)));
+    let rows = SCORED.filter(r => (state.board === 'all' || r.ipo.board === state.board) && (state.status === 'all' || (state.status === 'active' ? r.ipo.status !== 'listed' : state.status === 'watch' ? WATCH.has(r.ipo.id) : r.ipo.status === state.status)));
     if (state.hideNodata) rows = rows.filter(r => !(r.score && r.score.verdict.tier === 'nodata') || r.ipo.status === 'listed');
     const key = {
       verdict: r => [STATUS_ORDER[r.ipo.status] ?? 9, r.score ? ORDER[r.score.verdict.tier] : 9, -(r.score && r.score.ev.ev !== null ? r.score.ev.ev : -1e9)],
@@ -226,7 +257,8 @@
       const chips = el('div', { class: 'chips' },
         el('span', { class: 'chip board-' + ipo.board, text: ipo.board === 'sme' ? 'SME' : 'Mainboard' }),
         el('span', { class: 'chip st-' + ipo.status, text: ({ open: 'Open', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[ipo.status] || ipo.status }),
-        r.edited ? el('span', { class: 'chip', text: 'what-if' }) : null);
+        r.edited ? el('span', { class: 'chip', text: 'what-if' }) : null,
+        ipo.status !== 'listed' ? starButton(ipo) : null);
       name.append(chips);
       const dl = [];
       if (ipo.open_date || ipo.close_date) dl.push('Bids ' + dshort(ipo.open_date) + '–' + dshort(ipo.close_date));
@@ -696,15 +728,17 @@
     return out.join('\n');
   }
   function renderSettings() {
-    const sel = $('#s-schedule'), chk = $('#s-notify'), note = $('#s-note');
+    const sel = $('#s-schedule'), chk = $('#s-notify'), note = $('#s-note'), rem = $('#s-reminder');
     if (!sel) return;
-    if (!N) { sel.disabled = true; chk.disabled = true; if (!note.textContent) note.textContent = 'Background refresh and notifications work in the Android app; this page shows the snapshot it was built with.'; return; }
-    if (STATUS) { sel.value = String(STATUS.schedule_hours || 0); chk.checked = !!STATUS.notify; if (!note.textContent) note.textContent = 'App version ' + (STATUS.version || '?') + (STATUS.downloaded_at ? ' · last download ' + fmtTime(STATUS.downloaded_at) : ''); }
+    if (!N) { sel.disabled = true; chk.disabled = true; if (rem) rem.disabled = true; if (!note.textContent) note.textContent = 'Background refresh and notifications work in the Android app; this page shows the snapshot it was built with.'; return; }
+    if (STATUS) { sel.value = String(STATUS.schedule_hours || 0); chk.checked = !!STATUS.notify; if (rem) rem.value = String(STATUS.reminder_hour === undefined || STATUS.reminder_hour === null ? -1 : STATUS.reminder_hour); if (!note.textContent) note.textContent = 'App version ' + (STATUS.version || '?') + (STATUS.downloaded_at ? ' · last download ' + fmtTime(STATUS.downloaded_at) : ''); }
   }
   function bindSettings() {
     const sel = $('#s-schedule'), chk = $('#s-notify');
     if (sel) sel.addEventListener('change', () => { if (N) { try { N.setSchedule(Number(sel.value) || 0); } catch (e) { /* ignore */ } } });
     if (chk) chk.addEventListener('change', () => { if (N) { try { N.setNotify(!!chk.checked); } catch (e) { /* ignore */ } } });
+    const rem = $('#s-reminder');
+    if (rem) rem.addEventListener('change', () => { if (N) { try { N.setReminderHour(Number(rem.value)); } catch (e) { /* ignore */ } } });
     const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
     if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
     if (b2) b2.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText()));
@@ -743,6 +777,7 @@
       if (s.gain) m.append(el('span', null, 'Middle gain ', el('b', { class: 'num', text: pct(s.gain.p50, 0) })));
       if (s.ev.ev !== null && s.ev.ev !== undefined) m.append(el('span', null, 'Worth ', el('b', { class: 'num', text: inr(s.ev.ev, { plus: true }) })));
       m.append(el('span', null, ipo.status === 'open' ? 'Bids close ' + dshort(ipo.close_date) : 'Opens ' + dshort(ipo.open_date)));
+      m.append(el('span', { class: WATCH.has(ipo.id) ? 'warn' : 'muted', text: WATCH.has(ipo.id) ? '★ watching' : '' }));
       card.append(m);
       host.append(card);
     }
@@ -750,7 +785,7 @@
   }
 
   // ------------------------------------------------------------- wiring ---
-  function renderAll() { renderHead(); renderTiles(); renderToday(); renderTable(); renderPlanner(); }
+  function renderAll() { renderHead(); renderTiles(); renderToday(); renderWatchlist(); renderTable(); renderPlanner(); }
   function bindFilters() {
     for (const [id, key] of [['#f-board', 'board'], ['#f-status', 'status']]) {
       $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); renderTable(); });

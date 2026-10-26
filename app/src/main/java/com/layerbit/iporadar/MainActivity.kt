@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
         RefreshWorker.schedule(this, DataFeed.prefs(this).getInt(DataFeed.KEY_SCHEDULE_HOURS, 0))
+        ReminderWorker.schedule(this, ReminderWorker.hour(this))
         web.loadUrl(START)
     }
 
@@ -124,6 +125,8 @@ class MainActivity : AppCompatActivity() {
             .put("generated_at", p.getString(DataFeed.KEY_GENERATED_AT, "") ?: "")
             .put("schedule_hours", p.getInt(DataFeed.KEY_SCHEDULE_HOURS, 0))
             .put("notify", p.getBoolean(DataFeed.KEY_NOTIFY, false))
+            .put("reminder_hour", ReminderWorker.hour(this))
+            .put("watchlist", org.json.JSONArray(ReminderWorker.watchlist(this).toList()))
             .put("online", online())
             .put("refreshing", refreshing)
             .put("error", error ?: p.getString(DataFeed.KEY_LAST_ERROR, null))
@@ -186,13 +189,29 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { pushStatus(null) }
         }
 
+        @JavascriptInterface fun setWatchlist(idsJson: String) {
+            val clean = runCatching { val a = org.json.JSONArray(idsJson); org.json.JSONArray((0 until a.length()).map { a.getString(it) }).toString() }.getOrDefault("[]")
+            DataFeed.prefs(this@MainActivity).edit().putString(ReminderWorker.KEY_WATCH, clean).apply()
+        }
+
+        @JavascriptInterface fun setReminderHour(hour: Int) {
+            DataFeed.prefs(this@MainActivity).edit().putInt(ReminderWorker.KEY_HOUR, hour).apply()
+            ReminderWorker.schedule(this@MainActivity, hour)
+            if (hour >= 0) askNotificationPermission()
+            runOnUiThread { pushStatus(null) }
+        }
+
         @JavascriptInterface fun setNotify(on: Boolean) {
             DataFeed.prefs(this@MainActivity).edit().putBoolean(DataFeed.KEY_NOTIFY, on).apply()
-            if (on && Build.VERSION.SDK_INT >= 33 &&
-                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7) }
-            }
+            if (on) askNotificationPermission()
             runOnUiThread { pushStatus(null) }
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            runOnUiThread { ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7) }
         }
     }
 
