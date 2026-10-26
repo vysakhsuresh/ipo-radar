@@ -233,6 +233,10 @@ td.name .dates { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 .chip.st-listed { background: var(--surface-2); }
 .star { background: transparent; border: 1px solid var(--hair-2); border-radius: 999px; padding: 1px 8px; font-size: 11px; cursor: pointer; color: var(--ink-2); font-weight: 500; }
 .star[aria-pressed="true"] { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.star.share { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-ink); border-color: var(--accent-soft); background: var(--accent-soft); }
+.star.share svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.star.share:disabled { opacity: .6; }
+.share-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; cursor: default; }
 .watch-list { display: grid; gap: 6px; }
 .watch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); }
 .watch-row .n { font-weight: 600; min-width: 0; }
@@ -530,7 +534,7 @@ table.data th { color: var(--muted); font-weight: 500; }
       <div class="row"><label for="s-reminder">Watchlist reminder on the last bidding day</label>
         <select id="s-reminder"><option value="-1">Off</option><option value="9">9:00 am</option><option value="10">10:00 am</option><option value="12">12:00 noon</option><option value="14">2:00 pm</option><option value="16">4:00 pm (bids close at 5)</option></select></div>
       <div class="row hint" id="s-note"></div>
-      <div class="share-row"><button type="button" class="btn small" id="share-shortlist">Share today's shortlist</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
+      <div class="share-row"><button type="button" class="btn small primary" id="share-shortlist-img">Share today's shortlist as an image</button><button type="button" class="btn small" id="share-shortlist">Share shortlist as text</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
     </div>
     <div class="sec-head" style="margin-top:8px" id="glossary"><h2>Words used in this app</h2><p>Every term, in plain words. The same text opens when you tap an underlined word anywhere in the app.</p></div>
     <div class="panel"><div id="glossary-body"></div></div>

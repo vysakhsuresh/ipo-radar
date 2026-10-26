@@ -31,9 +31,9 @@ import traceback
 from datetime import date
 from typing import Any, Callable
 
-from fetch.common import Http, Provenance, dump_json, load_json, now_iso, today as today_iso
+from fetch.common import Http, Provenance, dump_json, load_json, now_iso, slugify, today as today_iso
 from fetch.normalize import (canonical_row, finalise_row, merge, derive_status, accrue_gmp_history,
-                             subscription_day, quality_flags, within_days, strip_empty_groups, is_junk)
+                             subscription_day, quality_flags, within_days, strip_empty_groups, is_junk, clean_name, year_for)
 from fetch.sources import chittorgarh, investorgain, market, nse
 from fetch import history as history_mod
 
@@ -59,6 +59,20 @@ def default_sources() -> list[tuple[str, SourceFn]]:
         ("chittorgarh_tracker", lambda http, today: chittorgarh.fetch_trackers(http, chittorgarh.tracker_years(today), today)),
         ("investorgain", investorgain.fetch),
     ]
+
+
+def canonical_pool(rows: list[dict], today: date) -> dict[str, dict]:
+    """Key stored rows by the id their cleaned name gives today, merging rows that an older
+    id rule kept apart ('Foo & Bar' next to 'Foo and Bar Ltd. (Foo and Bar IPO)')."""
+    pool: dict[str, dict] = {}
+    for r in rows:
+        if not r.get("id"):
+            continue
+        name = clean_name(r.get("name") or r["id"])
+        nid = slugify(name, year_for(r, today)) if name else r["id"]
+        row = dict(r, id=nid, name=name or r.get("name"))
+        pool[nid] = merge(pool[nid], row) if nid in pool else row
+    return pool
 
 
 def combine(prev: dict, partials: list[tuple[str, dict]]) -> dict:
@@ -96,7 +110,7 @@ def refresh(out_dir: str, today: date, *, cache: bool = True, sources: list[tupl
     ipos_path, hist_path = os.path.join(out_dir, "ipos.json"), os.path.join(out_dir, "history.json")
     prev = load_json(ipos_path, {"generated_at": None, "market": {}, "sources": [], "ipos": []}) or {}
     hist = load_json(hist_path, {"generated_at": None, "rows": []}) or {}
-    pool: dict[str, dict] = {r["id"]: r for r in prev.get("ipos", []) if r.get("id")}
+    pool: dict[str, dict] = canonical_pool(prev.get("ipos", []), today)
     summary: dict[str, Any] = {"today": today.isoformat(), "sources": {}}
 
     # ---- market backdrop

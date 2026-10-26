@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
@@ -159,13 +160,29 @@ def num(s: Any) -> float | None:
         return None
 
 
+_PAREN_RE = re.compile(r"\(([^)]*)\)")
+_PAREN_DROP_RE = re.compile(r"\b(ipo|fpo|sme|parent|mainboard)\b", re.IGNORECASE)
+_ID_SUFFIXES = ("-limited", "-ltd", "-ipo", "-fpo", "-pvt", "-private", "-sme", "-and")
+
+
 def slugify(name: str, year: str | int | None = None) -> str:
-    base = "".join(c.lower() if c.isalnum() else "-" for c in name).strip("-")
+    """'Bombay Coated & Special Steels', 'Bombay Coated and Special Steels Limited' and
+    'Bombay Coated and Special Steels Ltd. (Bombay Coated and Special Steels IPO)' all key
+    to 'bombay-coated-and-special-steels'. A parenthetical that names the issue again
+    ('(Foo IPO)', '(Snapdeal parent)') is dropped; one that is part of the name ('(India)') stays."""
+    t = str(name or "")
+    t = _PAREN_RE.sub(lambda m: "" if _PAREN_DROP_RE.search(m.group(1)) else " " + m.group(1) + " ", t)
+    t = t.replace("&", " and ")
+    base = "".join(c.lower() if c.isalnum() else "-" for c in t).strip("-")
     while "--" in base:
         base = base.replace("--", "-")
-    for suffix in ("-limited", "-ltd", "-ipo"):
-        if base.endswith(suffix):
-            base = base[: -len(suffix)]
+    changed = True
+    while changed:
+        changed = False
+        for suffix in _ID_SUFFIXES:
+            if base.endswith(suffix) and len(base) > len(suffix):
+                base = base[: -len(suffix)]
+                changed = True
     return f"{base}-{year}" if year else base
 
 

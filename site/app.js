@@ -305,7 +305,8 @@
         el('span', { class: 'chip board-' + ipo.board, text: ipo.board === 'sme' ? 'SME' : 'Mainboard' }),
         el('span', { class: 'chip st-' + ipo.status, text: ({ open: 'Open', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[ipo.status] || ipo.status }),
         r.edited ? el('span', { class: 'chip', text: 'what-if' }) : null,
-        ipo.status !== 'listed' ? starButton(ipo) : null);
+        ipo.status !== 'listed' ? starButton(ipo) : null,
+        cardButton(r));
       name.append(chips);
       const dl = [];
       if (ipo.open_date || ipo.close_date) dl.push('Bids ' + dshort(ipo.open_date) + '–' + dshort(ipo.close_date));
@@ -468,7 +469,8 @@
       computeAll(); keepFocus(renderAll);
     } }, 'Recompute'));
     btns.append(el('button', { class: 'btn small', type: 'button', id: 'wi-reset-' + ipo.id, onclick: () => { delete state.edits[ipo.id]; computeAll(); keepFocus(renderAll); } }, 'Reset'));
-    btns.append(el('button', { class: 'btn small', type: 'button', id: 'share-' + ipo.id, onclick: () => shareText(readText(r), ipo.name + ' · IPO Radar') }, 'Share this read'));
+    btns.append(el('button', { class: 'btn small', type: 'button', id: 'share-' + ipo.id, onclick: () => shareIpoCard(r) }, 'Share as image'));
+    btns.append(el('button', { class: 'btn small', type: 'button', id: 'sharet-' + ipo.id, onclick: () => shareText(readText(r), ipo.name + ' · IPO Radar') }, 'Share as text'));
     c3.append(btns);
     c3.append(el('p', { class: 'small muted', text: 'Type today’s premium or the latest demand figures and the row above updates. Edits live only on this device.' }));
     d.append(c3);
@@ -804,6 +806,7 @@
     const rem = $('#s-reminder');
     if (rem) rem.addEventListener('change', () => { if (N) { try { N.setReminderHour(Number(rem.value)); } catch (e) { /* ignore */ } } });
     const sr = $('#s-refresh'); if (sr) sr.addEventListener('click', doRefresh);
+    const b0 = $('#share-shortlist-img'); if (b0) b0.addEventListener('click', shareShortlistCard);
     const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
     if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
     if (b2) b2.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText()));
@@ -819,6 +822,203 @@
     try { if (location.hash.replace('#', '') !== name) history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed */ }
     store('screen', name);
     if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
+  }
+  // ------------------------------------------------------------ share cards ---
+  // Draws an IPO (or the shortlist) as a 1080x1350 PNG in the app's own typography,
+  // for WhatsApp, Instagram and any other share target. Pure canvas, no libraries.
+  const CARD = { w: 1080, h: 1350, pad: 64 };
+  const CPAL = { bg: '#f4f6f4', surface: '#ffffff', ink: '#15191b', ink2: '#45504e', muted: '#7a8683', hair: '#e2e7e5', accent: '#0b6e6d', accentSoft: '#d8eeec', good: '#1f7a3a', goodSoft: '#dff3e4', warn: '#8a5a0b', warnSoft: '#fdf0d0', crit: '#b4292b', critSoft: '#fbe3e3', amber: '#fab219' };
+  const VCOL = { apply: ['good', 'goodSoft'], lean: ['good', 'goodSoft'], coinflip: ['warn', 'warnSoft'], avoid: ['crit', 'critSoft'], watch: ['ink2', 'hair'], nodata: ['muted', 'hair'] };
+  function cFont(px, weight, mono) { return (weight || 400) + ' ' + px + 'px ' + (mono ? '"Fira Code", monospace' : '"Space Grotesk", sans-serif'); }
+  function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function wrapText(c, text, x, y, maxW, lh, maxLines) {
+    const words = String(text).split(/\s+/); let line = '', n = 0;
+    for (let i = 0; i < words.length; i++) {
+      const t = line ? line + ' ' + words[i] : words[i];
+      if (c.measureText(t).width > maxW && line) {
+        if (maxLines && n === maxLines - 1) { let cut = line; while (c.measureText(cut + '…').width > maxW && cut.length) cut = cut.slice(0, -1); c.fillText(cut + '…', x, y); return y + lh; }
+        c.fillText(line, x, y); y += lh; n++; line = words[i];
+      } else line = t;
+    }
+    if (line) { c.fillText(line, x, y); y += lh; }
+    return y;
+  }
+  function pill(c, x, y, text, fg, bg, px) {
+    c.font = cFont(px || 30, 600); const w = c.measureText(text).width + 44, h = (px || 30) * 1.7;
+    c.fillStyle = bg; roundRect(c, x, y, w, h, h / 2); c.fill();
+    c.fillStyle = fg; c.textBaseline = 'middle'; c.fillText(text, x + 22, y + h / 2 + 1); c.textBaseline = 'alphabetic';
+    return w;
+  }
+  function brandImage() {
+    const svg = document.querySelector('.brand .mark'); if (!svg) return Promise.resolve(null);
+    return new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); let src = svg.outerHTML; if (!/xmlns=/.test(src)) src = src.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); });
+  }
+  function cardHeader(c, logo, title) {
+    c.fillStyle = CPAL.bg; c.fillRect(0, 0, CARD.w, CARD.h);
+    const p = CARD.pad;
+    if (logo) c.drawImage(logo, p, 56, 76, 76);
+    c.fillStyle = CPAL.ink; c.font = cFont(40, 700); c.fillText('IPO Radar', p + 96, 92);
+    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); c.fillText(title || 'INDIA · LISTING-DAY GAINS', p + 96, 126);
+    const asof = 'Data as of ' + (LIVE.generated_at ? new Date(LIVE.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'unknown');
+    c.textAlign = 'right'; c.fillStyle = CPAL.ink2; c.font = cFont(24, 500); c.fillText(asof, CARD.w - p, 100); c.textAlign = 'left';
+  }
+  function cardFooter(c) {
+    const p = CARD.pad, y = CARD.h - 92;
+    c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.beginPath(); c.moveTo(p, y - 34); c.lineTo(CARD.w - p, y - 34); c.stroke();
+    c.fillStyle = CPAL.muted; c.font = cFont(22, 400);
+    wrapText(c, 'Not investment advice. Chances come from a model on past listings; the premium is unofficial. Apply only with money that can stay blocked.', p, y, CARD.w - 2 * p, 30, 2);
+    c.textAlign = 'right'; c.fillStyle = CPAL.ink2; c.font = cFont(22, 600); c.fillText('IPO Radar · a Layerbit tool', CARD.w - p, CARD.h - 24); c.textAlign = 'left';
+  }
+  function statBox(c, x, y, w, h, label, value, sub, valueColor, mono) {
+    c.fillStyle = CPAL.surface; roundRect(c, x, y, w, h, 18); c.fill(); c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.stroke();
+    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); wrapText(c, label.toUpperCase(), x + 26, y + 44, w - 52, 26, 1);
+    if (value === '–' || value === '-') { c.fillStyle = CPAL.muted; c.font = cFont(40, 400); c.fillText('not yet', x + 26, y + 106); }
+    else { c.fillStyle = valueColor || CPAL.ink; c.font = cFont(58, 700, mono); c.fillText(value, x + 26, y + 112); }
+    if (sub) { c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); wrapText(c, sub, x + 26, y + 150, w - 52, 28, 2); }
+  }
+  async function drawIpoCard(r) {
+    const ipo = r.eff, s = r.score, sub = ipo.subscription || {};
+    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
+    try { await document.fonts.load(cFont(40, 700)); await document.fonts.load(cFont(40, 400, true)); } catch (e) { /* draw with fallbacks */ }
+    const logo = await brandImage();
+    cardHeader(c, logo);
+    const p = CARD.pad; let y = 220;
+    // name + chips
+    c.fillStyle = CPAL.ink; c.font = cFont(52, 700); y = wrapText(c, ipo.name, p, y, CARD.w - 2 * p, 60, 2) + 8;
+    let cx = p;
+    cx += pill(c, cx, y, ipo.board === 'sme' ? 'SME' : 'Mainboard', CPAL.ink2, CPAL.hair, 26) + 14;
+    const stLab = ({ open: 'Bidding open', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[ipo.status] || ipo.status;
+    cx += pill(c, cx, y, stLab, ipo.status === 'open' ? CPAL.accent : CPAL.ink2, ipo.status === 'open' ? CPAL.accentSoft : CPAL.hair, 26) + 14;
+    y += 70;
+    const dl = [];
+    if (ipo.open_date || ipo.close_date) dl.push('Bids ' + dshort(ipo.open_date) + ' to ' + dshort(ipo.close_date));
+    if (ipo.listing_date) dl.push('lists ' + dshort(ipo.listing_date));
+    if (ipo.issue_price && ipo.lot_size) dl.push('₹' + ipo.issue_price + ' × ' + ipo.lot_size + ' = ' + inr(s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : ipo.issue_price * ipo.lot_size) + (s && s.ev && s.ev.min_lots > 1 ? ' (' + s.ev.min_lots + ' lots minimum)' : ' a lot'));
+    c.fillStyle = CPAL.ink2; c.font = cFont(26, 400); y = wrapText(c, dl.join('  ·  '), p, y, CARD.w - 2 * p, 34, 2) + 10;
+    // verdict band
+    if (s && ipo.status !== 'listed') {
+      const [fg, bg] = VCOL[s.verdict.tier] || VCOL.nodata;
+      c.fillStyle = CPAL[bg]; roundRect(c, p, y, CARD.w - 2 * p, 112, 20); c.fill();
+      c.fillStyle = CPAL[fg]; c.beginPath(); c.arc(p + 44, y + 56, 14, 0, Math.PI * 2); c.fill();
+      c.font = cFont(46, 700); c.fillText(s.verdict.label, p + 78, y + 72);
+      if (s.verdict.gamble) { c.textAlign = 'right'; c.font = cFont(30, 600); c.fillText(s.verdict.gamble === 'sure' ? 'Sure gamble' : 'Possible gamble', CARD.w - p - 30, y + 68); c.textAlign = 'left'; }
+      y += 136;
+    } else if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined) {
+      const up = ipo.listing.gain_pct > 0;
+      c.fillStyle = up ? CPAL.goodSoft : CPAL.critSoft; roundRect(c, p, y, CARD.w - 2 * p, 112, 20); c.fill();
+      c.fillStyle = up ? CPAL.good : CPAL.crit; c.font = cFont(46, 700); c.fillText('Listed ' + pct(ipo.listing.gain_pct, 1), p + 30, y + 72);
+      y += 136;
+    }
+    // four stats
+    const g = s && s.flags.includes('gmp_unquoted') ? null : S.gmpPctOf(ipo);
+    const bw = (CARD.w - 2 * p - 24) / 2, bh = 196;
+    const pUp = s && s.p_up !== null && s.p_up !== undefined ? s.p_up : null;
+    statBox(c, p, y, bw, bh, 'Chance of a listing gain', pUp === null ? '–' : pct0(pUp), pUp === null ? 'not enough data yet' : oddsText(pUp), pUp === null ? CPAL.muted : pUp >= 0.7 ? CPAL.good : pUp >= 0.5 ? CPAL.warn : CPAL.crit, true);
+    statBox(c, p + bw + 24, y, bw, bh, 'Unofficial premium (GMP)', g === null ? (s && s.flags.includes('gmp_unquoted') ? 'none' : '–') : pct(g, 1), g === null ? 'no grey-market quote' : (ipo.gmp && ipo.gmp.rs !== null && ipo.gmp.rs !== undefined ? '₹' + ipo.gmp.rs + ' a share' + (ipo.gmp.as_of ? ' · ' + dshort(ipo.gmp.as_of) : '') : ''), g === null ? CPAL.muted : g > 0 ? CPAL.good : CPAL.crit, true);
+    y += bh + 24;
+    const al = s && s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined ? s.allotment.p_min_lot : null;
+    statBox(c, p, y, bw, bh, 'Chance of getting shares', al === null ? '–' : al >= 0.999 ? 'Full' : '1 in ' + (1 / al).toFixed(1 / al >= 10 ? 0 : 1), al === null ? (ipo.status === 'upcoming' ? 'known once bidding starts' : 'no demand figures') : al >= 0.999 ? 'everyone who applies gets shares' : 'retail bid ' + x(sub.retail) + ' the shares on offer', CPAL.ink, true);
+    const ev = s && s.ev && s.ev.ev !== null && s.ev.ev !== undefined && ipo.status !== 'listed' ? s.ev.ev : null;
+    const invC = s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : (ipo.issue_price && ipo.lot_size ? ipo.issue_price * ipo.lot_size : null);
+    if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined && invC) {
+      const gl = invC * ipo.listing.gain_pct / 100;
+      statBox(c, p + bw + 24, y, bw, bh, 'Gain on one lot, listing day', inr(gl, { plus: true }), 'before charges and tax, on ' + inr(invC) + ' invested', gl > 0 ? CPAL.good : CPAL.crit, true);
+    } else if (ev !== null) {
+      statBox(c, p + bw + 24, y, bw, bh, 'Worth per application', inr(ev, { plus: true }), 'on average, after charges and tax' + (s.ev.ev_if_allotted !== null && s.ev.ev_if_allotted !== undefined ? '; ' + inr(s.ev.ev_if_allotted, { plus: true }) + ' if you get shares' : ''), ev > 0 ? CPAL.good : CPAL.crit, true);
+    } else if (s && s.gain && invC && ipo.status !== 'listed') {
+      const res = S.netProfitOnSale(invC, invC * (1 + s.gain.mean / 100), state.costs);
+      statBox(c, p + bw + 24, y, bw, bh, 'Profit if you get shares', inr(res.net, { plus: true }), 'after charges and tax; odds of shares unknown until bidding', res.net > 0 ? CPAL.good : CPAL.crit, true);
+    } else statBox(c, p + bw + 24, y, bw, bh, 'Worth per application', '–', 'needs a price, a lot size and a read', CPAL.muted, true);
+    y += bh + 28;
+    // demand + likely gain
+    const hasSub = ['qib', 'nii', 'retail'].some(k => sub[k] !== null && sub[k] !== undefined);
+    const half = (CARD.w - 2 * p - 24) / 2;
+    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); c.fillText('DEMAND, TIMES SUBSCRIBED', p, y); c.fillText('LIKELY GAIN, WORST TO BEST', p + half + 24, y);
+    let yy = y + 26;
+    if (hasSub) {
+      const max = Math.max(1, ...['qib', 'nii', 'retail'].map(k => Number(sub[k]) || 0));
+      const scale = v => Math.min(1, Math.log1p(v) / Math.log1p(Math.max(max, 10)));
+      for (const [k, lab] of [['qib', 'Institutions'], ['nii', 'Wealthy'], ['retail', 'Retail']]) {
+        const v = sub[k] === null || sub[k] === undefined ? null : Number(sub[k]);
+        c.fillStyle = CPAL.ink2; c.font = cFont(24, 400); c.fillText(lab, p, yy + 22);
+        c.fillStyle = CPAL.hair; roundRect(c, p + 150, yy + 6, half - 150 - 96, 18, 9); c.fill();
+        if (v !== null) { c.fillStyle = '#3987e5'; roundRect(c, p + 150, yy + 6, Math.max(6, (half - 150 - 96) * scale(v)), 18, 9); c.fill(); }
+        c.fillStyle = CPAL.ink; c.font = cFont(24, 500, true); c.textAlign = 'right'; c.fillText(x(v), p + half, yy + 22); c.textAlign = 'left';
+        yy += 40;
+      }
+      c.fillStyle = CPAL.muted; c.font = cFont(22, 400); c.fillText('overall ' + x(sub.total) + (ipo.status === 'closed' || ipo.status === 'listed' ? ', final' : ', so far'), p, yy + 18);
+    } else { c.fillStyle = CPAL.muted; c.font = cFont(24, 400); c.fillText(ipo.status === 'upcoming' ? 'Bidding has not opened yet' : 'No demand figures captured', p, yy + 22); }
+    const gx = p + half + 24;
+    if (s && s.gain && ipo.status !== 'listed') {
+      const lo = -30, hi = 90, tw = half, cxv = v => gx + Math.max(0, Math.min(1, (v - lo) / (hi - lo))) * tw;
+      c.fillStyle = CPAL.hair; roundRect(c, gx, yy + 20, tw, 16, 8); c.fill();
+      c.fillStyle = CPAL.accentSoft; roundRect(c, cxv(s.gain.p10), yy + 14, Math.max(8, cxv(s.gain.p90) - cxv(s.gain.p10)), 28, 8); c.fill();
+      c.fillStyle = CPAL.accent; c.fillRect(cxv(s.gain.p50) - 3, yy + 8, 6, 40);
+      c.strokeStyle = CPAL.muted; c.lineWidth = 2; c.beginPath(); c.moveTo(cxv(0), yy + 4); c.lineTo(cxv(0), yy + 52); c.stroke();
+      c.fillStyle = CPAL.ink2; c.font = cFont(24, 500, true); c.fillText(pct(s.gain.p10, 0), gx, yy + 86); c.textAlign = 'right'; c.fillText(pct(s.gain.p90, 0), gx + tw, yy + 86); c.textAlign = 'center'; c.fillStyle = CPAL.ink; c.font = cFont(26, 700, true); c.fillText(pct(s.gain.p50, 0) + ' middle', (gx + gx + tw) / 2, yy + 86); c.textAlign = 'left';
+    } else if (ipo.status === 'listed' && ipo.listing) {
+      c.fillStyle = CPAL.ink; c.font = cFont(28, 600, true); c.fillText('open ' + (ipo.listing.open ? '₹' + ipo.listing.open : '–') + '  ·  close ' + (ipo.listing.close ? '₹' + ipo.listing.close : '–'), gx, yy + 26);
+      if (s && s.gain) { c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); c.fillText('model range was ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0), gx, yy + 64); }
+    } else { c.fillStyle = CPAL.muted; c.font = cFont(24, 400); c.fillText('no read yet', gx, yy + 22); }
+    y = yy + 150;
+    // why: up to two warnings, then reasons
+    if (s) {
+      const lines = s.verdict.warnings.slice(0, 2).map(w => ['⚠', w]).concat(s.verdict.reasons.slice(0, 3 - Math.min(2, s.verdict.warnings.length)).map(w => ['•', w]));
+      c.font = cFont(25, 400);
+      for (const [m, t] of lines) { if (y > CARD.h - 150) break; c.fillStyle = m === '⚠' ? CPAL.crit : CPAL.ink2; c.fillText(m, p, y); y = wrapText(c, t, p + 36, y, CARD.w - 2 * p - 36, 32, 2) + 6; }
+    }
+    cardFooter(c);
+    return cv;
+  }
+  async function drawShortlistCard() {
+    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
+      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up)).slice(0, 7);
+    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
+    try { await document.fonts.load(cFont(40, 700)); await document.fonts.load(cFont(40, 400, true)); } catch (e) { /* fallbacks */ }
+    const logo = await brandImage();
+    cardHeader(c, logo, 'TODAY’S SHORTLIST');
+    const p = CARD.pad; let y = 206;
+    c.fillStyle = CPAL.ink; c.font = cFont(48, 700); c.fillText('Open and upcoming IPOs, best first', p, y); y += 24;
+    c.fillStyle = CPAL.ink2; c.font = cFont(25, 400); y = wrapText(c, 'Chance = how many of ten IPOs like it ended listing day above the issue price. Worth = average profit per application after charges and tax, counting the odds of getting no shares.', p, y + 26, CARD.w - 2 * p, 32, 3) + 14;
+    if (!rows.length) { c.fillStyle = CPAL.muted; c.font = cFont(30, 400); c.fillText('Nothing open or upcoming has a usable read right now.', p, y + 40); }
+    const rh = 118;
+    for (const r of rows) {
+      const s = r.score, ipo = r.eff;
+      c.fillStyle = CPAL.surface; roundRect(c, p, y, CARD.w - 2 * p, rh - 14, 18); c.fill(); c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.stroke();
+      c.fillStyle = CPAL.ink; c.font = cFont(30, 700); wrapText(c, ipo.name + (ipo.board === 'sme' ? '  (SME)' : ''), p + 26, y + 42, 560, 34, 1);
+      c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); c.fillText((ipo.status === 'open' ? 'Bids close ' + dshort(ipo.close_date) : 'Opens ' + dshort(ipo.open_date)) + '  ·  chance ' + pct0(s.p_up) + (s.ev.ev !== null && s.ev.ev !== undefined ? '  ·  worth ' + inr(s.ev.ev, { plus: true }) : ''), p + 26, y + 80);
+      const [fg, bg] = VCOL[s.verdict.tier] || VCOL.nodata;
+      c.font = cFont(26, 600); const pw = c.measureText(s.verdict.label).width + 44;
+      pill(c, CARD.w - p - pw - 24, y + 22, s.verdict.label, CPAL[fg], CPAL[bg], 26);
+      if (s.verdict.gamble) { c.textAlign = 'right'; c.fillStyle = s.verdict.gamble === 'sure' ? CPAL.crit : CPAL.warn; c.font = cFont(21, 600); c.fillText(s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble', CARD.w - p - 24, y + 92); c.textAlign = 'left'; }
+      y += rh; if (y > CARD.h - 220) break;
+    }
+    cardFooter(c);
+    return cv;
+  }
+  function canvasPng(cv) { return cv.toDataURL('image/png'); }
+  function shareImage(name, dataUrl, caption) {
+    if (N && typeof N.shareImage === 'function') { try { N.shareImage(name, dataUrl, caption); return; } catch (e) { /* fall through */ } }
+    try {
+      const bin = atob(dataUrl.split(',')[1]); const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const f = new File([arr], name, { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name, text: caption }).catch(() => {}); return; }
+      const a = document.createElement('a'); a.href = dataUrl; a.download = name; document.body.append(a); a.click(); a.remove(); alertNote('Card saved as ' + name);
+    } catch (e) { shareText(caption, name); }
+  }
+  async function shareIpoCard(r) {
+    const b = document.getElementById('shc-' + r.ipo.id); if (b) b.disabled = true;
+    try { const cv = await drawIpoCard(r); shareImage(r.eff.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-ipo-radar.png', canvasPng(cv), readText(r)); }
+    catch (e) { shareText(readText(r), r.eff.name); }
+    if (b) b.disabled = false;
+  }
+  async function shareShortlistCard() {
+    try { const cv = await drawShortlistCard(); shareImage('ipo-radar-shortlist-' + (LIVE.generated_at || '').slice(0, 10) + '.png', canvasPng(cv), shortlistText()); }
+    catch (e) { shareText(shortlistText(), 'IPO Radar shortlist'); }
+  }
+  function cardButton(r) {
+    return el('button', { class: 'star share', type: 'button', id: 'shc-' + r.ipo.id, 'aria-label': 'Share ' + r.eff.name + ' as an image card', onclick: (ev) => { ev.stopPropagation(); shareIpoCard(r); } },
+      svgEl('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M7 8l5-5 5 5' })), ' Share card');
   }
   // ------------------------------------------------------------ dropdowns ---
   // The native <select> keeps the value and fires 'change' as before; what the
@@ -898,7 +1098,7 @@
       card.append(m);
       host.append(card);
     }
-    host.append(el('button', { class: 'pick', type: 'button', id: 'pick-share', style: 'justify-content:center;align-content:center;color:var(--accent-ink);font-weight:600', onclick: () => shareText(shortlistText(), 'IPO Radar shortlist') }, 'Share this shortlist'));
+    host.append(el('div', { class: 'pick share-pick' }, el('button', { class: 'btn primary', type: 'button', id: 'pick-share', onclick: shareShortlistCard }, 'Share shortlist as an image'), el('button', { class: 'btn', type: 'button', id: 'pick-share-text', onclick: () => shareText(shortlistText(), 'IPO Radar shortlist') }, 'Share as text')));
   }
 
   // ------------------------------------------------------------- wiring ---

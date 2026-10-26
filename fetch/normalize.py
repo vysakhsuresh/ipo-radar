@@ -184,7 +184,8 @@ def crore(s: Any) -> float | None:
 def clean_name(name: Any) -> str:
     """Strip the decorations sites add: 'Foo Ltd IPO', 'Foo (SME)', 'Foo SME IPO', 'Foo Open'.
     '&' becomes 'and' so the same issuer keys identically across sites."""
-    t = re.sub(r"\s+", " ", str(name or "")).strip().replace("&", " and ")
+    t = re.sub(r"\s+", " ", str(name or "")).strip().replace(" & ", " and ")
+    t = re.sub(r"\s*\([^)]*\b(ipo|fpo)\b[^)]*\)", "", t, flags=re.IGNORECASE)
     t = re.sub(r"\s+", " ", t)
     prev = None
     while prev != t:

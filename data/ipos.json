@@ -1964,9 +1964,9 @@
   },
   {
    "id": "acevector-2026",
-   "name": "AceVector Limited",
+   "name": "Acevector Ltd.",
    "board": "mainboard",
-   "exchange": "NSE",
+   "exchange": "NSE,BSE",
    "listing_date": "2026-10-05",
    "price_band_low": 32.0,
    "price_band_high": 32.0,
@@ -1974,22 +1974,35 @@
    "status": "listed",
    "min_lots": 1,
    "sources": {
-    "name": "https://www.nseindia.com/api/public-past-issues",
-    "board": "https://www.nseindia.com/api/public-past-issues",
-    "exchange": "https://www.nseindia.com/api/public-past-issues",
-    "listing_date": "https://www.nseindia.com/api/public-past-issues",
-    "price_band_low": "https://www.nseindia.com/api/public-past-issues",
-    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
-    "issue_price": "https://www.nseindia.com/api/public-past-issues",
+    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
+    "ref1": "https://www.ipoji.com/ipo-subscription/acevector-ipo",
+    "ref2": "https://www.ipopremium.in/view/ipo/1381/acevector-ltd",
+    "ref3": "https://groww.in/ipo/acevector-ipo",
+    "ref4": "https://www.inkl.com/news/snapdeal-parent-acevector-lists-at-12-discount",
+    "ref5": "https://upstox.com/ipo/acevector-limited-ipo/",
+    "ref6": "https://www.indiaipo.in/ipo-blogs/acevector-limited-ipo",
+    "ref7": "https://www.chittorgarh.com/ipo/snapdeal-ipo/2543/",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
    },
    "flags": [],
    "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
+    "history": [
+     {
+      "date": "2026-10-26",
+      "rs": 1.0
+     }
+    ],
+    "rs": 1,
+    "pct": 3.13,
+    "as_of": "2026-10-26"
    },
    "subscription": {
     "qib": 3.42,
@@ -1999,29 +2012,20 @@
     "retail": 4.83,
     "employee": null,
     "total": 5.07,
-    "as_of": "2026-09-29",
+    "as_of": "2026-10-26",
     "day": null
    },
    "listing": {
-    "open": null,
-    "close": 26.08,
+    "open": 28.32,
+    "close": 26.1,
     "high": null,
     "low": null,
-    "gain_pct": -18.5,
+    "gain_pct": -18.44,
     "gain_basis": "close"
-   }
-  },
-  {
-   "id": "acevector-snapdeal-parent-2026",
-   "name": "Acevector (Snapdeal parent)",
-   "board": "mainboard",
+   },
    "open_date": "2026-09-25",
    "close_date": "2026-09-29",
    "allotment_date": "2026-09-30",
-   "listing_date": "2026-10-05",
-   "price_band_low": 30,
-   "price_band_high": 32,
-   "issue_price": 32,
    "lot_size": 468,
    "issue_size_cr": 420,
    "fresh_issue_cr": 287,
@@ -2033,91 +2037,7 @@
     "Systematix Corporate Services"
    ],
    "notes": "Listing open 28.32 NSE / 28.30 BSE (-11.5%); close 26.10 on 5 Oct per inkl/agency report (single source). Quota QIB 75% / NII 15% / retail 10%. Subscription 5.07x per ipoji final; others 4.93x at evening 29 Sep. Lead-manager list may be incomplete (snippet truncated). Pre-listing GMP ~1 (est. listing 33). Anchor bid date 24 Sep; amount not found. P/E n/a (loss-making not confirmed).",
-   "gmp": {
-    "rs": 1,
-    "pct": 3.13,
-    "as_of": "2026-10-26",
-    "history": [
-     {
-      "date": "2026-10-26",
-      "rs": 1.0
-     }
-    ]
-   },
-   "subscription": {
-    "qib": 3.42,
-    "nii": 8.53,
-    "retail": 4.83,
-    "total": 5.07,
-    "as_of": "2026-10-26",
-    "bnii": null,
-    "snii": null,
-    "employee": null,
-    "day": null
-   },
-   "listing": {
-    "open": 28.32,
-    "close": 26.1,
-    "high": null,
-    "low": null,
-    "gain_pct": -18.44,
-    "gain_basis": "close"
-   },
-   "status": "listed",
-   "min_lots": 1,
-   "min_investment": 14976,
-   "sources": {
-    "ref1": "https://www.ipoji.com/ipo-subscription/acevector-ipo",
-    "ref2": "https://www.ipopremium.in/view/ipo/1381/acevector-ltd",
-    "ref3": "https://groww.in/ipo/acevector-ipo",
-    "ref4": "https://www.inkl.com/news/snapdeal-parent-acevector-lists-at-12-discount",
-    "ref5": "https://upstox.com/ipo/acevector-limited-ipo/",
-    "ref6": "https://www.indiaipo.in/ipo-blogs/acevector-limited-ipo",
-    "ref7": "https://www.chittorgarh.com/ipo/snapdeal-ipo/2543/"
-   },
-   "flags": []
-  },
-  {
-   "id": "acevector-ltd-snapdeal-2026",
-   "name": "Acevector Ltd. (Snapdeal IPO)",
-   "board": "mainboard",
-   "exchange": "NSE,BSE",
-   "open_date": "2026-09-25",
-   "listing_date": "2026-10-05",
-   "price_band_low": 32.0,
-   "price_band_high": 32.0,
-   "issue_price": 32.0,
-   "status": "listed",
-   "min_lots": 1,
-   "sources": {
-    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
-   },
-   "flags": [],
-   "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
-   },
-   "subscription": {
-    "qib": null,
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "retail": null,
-    "employee": null,
-    "total": null,
-    "as_of": null,
-    "day": null
-   },
-   "listing": null
+   "min_investment": 14976
   },
   {
    "id": "bench-mark-infotech-services-2026",
@@ -2258,13 +2178,13 @@
    "exchange": "BSE SME"
   },
   {
-   "id": "german-green-steel-power-2026",
-   "name": "German Green Steel & Power",
+   "id": "german-green-steel-and-power-2026",
+   "name": "German Green Steel and Power Limited",
    "board": "mainboard",
    "listing_date": "2026-10-05",
-   "price_band_low": 132,
-   "price_band_high": 139,
-   "issue_price": 139,
+   "price_band_low": 139.0,
+   "price_band_high": 139.0,
+   "issue_price": 139.0,
    "lot_size": 107,
    "issue_size_cr": 303.9,
    "fresh_issue_cr": 290,
@@ -2281,20 +2201,20 @@
     "qib": 21.91,
     "retail": 23.98,
     "total": 30.42,
-    "as_of": "2026-10-26",
-    "nii": null,
-    "bnii": null,
-    "snii": null,
+    "as_of": "2026-09-29",
+    "nii": 56.77,
+    "bnii": 56.78,
+    "snii": 56.73,
     "employee": null,
-    "day": null
+    "day": 3
    },
    "listing": {
     "open": 142,
-    "close": null,
+    "close": 128.33,
     "high": null,
     "low": null,
-    "gain_pct": 2.16,
-    "gain_basis": "open"
+    "gain_pct": -7.68,
+    "gain_basis": "close"
    },
    "status": "listed",
    "min_lots": 1,
@@ -2305,24 +2225,7 @@
     "ref3": "https://www.mstock.com/ipo/german-green-steel-and-power-ltd/ipo1063",
     "ref4": "https://www.kotakneo.com/ipo/german-green-steel-power-ltd-ipo/",
     "ref5": "https://www.ipoplatform.com/ipo/german-green-steel-and-power-ipo/4207",
-    "ref6": "https://upstox.com/news/market-news/ipo/orient-cables-shares-debut-65-above-ipo-price-on-nse-here-s-how-ace-vector-runwal-enterprises-german-green-steel-debuted/article-201257/"
-   },
-   "flags": [
-    "sub_partial"
-   ]
-  },
-  {
-   "id": "german-green-steel-and-power-2026",
-   "name": "German Green Steel and Power Limited",
-   "board": "mainboard",
-   "exchange": "NSE",
-   "listing_date": "2026-10-05",
-   "price_band_low": 139.0,
-   "price_band_high": 139.0,
-   "issue_price": 139.0,
-   "status": "listed",
-   "min_lots": 1,
-   "sources": {
+    "ref6": "https://upstox.com/news/market-news/ipo/orient-cables-shares-debut-65-above-ipo-price-on-nse-here-s-how-ace-vector-runwal-enterprises-german-green-steel-debuted/article-201257/",
     "name": "https://www.nseindia.com/api/public-past-issues",
     "board": "https://www.nseindia.com/api/public-past-issues",
     "exchange": "https://www.nseindia.com/api/public-past-issues",
@@ -2334,32 +2237,10 @@
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
     "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
    },
-   "flags": [],
-   "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
-   },
-   "subscription": {
-    "qib": 21.91,
-    "nii": 56.77,
-    "bnii": 56.78,
-    "snii": 56.73,
-    "retail": 23.98,
-    "employee": null,
-    "total": 30.42,
-    "as_of": "2026-09-29",
-    "day": 3
-   },
-   "listing": {
-    "open": null,
-    "close": 128.33,
-    "high": null,
-    "low": null,
-    "gain_pct": -7.68,
-    "gain_basis": "close"
-   },
+   "flags": [
+    "sub_partial"
+   ],
+   "exchange": "NSE",
    "open_date": "2026-09-25"
   },
   {
@@ -3585,16 +3466,16 @@
    "listing": null
   },
   {
-   "id": "nityas-gems-jewellery-2026",
-   "name": "Nityas Gems & Jewellery",
+   "id": "nityas-gems-and-jewellery-2026",
+   "name": "Nityas Gems and Jewellery Limited",
    "board": "mainboard",
    "open_date": "2026-09-30",
    "close_date": "2026-10-05",
    "allotment_date": "2026-10-06",
    "listing_date": "2026-10-08",
-   "price_band_low": 70,
-   "price_band_high": 75,
-   "issue_price": 75,
+   "price_band_low": 75.0,
+   "price_band_high": 75.0,
+   "issue_price": 75.0,
    "lot_size": 200,
    "issue_size_cr": 108.35,
    "fresh_issue_cr": 108.35,
@@ -3619,20 +3500,20 @@
     "qib": 1.06,
     "retail": 4.07,
     "total": 2.26,
-    "as_of": "2026-10-26",
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "employee": null,
-    "day": null
+    "as_of": "2026-10-05",
+    "nii": 2.05,
+    "bnii": 1.56,
+    "snii": 3.02,
+    "employee": 2.82,
+    "day": 4
    },
    "listing": {
     "open": 80,
-    "close": null,
+    "close": 83.99,
     "high": null,
     "low": null,
-    "gain_pct": 6.67,
-    "gain_basis": "open"
+    "gain_pct": 11.99,
+    "gain_basis": "close"
    },
    "status": "listed",
    "min_lots": 1,
@@ -3643,24 +3524,7 @@
     "ref3": "https://ticker.finology.in/ipo/nityas-gems-jewellery",
     "ref4": "https://www.zeebiz.com/markets/ipo/news-nityas-gems-and-jewellery-ipo-opens-rs-70-75-price-band-check-lot-size-and-key-dates-403088",
     "ref5": "https://www.ipoji.com/ipo/nityas-gems-jewellery-ipo",
-    "ref6": "https://www.ipoplatform.com/ipo/nityas-gems-and-jewellery-ipo/4650"
-   },
-   "flags": [
-    "sub_partial"
-   ]
-  },
-  {
-   "id": "nityas-gems-and-jewellery-2026",
-   "name": "Nityas Gems and Jewellery Limited",
-   "board": "mainboard",
-   "exchange": "NSE",
-   "listing_date": "2026-10-08",
-   "price_band_low": 75.0,
-   "price_band_high": 75.0,
-   "issue_price": 75.0,
-   "status": "listed",
-   "min_lots": 1,
-   "sources": {
+    "ref6": "https://www.ipoplatform.com/ipo/nityas-gems-and-jewellery-ipo/4650",
     "name": "https://www.nseindia.com/api/public-past-issues",
     "board": "https://www.nseindia.com/api/public-past-issues",
     "exchange": "https://www.nseindia.com/api/public-past-issues",
@@ -3672,33 +3536,10 @@
     "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
     "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
    },
-   "flags": [],
-   "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
-   },
-   "subscription": {
-    "qib": 1.06,
-    "nii": 2.05,
-    "bnii": 1.56,
-    "snii": 3.02,
-    "retail": 4.07,
-    "employee": 2.82,
-    "total": 2.26,
-    "as_of": "2026-10-05",
-    "day": 4
-   },
-   "listing": {
-    "open": null,
-    "close": 83.99,
-    "high": null,
-    "low": null,
-    "gain_pct": 11.99,
-    "gain_basis": "close"
-   },
-   "open_date": "2026-09-30"
+   "flags": [
+    "sub_partial"
+   ],
+   "exchange": "NSE"
   },
   {
    "id": "omara-ventures-india-2026",
@@ -4362,46 +4203,6 @@
   },
   {
    "id": "l-and-t-finance-2026",
-   "name": "L and T Finance Limited",
-   "board": "mainboard",
-   "exchange": "NSE",
-   "listing_date": "2026-10-15",
-   "price_band_low": 99987.0,
-   "price_band_high": 99987.0,
-   "issue_price": 99987.0,
-   "status": "listed",
-   "min_lots": 1,
-   "sources": {
-    "name": "https://www.nseindia.com/api/public-past-issues",
-    "board": "https://www.nseindia.com/api/public-past-issues",
-    "exchange": "https://www.nseindia.com/api/public-past-issues",
-    "listing_date": "https://www.nseindia.com/api/public-past-issues",
-    "price_band_low": "https://www.nseindia.com/api/public-past-issues",
-    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
-    "issue_price": "https://www.nseindia.com/api/public-past-issues"
-   },
-   "flags": [],
-   "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
-   },
-   "subscription": {
-    "qib": null,
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "retail": null,
-    "employee": null,
-    "total": null,
-    "as_of": null,
-    "day": null
-   },
-   "listing": null
-  },
-  {
-   "id": "l-t-finance-2026",
    "name": "L&T Finance Limited",
    "board": "mainboard",
    "exchange": "NSE",
@@ -7016,102 +6817,6 @@
   },
   {
    "gmp": {
-    "rs": 8,
-    "pct": 9.76,
-    "as_of": "2026-10-25",
-    "history": [
-     {
-      "date": "2012-10-26",
-      "rs": 8.0
-     },
-     {
-      "date": "2023-10-23",
-      "rs": 8.0
-     },
-     {
-      "date": "2023-10-24",
-      "rs": 8.0
-     },
-     {
-      "date": "2023-10-25",
-      "rs": 8.0
-     },
-     {
-      "date": "2026-10-23",
-      "rs": 8.0
-     },
-     {
-      "date": "2026-10-24",
-      "rs": 8.0
-     },
-     {
-      "date": "2026-10-25",
-      "rs": 8.0
-     }
-    ]
-   },
-   "issue_size_cr": 183.06,
-   "id": "bombay-coated-special-steels-2026",
-   "name": "Bombay Coated & Special Steels",
-   "open_date": "2026-10-29",
-   "close_date": "2026-11-02",
-   "allotment_date": "2026-11-03",
-   "listing_date": "2026-11-05",
-   "price_band_low": 78,
-   "price_band_high": 82,
-   "issue_price": 82,
-   "lot_size": 182,
-   "status": "upcoming",
-   "sources": {
-    "name": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "price_band_low": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "price_band_high": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "issue_price": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "open_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "listing_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "gmp_history": "https://www.investorgain.com/gmp/bombay-coated-and-special-steels-ipo/1936/",
-    "ref1": "https://www.chittorgarh.com/ipo/bombay-coated-and-special-steels-ipo/2671/",
-    "ref2": "https://www.businesstoday.in/markets/ipo-corner/story/bombay-coated-and-special-steels-ipo-check-price-band-dates-lot-size-and-more-563276-2026-10-23",
-    "ref3": "https://www.investorgain.com/gmp/bombay-coated-and-special-steels-ipo-gmp/1936/",
-    "ref4": "https://ipowatch.in/bombay-coated-special-steels-ipo-gmp-today/",
-    "ref5": "https://chanakyanipothi.com/bombay-coated-special-steels-ipo-review/",
-    "ref6": "https://groww.in/blog/bombay-coated-and-special-steels-ipo-to-open-on-october-29-2026",
-    "ref7": "https://trendlyne.com/ipo/detail/2200/bombay-coated-and-special-steels-ltd/"
-   },
-   "flags": [
-    "price_band_only"
-   ],
-   "board": "mainboard",
-   "subscription": {
-    "qib": null,
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "retail": null,
-    "employee": null,
-    "total": null,
-    "as_of": "2026-10-26",
-    "day": null
-   },
-   "listing": null,
-   "min_lots": 1,
-   "min_investment": 14924,
-   "fresh_issue_cr": 183.06,
-   "ofs_cr": 0,
-   "sector": "Coated / special steel products",
-   "pe_post_issue": 16.87,
-   "lead_managers": [
-    "Smart Horizon Capital Advisors"
-   ],
-   "notes": "Allotment date not found (listing 5 Nov). GMP latest = investorgain 25 Oct 11:02 IST; ipowatch shows 5 on 23 Oct; no 26 Oct reading. P/E 16.87x FY26 (chanakyanipothi); FY26 financials conflict (PAT 22.02 cr vs 30.54 cr). Fresh issue 2.23 cr shares; 125 cr for debt repayment (debt ~302 cr). ~90.6% of coil sourced from JSW Steel Coated Products. Anchor not found."
-  },
-  {
-   "gmp": {
     "rs": 9.0,
     "pct": 10.98,
     "as_of": "2023-10-25",
@@ -7155,12 +6860,24 @@
      {
       "date": "2023-10-25",
       "rs": 9.0
+     },
+     {
+      "date": "2026-10-23",
+      "rs": 8.0
+     },
+     {
+      "date": "2026-10-24",
+      "rs": 8.0
+     },
+     {
+      "date": "2026-10-25",
+      "rs": 8.0
      }
     ]
    },
    "issue_size_cr": 183.06,
    "id": "bombay-coated-and-special-steels-2026",
-   "name": "Bombay Coated and Special Steels Limited",
+   "name": "Bombay Coated and Special Steels Ltd.",
    "open_date": "2026-10-29",
    "close_date": "2026-11-02",
    "allotment_date": "2026-11-03",
@@ -7171,20 +6888,27 @@
    "lot_size": 182,
    "status": "upcoming",
    "sources": {
-    "name": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
-    "price_band_low": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
-    "price_band_high": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
+    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "issue_price": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "issue_size_cr": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "open_date": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "close_date": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "listing_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/bombay-coated-and-special-steels-ipo/1936/",
-    "board": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
-    "exchange": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ"
+    "ref1": "https://www.chittorgarh.com/ipo/bombay-coated-and-special-steels-ipo/2671/",
+    "ref2": "https://www.businesstoday.in/markets/ipo-corner/story/bombay-coated-and-special-steels-ipo-check-price-band-dates-lot-size-and-more-563276-2026-10-23",
+    "ref3": "https://www.investorgain.com/gmp/bombay-coated-and-special-steels-ipo-gmp/1936/",
+    "ref4": "https://ipowatch.in/bombay-coated-special-steels-ipo-gmp-today/",
+    "ref5": "https://chanakyanipothi.com/bombay-coated-special-steels-ipo-review/",
+    "ref6": "https://groww.in/blog/bombay-coated-and-special-steels-ipo-to-open-on-october-29-2026",
+    "ref7": "https://trendlyne.com/ipo/detail/2200/bombay-coated-and-special-steels-ltd/",
+    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
    },
    "flags": [
     "price_band_only"
@@ -7198,54 +6922,21 @@
     "retail": null,
     "employee": null,
     "total": null,
-    "as_of": null,
+    "as_of": "2026-10-26",
     "day": null
    },
    "listing": null,
    "min_lots": 1,
    "min_investment": 14924.0,
-   "exchange": "NSE"
-  },
-  {
-   "id": "bombay-coated-and-special-steels-ltd-bombay-coated-and-special-steels-2026",
-   "name": "Bombay Coated and Special Steels Ltd. (Bombay Coated and Special Steels IPO)",
-   "board": "mainboard",
-   "exchange": "NSE,BSE",
-   "open_date": "2026-10-29",
-   "price_band_low": 78.0,
-   "price_band_high": 82.0,
-   "issue_price": 82.0,
-   "flags": [
-    "price_band_only"
+   "fresh_issue_cr": 183.06,
+   "ofs_cr": 0,
+   "sector": "Coated / special steel products",
+   "pe_post_issue": 16.87,
+   "lead_managers": [
+    "Smart Horizon Capital Advisors"
    ],
-   "status": "upcoming",
-   "min_lots": 1,
-   "sources": {
-    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/"
-   },
-   "gmp": {
-    "history": [],
-    "rs": null,
-    "pct": null,
-    "as_of": null
-   },
-   "subscription": {
-    "qib": null,
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "retail": null,
-    "employee": null,
-    "total": null,
-    "as_of": null,
-    "day": null
-   },
-   "listing": null
+   "notes": "Allotment date not found (listing 5 Nov). GMP latest = investorgain 25 Oct 11:02 IST; ipowatch shows 5 on 23 Oct; no 26 Oct reading. P/E 16.87x FY26 (chanakyanipothi); FY26 financials conflict (PAT 22.02 cr vs 30.54 cr). Fresh issue 2.23 cr shares; 125 cr for debt repayment (debt ~302 cr). ~90.6% of coil sourced from JSW Steel Coated Products. Anchor not found.",
+   "exchange": "NSE,BSE"
   }
  ]
 }

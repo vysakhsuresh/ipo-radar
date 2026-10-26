@@ -174,6 +174,18 @@ class MainActivity : AppCompatActivity() {
         runCatching { startActivity(Intent.createChooser(i, name)) }
     }
 
+    /** A PNG drawn by the page (an IPO card), shared with a caption so WhatsApp, Instagram and the rest can take it. */
+    private fun shareImage(name: String, dataUrl: String, caption: String) {
+        val safe = name.replace(Regex("[^A-Za-z0-9._-]"), "-").ifBlank { "ipo-radar.png" }
+        val b64 = dataUrl.substringAfter(",", "")
+        val bytes = runCatching { android.util.Base64.decode(b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return
+        val dir = File(cacheDir, "shared").apply { mkdirs() }
+        val f = File(dir, safe).apply { writeBytes(bytes) }
+        val uri = FileProvider.getUriForFile(this, "$packageName.files", f)
+        val i = Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri).putExtra(Intent.EXTRA_TEXT, caption).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        runCatching { startActivity(Intent.createChooser(i, "Share card")) }
+    }
+
     /** The page calls these; keep the surface tiny and every argument a plain string or number. */
     inner class Bridge {
         @JavascriptInterface fun platform(): String = "android"
@@ -182,6 +194,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun openExternal(url: String) { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }
         @JavascriptInterface fun shareText(text: String, subject: String) { runOnUiThread { this@MainActivity.shareText(text, subject) } }
         @JavascriptInterface fun shareFile(name: String, mime: String, content: String) { runOnUiThread { this@MainActivity.shareFile(name, mime, content) } }
+        @JavascriptInterface fun shareImage(name: String, dataUrl: String, caption: String) { runOnUiThread { this@MainActivity.shareImage(name, dataUrl, caption) } }
 
         @JavascriptInterface fun setSchedule(hours: Int) {
             DataFeed.prefs(this@MainActivity).edit().putInt(DataFeed.KEY_SCHEDULE_HOURS, hours).apply()
