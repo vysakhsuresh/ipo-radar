@@ -33,7 +33,7 @@ from typing import Any, Callable
 
 from fetch.common import Http, Provenance, dump_json, load_json, now_iso, today as today_iso
 from fetch.normalize import (canonical_row, finalise_row, merge, derive_status, accrue_gmp_history,
-                             subscription_day, quality_flags, within_days, strip_empty_groups)
+                             subscription_day, quality_flags, within_days, strip_empty_groups, is_junk)
 from fetch.sources import chittorgarh, investorgain, market, nse
 from fetch import history as history_mod
 
@@ -142,7 +142,7 @@ def refresh(out_dir: str, today: date, *, cache: bool = True, sources: list[tupl
         pool[rid] = combine(pool.get(rid, {}), parts)
     for rid in list(pool):
         row = pool[rid]
-        if rid not in seen and not any(row.get(k) for k in ("open_date", "close_date", "listing_date")):
+        if is_junk(row):
             del pool[rid]
             continue
         row.setdefault("board", "mainboard")

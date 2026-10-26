@@ -43,6 +43,10 @@ jobs:
         run: python -m fetch.run --out data
         continue-on-error: true
 
+      - name: Diagnose the Chittorgarh pages (printed to the log for parser fixes)
+        run: python -m fetch.debug
+        continue-on-error: true
+
       - name: Calibrate the model on the listing history
         run: python -m model.calibrate --history data/history.json --out model/params.json
 

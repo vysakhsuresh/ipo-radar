@@ -182,8 +182,10 @@ def crore(s: Any) -> float | None:
 # ------------------------------------------------------------------ names ---
 
 def clean_name(name: Any) -> str:
-    """Strip the decorations sites add: 'Foo Ltd IPO', 'Foo (SME)', 'Foo SME IPO', 'Foo Open'."""
-    t = re.sub(r"\s+", " ", str(name or "")).strip()
+    """Strip the decorations sites add: 'Foo Ltd IPO', 'Foo (SME)', 'Foo SME IPO', 'Foo Open'.
+    '&' becomes 'and' so the same issuer keys identically across sites."""
+    t = re.sub(r"\s+", " ", str(name or "")).strip().replace("&", " and ")
+    t = re.sub(r"\s+", " ", t)
     prev = None
     while prev != t:
         prev = t
@@ -531,3 +533,17 @@ def quality_flags(row: dict, today: date) -> list[str]:
 def within_days(iso: str | None, today: date, days: int) -> bool:
     d = to_date(iso)
     return bool(d) and d >= today - timedelta(days=days)
+
+
+_JUNK_NAME_RE = re.compile(r"(^\s*(name|company|issuer)\s*$|withdraw|cancell)", re.I)
+
+
+def is_junk(row: dict) -> bool:
+    """Rows that are not an IPO anyone can act on: a header parsed as a row, a
+    withdrawn issue, or a dateless entry from an exchange's past/debt feed."""
+    name = str(row.get("name") or "")
+    if not name.strip() or _JUNK_NAME_RE.search(name):
+        return True
+    if not any(row.get(k) for k in ("open_date", "close_date", "listing_date")):
+        return True
+    return False
