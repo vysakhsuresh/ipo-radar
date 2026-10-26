@@ -1,8 +1,9 @@
 <title>IPO Radar</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
 <style>
+/* fonts ship with the app (Space Grotesk and Fira Code, variable weight, latin), so they work offline */
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/SpaceGrotesk.woff2) format("woff2"); }
+@font-face { font-family: "Fira Code"; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/FiraCode.woff2) format("woff2"); }
 /* Layout: an app with five screens behind a sticky top bar (Today, Pipeline, Planner,
    Evidence, Method). One screen is visible at a time; the ledger stays dense and scannable. */
 :root {
@@ -116,6 +117,21 @@ table.pipe th .th:hover { color: var(--accent-ink); }
 .sheet .body { display: grid; gap: 8px; color: var(--ink-2); font-size: 14px; max-height: 60vh; overflow: auto; }
 .sheet .body p { color: var(--ink-2); }
 .sheet .linklike { justify-self: start; }
+/* dropdowns: the native <select> stays for state, a button + in-app sheet does the showing (Android's native popup ignores web fonts) */
+select.enhanced { position: absolute !important; width: 1px !important; height: 1px !important; min-width: 0 !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important; }
+.pick-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface); border: 1px solid var(--hair-2); border-radius: var(--radius); padding: 6px 10px; font: inherit; color: var(--ink); cursor: pointer; text-align: left; min-width: 150px; max-width: 100%; }
+.pick-btn .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-btn .chev { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
+.pick-btn:hover { background: var(--surface-2); }
+.panel .pick-btn { width: 100%; font-size: 14px; }
+.filters .pick-btn { font-size: 13px; }
+.settings .row .pick-btn { font-size: 14px; width: auto; min-width: 180px; }
+.sheet .opts { display: grid; gap: 4px; max-height: 60vh; overflow: auto; }
+.sheet .opt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; background: var(--surface-2); border: 1px solid transparent; border-radius: 10px; padding: 12px 14px; font: inherit; font-size: 15px; color: var(--ink); cursor: pointer; text-align: left; }
+.sheet .opt-row:hover { border-color: var(--hair-2); }
+.sheet .opt-row[aria-selected="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.sheet .opt-row .tick { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.sheet .opt-row[aria-selected="true"] .tick { visibility: visible; }
 /* help sheet, mirroring the LayerLink "Contact Layerbit Support" panel */
 .sheet-back { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .sheet-back[hidden] { display: none; }
@@ -546,6 +562,13 @@ table.data th { color: var(--muted); font-weight: 500; }
 </div>
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="sheet-back" id="picker" hidden role="dialog" aria-modal="true" aria-labelledby="picker-title">
+  <div class="sheet">
+    <button type="button" class="close" id="picker-close" aria-label="Close">&times;</button>
+    <h3 id="picker-title">Choose</h3>
+    <div class="opts" id="picker-opts" role="listbox"></div>
+  </div>
+</div>
 <div class="sheet-back" id="explain" hidden role="dialog" aria-modal="true" aria-labelledby="explain-title">
   <div class="sheet">
     <button type="button" class="close" id="explain-close" aria-label="Close">&times;</button>

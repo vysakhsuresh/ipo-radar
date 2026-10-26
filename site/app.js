@@ -17,9 +17,11 @@
   }
   function boot(DATA) {
   // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help', '#explain', '#intro', '#glossary']) {
+  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help', '#explain', '#intro', '#glossary', '#picker']) {
     const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
   }
+  for (const b of document.querySelectorAll('.pick-btn')) b.remove();
+  for (const sel of document.querySelectorAll('select.enhanced')) { sel.classList.remove('enhanced'); sel.removeAttribute('aria-hidden'); sel.tabIndex = 0; }
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
   const PARAMS = DATA.params || null;
   const HIST = slimHistory(DATA.history instanceof Object && DATA.history.rows ? DATA.history.rows : DATA.history);
@@ -476,6 +478,7 @@
   // ------------------------------------------------------------- planner ---
   let plannerInputsSet = false;
   function writePlannerInputs() {
+    setTimeout(syncSelects, 0);
     const p = state.plan, c = state.costs;
     $('#p-capital').value = p.capital; $('#p-accounts').value = p.accounts; $('#p-target').value = p.target; $('#p-broker').value = p.broker;
     $('#c-brok').value = c.brokerage_pct; $('#c-min').value = c.brokerage_min; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
@@ -550,7 +553,7 @@
       const c = state.costs;
       c.brokerage_pct = Number($('#c-brok').value) || 0; c.brokerage_min = Number($('#c-min').value) || 0; c.brokerage_cap = Number($('#c-cap').value) || 0; c.dp_charge = Number($('#c-dp').value) || 0;
       c.stt_pct = Number($('#c-stt').value) || 0; c.stcg_tax_pct = Number($('#c-tax').value) || 0; c.cess_pct = Number($('#c-cess').value) || 0;
-      state.plan.broker = 'custom'; $('#p-broker').value = 'custom'; store('plan', state.plan);
+      state.plan.broker = 'custom'; $('#p-broker').value = 'custom'; syncSelects(); store('plan', state.plan);
       store('customCosts', { brokerage_pct: c.brokerage_pct, brokerage_min: c.brokerage_min, brokerage_cap: c.brokerage_cap, dp_charge: c.dp_charge, stt_pct: c.stt_pct, stcg_tax_pct: c.stcg_tax_pct, cess_pct: c.cess_pct });
       computeAll(); keepFocus(renderAll);
     };
@@ -788,6 +791,7 @@
     return out.join('\n');
   }
   function renderSettings() {
+    setTimeout(syncSelects, 0);
     const sel = $('#s-schedule'), chk = $('#s-notify'), note = $('#s-note'), rem = $('#s-reminder');
     if (!sel) return;
     if (!N) { sel.disabled = true; chk.disabled = true; if (rem) rem.disabled = true; if (!note.textContent) note.textContent = 'Background refresh and notifications work in the Android app; this page shows the snapshot it was built with.'; return; }
@@ -816,13 +820,43 @@
     store('screen', name);
     if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
   }
+  // ------------------------------------------------------------ dropdowns ---
+  // The native <select> keeps the value and fires 'change' as before; what the
+  // user sees and taps is a button plus an in-app sheet in the app's own font.
+  const PICK_TITLES = { 'f-sort': 'Sort the pipeline', 'p-broker': 'Your broker', 's-schedule': 'Background refresh', 's-reminder': 'Watchlist reminder time' };
+  function enhanceSelects() {
+    for (const sel of document.querySelectorAll('select:not(.enhanced)')) {
+      sel.classList.add('enhanced'); sel.setAttribute('aria-hidden', 'true'); sel.tabIndex = -1;
+      const btn = el('button', { type: 'button', class: 'pick-btn', id: 'pb-' + sel.id, 'aria-haspopup': 'listbox', 'aria-label': PICK_TITLES[sel.id] || 'Choose' },
+        el('span', { class: 'v' }), svgEl('svg', { class: 'chev', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M6 9l6 6 6-6' })));
+      sel.insertAdjacentElement('afterend', btn);
+      const sync = () => { const o = sel.options[sel.selectedIndex]; btn.querySelector('.v').textContent = o ? o.textContent : ''; };
+      sync(); sel.addEventListener('change', sync); sel._syncPick = sync;
+      btn.addEventListener('click', () => openPicker(sel, btn));
+    }
+  }
+  function syncSelects() { for (const sel of document.querySelectorAll('select.enhanced')) if (sel._syncPick) sel._syncPick(); }
+  function openPicker(sel, btn) {
+    const sheet = $('#picker'), host = $('#picker-opts'); host.replaceChildren();
+    $('#picker-title').textContent = PICK_TITLES[sel.id] || 'Choose';
+    const close = () => { sheet.hidden = true; btn.focus({ preventScroll: true }); };
+    for (const o of sel.options) {
+      const row = el('button', { type: 'button', class: 'opt-row', role: 'option', 'aria-selected': o.selected ? 'true' : 'false' }, el('span', { text: o.textContent }), svgEl('svg', { class: 'tick', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M5 12l5 5 9-10' })));
+      row.addEventListener('click', () => { if (sel.value !== o.value) { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } close(); });
+      host.append(row);
+    }
+    sheet.hidden = false;
+    const selRow = host.querySelector('[aria-selected="true"]'); (selRow || host.firstChild).focus({ preventScroll: true });
+    sheet.onclick = (ev) => { if (ev.target === sheet) close(); };
+    $('#picker-close').onclick = close;
+  }
   function bindExplain() {
     const sheet = $('#explain'); if (!sheet) return;
     const close = () => { sheet.hidden = true; };
     if (!window.__ipoExplainBound) { window.__ipoExplainBound = true; document.addEventListener('click', (ev) => { const t = ev.target.closest('[data-term]'); if (!t) return; ev.preventDefault(); ev.stopPropagation(); openExplain(t.dataset.term); }, true); }
     $('#explain-close').addEventListener('click', close);
     sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); if (ev.key === 'Escape') { const pk = $('#picker'); if (pk && !pk.hidden) pk.hidden = true; } });
     $('#explain-all').addEventListener('click', () => { close(); showScreen('about'); const g = $('#glossary'); if (g) g.scrollIntoView({ block: 'start' }); });
     // glossary on the More screen, from the same text
     const g = $('#glossary-body'); if (g) { g.replaceChildren(); for (const k of TERM_ORDER) { const t = TERMS[k]; g.append(el('details', { class: 'gl' }, el('summary', { text: t.t }), ...t.d.map(line => el('p', { text: line })))); } }
@@ -902,7 +936,7 @@
   }
   function start() {
     computeAll();
-    bindFilters(); bindPlanner(); bindScreens(); bindContact(); bindSettings(); bindExplain();
+    bindFilters(); bindPlanner(); bindScreens(); bindContact(); bindSettings(); bindExplain(); enhanceSelects();
     renderAll(); renderStatus(); renderSettings();
     $('#cal-lede').textContent = !PARAMS ? 'No model report in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'This is the model’s report card. It was fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + ', and every figure below was measured on IPOs it had not seen while learning.'

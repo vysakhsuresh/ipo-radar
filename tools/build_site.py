@@ -68,8 +68,19 @@ def main(argv=None):
     page = page.replace('<script src="app.js"></script>', '<script>\n' + read(os.path.join(ROOT, "site", "app.js")) + '\n</script>')
 
     os.makedirs(os.path.join(a.out, "data"), exist_ok=True)
+    # the single-file artifact carries the fonts inline; the app and the site load them from fonts/
+    fonts_src = os.path.join(ROOT, "site", "fonts")
+    art = page
+    if os.path.isdir(fonts_src):
+        import base64
+        os.makedirs(os.path.join(a.out, "fonts"), exist_ok=True)
+        for fn in os.listdir(fonts_src):
+            shutil.copy(os.path.join(fonts_src, fn), os.path.join(a.out, "fonts", fn))
+            with open(os.path.join(fonts_src, fn), "rb") as fh:
+                b64 = base64.b64encode(fh.read()).decode("ascii")
+            art = art.replace("url(fonts/" + fn + ")", "url(data:font/woff2;base64," + b64 + ")")
     with open(os.path.join(a.out, "artifact.html"), "w", encoding="utf-8") as f:
-        f.write(page)
+        f.write(art)
     full = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
             '<meta name="description" content="Indian IPOs with the chance of a listing-day gain, allotment odds and what one application is worth after costs.">\n'
