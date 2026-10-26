@@ -12,10 +12,13 @@ from bs4 import BeautifulSoup
 from fetch.common import Http, Provenance
 
 URLS = [
-    "https://www.chittorgarh.com/report/mainboard-ipo-list-in-india-bse-nse/19/",
-    "https://www.chittorgarh.com/report/sme-ipo-list-in-india-bse-sme-nse-emerge/84/",
-    "https://www.chittorgarh.com/report/ipo_gmp_grey_market_premium/85/",
-    "https://www.chittorgarh.com/report/ipo-performance-tracker-listing-gain-on-ipo/21/?year=2026",
+    "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
+    "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/",
+    "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2025/",
+    "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/?year=2025",
+    "https://www.chittorgarh.com/report/ipo-gmp-grey-market-premium/97/",
 ]
 
 
@@ -31,8 +34,12 @@ def main() -> int:
         title = (soup.title.get_text(strip=True) if soup.title else "")[:100]
         tables = soup.find_all("table")
         print(f"== {url}\n   status {r.status_code}, {len(html)} chars, title: {title!r}, tables: {len(tables)}")
-        if re.search(r"just a moment|cloudflare|captcha|access denied|enable javascript", html, re.I):
+        if re.search(r"just a moment|attention required|cloudflare|captcha|access denied", html, re.I):
             print("   looks like a bot-check / JS wall")
+        links = [(a.get_text(" ", strip=True)[:40], a["href"]) for a in soup.find_all("a", href=True)
+                 if re.search(r"grey|gmp|perf|tracker|subscription|year", (a.get_text(" ", strip=True) or "") + a["href"], re.I)]
+        seen = set(); uniq = [l for l in links if not (l[1] in seen or seen.add(l[1]))]
+        print(f"   related links ({len(uniq)}): {uniq[:14]}")
         for t in tables[:4]:
             heads = [th.get_text(" ", strip=True)[:28] for th in t.find_all("th")][:14]
             first = t.find("tr")

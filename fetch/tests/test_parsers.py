@@ -74,6 +74,8 @@ def full_stub() -> StubHttp:
         cg.URL_GMP: "chittorgarh_gmp.html",
         "/ipo_subscription/lenskart-solutions-ipo/": "chittorgarh_subscription.html",
         cg.URL_TRACKER_MAINBOARD: "chittorgarh_tracker.html",
+        cg.URL_TRACKER_MAINBOARD + "2025/": "chittorgarh_tracker.html",
+        cg.URL_TRACKER_MAINBOARD + "2026/": "chittorgarh_tracker.html",
         ig.URL_LIVE_GMP: "investorgain_live_gmp.html",
         "/gmp/lenskart-solutions-ipo-gmp/": "investorgain_gmp_history.html",
         ig.URL_GMP_PERFORMANCE: "investorgain_gmp_performance.html",

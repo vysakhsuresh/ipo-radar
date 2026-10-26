@@ -37,7 +37,10 @@ Returns canonical partial rows (see fetch/normalize.py) and nothing else.
 """
 from __future__ import annotations
 
+import re
 from datetime import date, timedelta
+
+from bs4 import BeautifulSoup
 from typing import Any
 from urllib.parse import urljoin
 
@@ -47,11 +50,32 @@ from fetch.normalize import (clean_name, parse_date, parse_price_band, crore, fi
 from fetch.sources.htmltable import Table, parse_tables, find_text
 
 BASE = "https://www.chittorgarh.com/"
-URL_MAINBOARD_LIST = BASE + "report/mainboard-ipo-list-in-india-bse-nse/19/"
-URL_SME_LIST = BASE + "report/sme-ipo-list-in-india-bse-sme-nse-emerge/84/"
-URL_GMP = BASE + "report/ipo_gmp_grey_market_premium/85/"
-URL_TRACKER_MAINBOARD = BASE + "report/ipo-performance-tracker-listing-gain-on-ipo/21/"
-URL_TRACKER_SME = BASE + "report/ipo-listing-gain-sme-ipo-performance-tracker/23/"
+# Paths as the site's own navigation links them (read from an Actions run on 2026-10-26).
+# A wrong report path does not 404 on this site: it silently serves another page with no
+# tables, so every path here was taken from the live nav, and the GMP page is discovered
+# from the nav at run time (`discover_link`) rather than hard-coded.
+URL_MAINBOARD_LIST = BASE + "report/ipo-in-india-list-main-board-sme/82/mainboard/"
+URL_SME_LIST = BASE + "report/ipo-in-india-list-main-board-sme/82/sme/"
+URL_SUBSCRIPTION_LIVE = BASE + "report/ipo-subscription-status-live-bidding-data-bse-nse/21/"
+URL_TRACKER_MAINBOARD = BASE + "report/ipo-perf-tracker/236/mainboard/"
+URL_TRACKER_SME = BASE + "report/ipo-perf-tracker/236/sme/"
+URL_GMP = BASE + "report/ipo-gmp-grey-market-premium/97/"      # first guess; the nav link wins when found
+URL_GMP_CANDIDATES = (URL_GMP, BASE + "ipo/ipo_gmp/")
+GMP_LINK_RE = r"grey\s*market\s*premium|\bgmp\b"
+
+
+def discover_link(html: str, pattern: str) -> str | None:
+    """Absolute href of the first <a> whose text matches `pattern` (case-insensitive)."""
+    soup = BeautifulSoup(html, "lxml")
+    rx = re.compile(pattern, re.I)
+    for a in soup.find_all("a", href=True):
+        if rx.search(a.get_text(" ", strip=True) or ""):
+            href = a["href"]
+            if href.startswith("http"):
+                return href
+            if href.startswith("/"):
+                return BASE.rstrip("/") + href
+    return None
 AS_ON_RE = r"(?:as on|as of|updated on|last updated(?: on)?)\s*:?\s*([A-Za-z]{3,9}\.? \d{1,2},? \d{4}|\d{1,2}[-/ ][A-Za-z]{3,9}[-/ ,]+\d{2,4}|\d{4}-\d{2}-\d{2})"
 
 NAME_PATTERNS = ("issuer", "company", "ipo name", "ipo", "name")
@@ -184,6 +208,45 @@ def parse_gmp_report(html: str, url: str, today: date | None = None) -> list[dic
     return out
 
 
+def parse_subscription_report(html: str, url: str, today: date | None = None) -> list[dict]:
+    """The live 'subscription status' report: one row per current issue with the
+    category multiples -> partial rows {name, subscription{qib,nii,retail,total}}."""
+    out: list[dict] = []
+    page_as_of = parse_date(find_text(html, AS_ON_RE), ref=today)
+    for t in parse_tables(html):
+        nc = _name_col(t)
+        qc = t.col("qib", exclude=("ex",))
+        tc = t.col("total", exclude=("amount", "value", "crore", "cr"))
+        if nc is None or (qc is None and tc is None) or not t.rows:
+            continue
+        nii = t.col("nii", "hni", "non-institutional", exclude=("b", "s", "big", "small"))
+        bn = t.col("bnii", "bhni", "big")
+        sn = t.col("snii", "shni", "small")
+        rc = t.col("rii", "retail", "individual", exclude=("non",))
+        ec = t.col("employee", "emp")
+        dc = t.col("day", "date", "as on", "updated", exclude=("open", "close", "listing"))
+        for row in t.rows:
+            name, href, sme_in_cell = _name_cell(t, row, nc)
+            if not name:
+                continue
+            sub = {k: first_number(t.text(row, idx)) for k, idx in (("qib", qc), ("nii", nii), ("bnii", bn), ("snii", sn), ("retail", rc), ("employee", ec), ("total", tc)) if idx is not None}
+            if not any(v is not None for v in sub.values()):
+                continue
+            if sub.get("nii") is None and (sub.get("bnii") is not None or sub.get("snii") is not None):
+                vals = [v for v in (sub.get("bnii"), sub.get("snii")) if v is not None]
+                sub["nii"] = sum(vals) / len(vals)
+            sub["as_of"] = parse_date(t.text(row, dc), ref=today) or page_as_of or (today.isoformat() if today else None)
+            r: dict[str, Any] = {"name": name, "subscription": sub}
+            if href:
+                r["ipo_url"] = href
+            if sme_in_cell:
+                r["board"] = "sme"
+            out.append(_with_sources(r, url))
+        if out:
+            break
+    return out
+
+
 def parse_subscription(html: str, url: str, today: date | None = None) -> dict | None:
     """A per-IPO subscription page -> {qib, nii, bnii, snii, retail, employee, total, as_of} or None."""
     as_of = parse_date(find_text(html, AS_ON_RE), ref=today)
@@ -286,29 +349,45 @@ def fetch(http: Http, today: date, with_subscription: bool = True) -> list[dict]
         key = row_id(parts, today)
         rows[key] = merge(rows[key], parts) if key in rows else parts
 
+    nav_html = None
     for url, board in ((URL_MAINBOARD_LIST, "mainboard"), (URL_SME_LIST, "sme")):
         html = http.get_html(url)
         if html:
+            nav_html = nav_html or html
             for p in parse_list(html, board, url, today):
                 add(p)
-    html = http.get_html(URL_GMP)
-    if html:
-        for p in parse_gmp_report(html, URL_GMP, today):
-            add(p)
+    gmp_urls = []
+    if nav_html:
+        found = discover_link(nav_html, GMP_LINK_RE)
+        if found:
+            gmp_urls.append(found)
+    gmp_urls += [u for u in URL_GMP_CANDIDATES if u not in gmp_urls]
+    for url in gmp_urls:
+        html = http.get_html(url)
+        parsed = parse_gmp_report(html, url, today) if html else []
+        if parsed:
+            for p in parsed:
+                add(p)
+            break
     if with_subscription:
-        for p in rows.values():
-            st = derive_status(p, today)
-            cd = to_date(p.get("close_date"))
-            if st not in ("open", "closed") or not p.get("ipo_url"):
-                continue
-            if st == "closed" and cd and cd < today - timedelta(days=10):
-                continue
-            url = subscription_url(p["ipo_url"])
-            html = http.get_html(url) if url else None
-            sub = parse_subscription(html, url, today) if html else None
-            if sub:
-                p["subscription"] = {**(p.get("subscription") or {}), **sub}
-                p.setdefault("sources", {})["subscription"] = url
+        html = http.get_html(URL_SUBSCRIPTION_LIVE)
+        got = parse_subscription_report(html, URL_SUBSCRIPTION_LIVE, today) if html else []
+        for p in got:
+            add(p)
+        if not got:  # fall back to each issue's own page
+            for p in list(rows.values()):
+                st = derive_status(p, today)
+                cd = to_date(p.get("close_date"))
+                if st not in ("open", "closed") or not p.get("ipo_url"):
+                    continue
+                if st == "closed" and cd and cd < today - timedelta(days=10):
+                    continue
+                url = subscription_url(p["ipo_url"])
+                html = http.get_html(url) if url else None
+                sub = parse_subscription(html, url, today) if html else None
+                if sub:
+                    p["subscription"] = {**(p.get("subscription") or {}), **sub}
+                    p.setdefault("sources", {})["subscription"] = url
     return list(rows.values())
 
 
@@ -317,10 +396,13 @@ def fetch_trackers(http: Http, years: list[int] | tuple[int, ...], today: date) 
     out: list[dict] = []
     for year in years:
         for base, board in ((URL_TRACKER_MAINBOARD, "mainboard"), (URL_TRACKER_SME, "sme")):
-            url = f"{base}?year={year}"
-            html = http.get_html(url)
-            if html:
-                out.extend(parse_tracker(html, board, url, today))
+            # the year selector's URL shape is not known for certain: try the path form, then the query form
+            for url in (f"{base}{year}/", f"{base}?year={year}"):
+                html = http.get_html(url)
+                got = parse_tracker(html, board, url, today) if html else []
+                if got:
+                    out.extend(got)
+                    break
     return out
 
 
