@@ -17,7 +17,7 @@
   }
   function boot(DATA) {
   // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help']) {
+  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help']) {
     const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
   }
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
@@ -476,7 +476,7 @@
     if (anyUnknown) vs.push('Some ticked IPOs have no subscription figures yet, so their allotment odds (and expected profit) are not counted.');
     if (costSum > 0) vs.push('If every ticked application were allotted, brokerage, STT, exchange and depository charges and ' + state.costs.stcg_tax_pct + '% tax would take ' + inr(costSum) + ' out of ' + inr(grossSum, { plus: true }) + ' gross; the figures above are after that.');
     out.append(el('p', { class: 'vs', text: vs.join(' ') }));
-    const t = el('table', { class: 'plan' });
+    const t = el('table', { class: 'plan sticky2' });
     t.append(el('thead', null, el('tr', null, el('th', { text: '' }), el('th', { text: 'IPO' }), el('th', { class: 'r', text: 'Minimum ticket' }), el('th', { class: 'r', text: 'Allotment' }), el('th', { class: 'r', text: 'If allotted' }), el('th', { class: 'r', text: 'Expected' }), el('th', { text: 'Verdict' }))));
     const tb = el('tbody');
     for (const q of rows) {
@@ -490,7 +490,7 @@
     }
     t.append(tb);
     t.append(el('tfoot', null, el('tr', null, el('td', { colspan: 2, text: 'Ticked total' }), el('td', { class: 'r num', text: inr(totalBlock) }), el('td'), el('td'), el('td', { class: 'r num', text: inr(totalEv, { plus: true }) }), el('td'))));
-    out.append(el('div', { style: 'overflow-x:auto' }, t));
+    out.append(hscroll(t));
     out.append(el('p', { class: 'small muted', text: 'Expected value is an average over many IPOs, not a promise for this one. Most months you will get zero or one allotment; the profit arrives in lumps.' }));
   }
   function bindPlanner() {
@@ -595,7 +595,7 @@
     const t = el('table', { class: 'data' });
     t.append(el('thead', null, el('tr', null, ...head.map(h => el('th', { text: h })))));
     const tb = el('tbody'); for (const r of rows) tb.append(el('tr', null, ...r.map(c => el('td', { class: 'num', text: c })))); t.append(tb);
-    d.append(el('div', { style: 'overflow-x:auto;max-height:260px;overflow-y:auto' }, t));
+    d.append(hscroll(t, 'max-height:260px;overflow-y:auto'));
     return d;
   }
   function bucketTable() {
@@ -607,7 +607,7 @@
     const tb = el('tbody');
     for (const r of PARAMS.empirical) { if (!r.n) continue; tb.append(el('tr', null, el('td', { text: r.bucket }), el('td', { text: r.board === 'sme' ? 'SME' : 'Mainboard' }), el('td', { class: 'num', text: String(r.n) }), el('td', { class: 'num', text: r.n_up + ' (' + Math.round(100 * r.p_up) + '%)' }), el('td', { class: 'num', text: pct(r.median_gain, 0) }), el('td', { class: 'num', text: pct(r.p10_gain, 0) }))); }
     t.append(tb);
-    host.append(el('div', { style: 'overflow-x:auto' }, t));
+    host.append(hscroll(t));
     host.append(el('p', { class: 'small muted', text: 'Count the rows yourself: this table needs no model. The “chance of listing gain” column in the pipeline should roughly agree with it.' }));
   }
   function coefTable() {
@@ -806,11 +806,35 @@
 
   // ------------------------------------------------------------- wiring ---
   function renderAll() { renderHead(); renderTiles(); renderToday(); renderWatchlist(); renderTable(); renderPlanner(); }
+  // Wraps a horizontally scrolling element with a fade + chevron cue that
+  // shows while there is more content to the right and hides at the end.
+  function scrollCue(strip, extraStyle) {
+    const wrap = el('div', { class: 'hwrap' });
+    if (extraStyle) strip.style.cssText += ';' + extraStyle;
+    const more = el('button', { type: 'button', class: 'chips-more', 'aria-label': 'Scroll right for more' }, el('span', { class: 'arr', text: '\u203a' }));
+    wrap.append(strip, more);
+    const cue = () => {
+      const max = strip.scrollWidth - strip.clientWidth;
+      wrap.classList.toggle('no-scroll', max <= 4);
+      wrap.classList.toggle('at-end', strip.scrollLeft >= max - 4);
+      wrap.classList.toggle('at-start', strip.scrollLeft <= 4);
+    };
+    strip.addEventListener('scroll', cue, { passive: true });
+    window.addEventListener('resize', cue);
+    more.addEventListener('click', () => strip.scrollBy({ left: Math.max(120, strip.clientWidth * 0.6), behavior: 'smooth' }));
+    if (window.ResizeObserver) new ResizeObserver(cue).observe(strip); else { requestAnimationFrame(cue); setTimeout(cue, 300); }
+    requestAnimationFrame(cue);
+    return wrap;
+  }
+  function hscroll(table, extraStyle) { return scrollCue(el('div', { class: 'hscroll' }, table), extraStyle); }
   function bindFilters() {
     for (const [id, key] of [['#f-board', 'board'], ['#f-status', 'status']]) {
       $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); if (b.classList.contains('stile') && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); renderTable(); });
     }
     $('#f-nodata').addEventListener('change', () => { state.hideNodata = $('#f-nodata').checked; renderTable(); });
+    // "more to the right" cue on the status row
+    const host = $('#f-status-wrap'), strip = $('#f-status'); const old = $('#f-status-more'); if (old) old.remove();
+    host.replaceChildren(scrollCue(strip));
     $('#f-sort').addEventListener('change', () => { state.sort = $('#f-sort').value; renderTable(); });
   }
   function start() {
