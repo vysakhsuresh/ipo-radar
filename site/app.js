@@ -281,10 +281,13 @@
       if (s && s.ev.ev !== null && s.ev.ev !== undefined && ipo.status !== 'listed') {
         etd.append(el('div', { class: 'big num ' + (s.ev.ev > 0 ? 'pos' : 'neg'), text: inr(s.ev.ev, { plus: true }) }));
         etd.append(el('div', { class: 'small muted num', text: 'if allotted ' + inr(s.ev.ev_if_allotted, { plus: true }) + ' · bad day ' + inr(s.ev.downside_if_allotted, { plus: true }) }));
+        const invA = s.ev.invested_if_allotted, resA = invA && s.gain ? S.netProfitOnSale(invA, invA * (1 + s.gain.mean / 100), state.costs) : null;
+        if (resA) etd.append(el('div', { class: 'small muted', text: 'after ' + inr(resA.charges + resA.tax) + ' charges & tax' }));
       } else if (s && s.gain && inv && ipo.status !== 'listed') {
-        const net = S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs).net;
-        etd.append(el('div', { class: 'big num ' + (net > 0 ? 'pos' : 'neg'), text: inr(net, { plus: true }) }));
+        const res = S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs);
+        etd.append(el('div', { class: 'big num ' + (res.net > 0 ? 'pos' : 'neg'), text: inr(res.net, { plus: true }) }));
         etd.append(el('div', { class: 'small muted', text: 'if allotted; odds unknown until bidding' }));
+        etd.append(el('div', { class: 'small muted', text: 'after ' + inr(res.charges + res.tax) + ' charges & tax' }));
       } else etd.append(el('span', { class: 'muted', text: '–' }));
       tr.append(etd);
       // verdict
@@ -331,9 +334,10 @@
       const kv = (k, v) => dl.append(el('dt', { text: k }), el('dd', { class: 'num', text: v }));
       kv('Blocked when you apply', inr(inv));
       kv('Sale at the expected gain (' + pct(s.gain.mean, 0) + ')', inr(inv * (1 + s.gain.mean / 100)));
-      kv('Charges (STT, exchange, DP, GST)', '−' + inr(mid.charges));
-      kv('Short-term capital gains tax', '−' + inr(mid.tax));
-      kv('Net profit if allotted', inr(mid.net, { plus: true }));
+      kv('Gross gain', inr(mid.gross, { plus: true }));
+      kv('Brokerage, STT, exchange & SEBI fees, GST, DP charge (' + ($('#p-broker option:checked') ? $('#p-broker option:checked').textContent : 'broker') + ')', '−' + inr(mid.charges));
+      kv('Short-term capital gains tax (' + state.costs.stcg_tax_pct + '% + ' + state.costs.cess_pct + '% cess)', '−' + inr(mid.tax));
+      kv('Net profit if allotted, in hand', inr(mid.net, { plus: true }));
       kv('Same sale at the middle gain (' + pct(s.gain.p50, 0) + ')', inr(S.netProfitOnSale(inv, inv * (1 + s.gain.p50 / 100), state.costs).net, { plus: true }));
       if (s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined) {
         kv('Chance of allotment', pct0(s.allotment.p_min_lot));
@@ -402,9 +406,11 @@
       if (on) { totalBlock += inv * accounts; if (ev1 !== null) { totalEv += ev1 * accounts; pNone *= Math.pow(1 - pa, accounts); if (ev1 > 0) { posEv += ev1 * accounts; posBlock += inv * accounts; } } }
       rows.push({ r, inv, pa, evIf, ev1, on });
     }
+    let grossSum = 0, costSum = 0;
+    for (const q of rows) if (q.on && q.r.score.gain) { const res = S.netProfitOnSale(q.inv, q.inv * (1 + q.r.score.gain.mean / 100), state.costs); grossSum += res.gross * accounts; costSum += (res.charges + res.tax) * accounts; }
     const overCap = totalBlock > p.capital;
     const hero = el('div', { class: 'hero num ' + (totalEv > 0 ? 'pos' : 'neg'), text: inr(totalEv, { plus: true }) });
-    out.append(el('div', { class: 'eyebrow', text: 'Expected profit from the ticked IPOs, ' + accounts + ' account' + (accounts > 1 ? 's' : '') }));
+    out.append(el('div', { class: 'eyebrow', text: 'Expected profit in hand, after charges and tax, from the ticked IPOs, ' + accounts + ' account' + (accounts > 1 ? 's' : '') }));
     out.append(hero);
     const anyUnknown = rows.some(q => q.on && q.pa === null);
     const need = posEv > 0 ? p.target / (posEv / Math.max(1, posBlock)) : null;
@@ -414,6 +420,7 @@
     vs.push('Blocked capital: ' + inr(totalBlock) + (overCap ? ', more than the ' + inr(p.capital) + ' you set.' : ' of your ' + inr(p.capital) + '.'));
     if (!anyUnknown && totalBlock > 0) vs.push('Chance that none of these applications gets a single lot: ' + pct0(pNone) + '.');
     if (anyUnknown) vs.push('Some ticked IPOs have no subscription figures yet, so their allotment odds (and expected profit) are not counted.');
+    if (costSum > 0) vs.push('If every ticked application were allotted, brokerage, STT, exchange and depository charges and ' + state.costs.stcg_tax_pct + '% tax would take ' + inr(costSum) + ' out of ' + inr(grossSum, { plus: true }) + ' gross; the figures above are after that.');
     out.append(el('p', { class: 'vs', text: vs.join(' ') }));
     const t = el('table', { class: 'plan' });
     t.append(el('thead', null, el('tr', null, el('th', { text: '' }), el('th', { text: 'IPO' }), el('th', { class: 'r', text: 'Minimum ticket' }), el('th', { class: 'r', text: 'Allotment' }), el('th', { class: 'r', text: 'If allotted' }), el('th', { class: 'r', text: 'Expected' }), el('th', { text: 'Verdict' }))));
