@@ -144,46 +144,46 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
     sofar = " so far" if status == "open" else ""
 
     if p_up is None or confidence == "none":
-        return {"tier": "nodata", "label": TIERS["nodata"]["label"], "reasons": ["No GMP quote and no subscription figures yet."],
+        return {"tier": "nodata", "label": TIERS["nodata"]["label"], "reasons": ["No premium quote and no demand figures yet."],
                 "warnings": warnings, "gamble": None}
 
     # --- hard warnings: each one is a reason to stop and think ---
     if g is not None and g <= 0:
-        warnings.append("GMP is zero or negative: the grey market expects a flat or discount listing.")
+        warnings.append("The unofficial premium is zero or negative: dealers expect it to list flat or below the issue price.")
     elif g is not None and g < 5:
-        warnings.append("GMP under 5%: thin cushion; a weak market on listing day wipes it out.")
+        warnings.append("Premium under 5%: a thin cushion that a weak market on listing day wipes out.")
     if trend is not None and g is not None and trend <= -0.4 * max(g - trend, 1):
-        warnings.append("GMP has fallen sharply over the last few sessions.")
+        warnings.append("The premium has fallen sharply over the last few days.")
     if live and ret_v is not None and ret_v < 1:
         warnings.append(f"Retail portion under-subscribed{sofar}: weak demand, and everyone who bids gets allotted in full.")
     if live and qib_v is not None and qib_v < 1:
-        warnings.append(f"QIBs (institutions) have not filled their quota{sofar}" + (" (they usually bid on the last day)." if status == "open" else ": the smart money passed."))
+        warnings.append(f"Institutions (banks and funds) have not filled their share{sofar}" + (" (they usually bid on the last day)." if status == "open" else ": the professionals passed."))
     if board == "sme":
         warnings.append("SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.")
         if tot_v is not None and tot_v < 10 and status == "closed":
             warnings.append("SME with under 10x total subscription: historically the riskiest bucket.")
     if (status == "closed" and qib_v is not None and qib_v >= 20
             and ((nii_v is not None and nii_v < 2) or (ret_v is not None and ret_v < 2))):
-        warnings.append("Institution-only demand: QIBs piled in but HNIs or retail stayed under 2x. Thin day-one buying is a classic flat-listing setup.")
+        warnings.append("Only institutions piled in; wealthy investors or retail stayed under 2x. Thin buying on day one is a classic flat-listing setup.")
     if "gmp_stale" in flags and status != "listed":
-        warnings.append("GMP quote is 3+ days old; check a fresh one before applying.")
+        warnings.append("The premium quote is 3+ days old; check a fresh one before applying.")
     if size is not None and size < 50:
-        warnings.append("Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price.")
+        warnings.append("Very small issue (under ₹50 crore): a few operators can move both the premium and the listing price.")
     ofs, fresh = _f(ipo.get("ofs_cr")), _f(ipo.get("fresh_issue_cr"))
     if ofs and (fresh is not None) and (ofs + fresh) > 0 and ofs / (ofs + fresh) > 0.85:
         reasons.append("Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.")
 
     # --- supporting reasons ---
     if g is not None:
-        reasons.append(f"GMP {'+' if g >= 0 else '-'}{_r1(abs(g))}% of the issue price.")
+        reasons.append(f"Unofficial premium {'+' if g >= 0 else '-'}{_r1(abs(g))}% of the issue price.")
     if qib_v is not None or nii_v is not None or ret_v is not None:
         fx = lambda v: "–" if v is None else _r1(v)  # noqa: E731
-        reasons.append(f"QIB {fx(qib_v)}x, NII {fx(nii_v)}x, retail {fx(ret_v)}x" + (" (final)" if status in ("closed", "listed") else " (so far)"))
+        reasons.append(f"Demand: institutions {fx(qib_v)}x, wealthy {fx(nii_v)}x, retail {fx(ret_v)}x" + (" (final)" if status in ("closed", "listed") else " (so far)"))
     if confidence == "low":
-        reasons.append("No subscription figures were captured for this issue; the read rests on the GMP alone." if status in ("closed", "listed")
-                       else "Only a GMP quote so far; subscription figures will sharpen this.")
+        reasons.append("No demand figures were captured for this issue; the read rests on the premium alone." if status in ("closed", "listed")
+                       else "Only a premium quote so far; demand figures will sharpen this.")
     if status == "open" and confidence == "medium":
-        reasons.append("Bidding is still on: QIB and HNI books usually fill on the last day.")
+        reasons.append("Bidding is still on: institutions and wealthy investors usually bid on the last day.")
 
     # --- tier ---
     hard = len([w for w in warnings if not w.startswith("SME issue")])

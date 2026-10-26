@@ -230,31 +230,31 @@
     const live = status === 'open' || status === 'closed';
     const sofar = status === 'open' ? ' so far' : '';
     if (pUp === null || confidence === 'none') {
-      return { tier: 'nodata', label: TIERS.nodata.label, reasons: ['No GMP quote and no subscription figures yet.'], warnings, gamble: null };
+      return { tier: 'nodata', label: TIERS.nodata.label, reasons: ['No premium quote and no demand figures yet.'], warnings, gamble: null };
     }
-    if (g !== null && g <= 0) warnings.push('GMP is zero or negative: the grey market expects a flat or discount listing.');
-    else if (g !== null && g < 5) warnings.push('GMP under 5%: thin cushion; a weak market on listing day wipes it out.');
-    if (trend !== null && g !== null && trend <= -0.4 * Math.max(g - trend, 1)) warnings.push('GMP has fallen sharply over the last few sessions.');
+    if (g !== null && g <= 0) warnings.push('The unofficial premium is zero or negative: dealers expect it to list flat or below the issue price.');
+    else if (g !== null && g < 5) warnings.push('Premium under 5%: a thin cushion that a weak market on listing day wipes out.');
+    if (trend !== null && g !== null && trend <= -0.4 * Math.max(g - trend, 1)) warnings.push('The premium has fallen sharply over the last few days.');
     if (live && retV !== null && retV < 1) warnings.push('Retail portion under-subscribed' + sofar + ': weak demand, and everyone who bids gets allotted in full.');
-    if (live && qibV !== null && qibV < 1) warnings.push('QIBs (institutions) have not filled their quota' + sofar + (status === 'open' ? ' (they usually bid on the last day).' : ': the smart money passed.'));
+    if (live && qibV !== null && qibV < 1) warnings.push('Institutions (banks and funds) have not filled their share' + sofar + (status === 'open' ? ' (they usually bid on the last day).' : ': the professionals passed.'));
     if (board === 'sme') {
       warnings.push('SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.');
       if (totV !== null && totV < 10 && status === 'closed') warnings.push('SME with under 10x total subscription: historically the riskiest bucket.');
     }
     if (status === 'closed' && qibV !== null && qibV >= 20 && ((niiV !== null && niiV < 2) || (retV !== null && retV < 2)))
-      warnings.push('Institution-only demand: QIBs piled in but HNIs or retail stayed under 2x. Thin day-one buying is a classic flat-listing setup.');
-    if (flags.indexOf('gmp_stale') >= 0 && status !== 'listed') warnings.push('GMP quote is 3+ days old; check a fresh one before applying.');
-    if (size !== null && size < 50) warnings.push('Very small issue (under ₹50 crore): a few operators can move both the GMP and the listing price.');
+      warnings.push('Only institutions piled in; wealthy investors or retail stayed under 2x. Thin buying on day one is a classic flat-listing setup.');
+    if (flags.indexOf('gmp_stale') >= 0 && status !== 'listed') warnings.push('The premium quote is 3+ days old; check a fresh one before applying.');
+    if (size !== null && size < 50) warnings.push('Very small issue (under ₹50 crore): a few operators can move both the premium and the listing price.');
     const ofs = f(ipo.ofs_cr), fresh = f(ipo.fresh_issue_cr);
     if (ofs && fresh !== null && (ofs + fresh) > 0 && ofs / (ofs + fresh) > 0.85)
       reasons.push('Almost entirely an offer for sale: promoters and investors are cashing out, no fresh money goes into the company.');
-    if (g !== null) reasons.push('GMP ' + (g >= 0 ? '+' : '-') + r1(Math.abs(g)) + '% of the issue price.');
+    if (g !== null) reasons.push('Unofficial premium ' + (g >= 0 ? '+' : '-') + r1(Math.abs(g)) + '% of the issue price.');
     if (qibV !== null || niiV !== null || retV !== null) {
       const fx = v => v === null ? '–' : r1(v);
-      reasons.push('QIB ' + fx(qibV) + 'x, NII ' + fx(niiV) + 'x, retail ' + fx(retV) + 'x' + ((status === 'closed' || status === 'listed') ? ' (final)' : ' (so far)'));
+      reasons.push('Demand: institutions ' + fx(qibV) + 'x, wealthy ' + fx(niiV) + 'x, retail ' + fx(retV) + 'x' + ((status === 'closed' || status === 'listed') ? ' (final)' : ' (so far)'));
     }
-    if (confidence === 'low') reasons.push((status === 'closed' || status === 'listed') ? 'No subscription figures were captured for this issue; the read rests on the GMP alone.' : 'Only a GMP quote so far; subscription figures will sharpen this.');
-    if (status === 'open' && confidence === 'medium') reasons.push('Bidding is still on: QIB and HNI books usually fill on the last day.');
+    if (confidence === 'low') reasons.push((status === 'closed' || status === 'listed') ? 'No demand figures were captured for this issue; the read rests on the premium alone.' : 'Only a premium quote so far; demand figures will sharpen this.');
+    if (status === 'open' && confidence === 'medium') reasons.push('Bidding is still on: institutions and wealthy investors usually bid on the last day.');
 
     const hard = warnings.filter(w => !w.startsWith('SME issue')).length;
     const evv = ev.ev;

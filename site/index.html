@@ -93,6 +93,29 @@ nav.screens button[aria-current="page"] { color: var(--accent-ink); background: 
 .settings .row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
 .settings .row select { width: auto; min-width: 150px; padding: 6px 8px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); font-size: 14px; }
 .settings .hint { font-size: 12px; color: var(--muted); flex-basis: 100%; }
+/* plain-language layer: tappable terms, column captions, first-open guide, glossary */
+.term { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; text-align: left; }
+.term:hover { text-decoration-color: var(--accent-ink); color: var(--accent-ink); }
+.subs .term.k { color: var(--muted); font-size: 11px; white-space: nowrap; }
+[data-term] { cursor: help; }
+table.pipe th .th { display: grid; gap: 2px; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: help; width: 100%; }
+table.pipe th .th .cap { font-size: 10px; text-transform: none; letter-spacing: 0; color: var(--muted); font-weight: 400; }
+table.pipe th .th:hover { color: var(--accent-ink); }
+.howto { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent-ink); border: 0; border-radius: var(--radius); padding: 6px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.howto .q { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+.intro { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 10px; box-shadow: var(--shadow); }
+.intro[hidden] { display: none; }
+.intro h2 { font-size: 16px; }
+.intro ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); }
+.intro ol b { color: var(--ink); }
+.intro .acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gl { border-top: 1px solid var(--hair); padding: 8px 0; }
+.gl:first-of-type { border-top: 0; }
+.gl summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.gl p { color: var(--ink-2); margin-top: 6px; }
+.sheet .body { display: grid; gap: 8px; color: var(--ink-2); font-size: 14px; max-height: 60vh; overflow: auto; }
+.sheet .body p { color: var(--ink-2); }
+.sheet .linklike { justify-self: start; }
 /* help sheet, mirroring the LayerLink "Contact Layerbit Support" panel */
 .sheet-back { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .sheet-back[hidden] { display: none; }
@@ -176,7 +199,7 @@ section { display: grid; gap: 12px; min-width: 0; align-content: start; }
 /* table */
 .tablewrap { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
 table.pipe { border-collapse: collapse; width: 100%; min-width: 980px; table-layout: fixed; }
-table.pipe col.c-name { width: 20%; } table.pipe col.c-price { width: 9%; } table.pipe col.c-gmp { width: 8%; } table.pipe col.c-sub { width: 12%; } table.pipe col.c-p { width: 12%; } table.pipe col.c-gain { width: 12%; } table.pipe col.c-allot { width: 8%; } table.pipe col.c-ev { width: 10%; } table.pipe col.c-verdict { width: 9%; }
+table.pipe col.c-name { width: 19%; } table.pipe col.c-price { width: 9%; } table.pipe col.c-gmp { width: 8%; } table.pipe col.c-sub { width: 13%; } table.pipe col.c-p { width: 12%; } table.pipe col.c-gain { width: 12%; } table.pipe col.c-allot { width: 8%; } table.pipe col.c-ev { width: 10%; } table.pipe col.c-verdict { width: 9%; }
 table.pipe th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 500; padding: 10px 10px 8px; border-bottom: 1px solid var(--hair-2); vertical-align: bottom; line-height: 1.25; }
 table.pipe td { padding: 10px; border-bottom: 1px solid var(--hair); vertical-align: top; min-width: 0; }
 table.pipe tr.row { cursor: pointer; }
@@ -223,7 +246,7 @@ td.name .dates { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
 .range .band { position: absolute; top: 2px; bottom: 2px; background: var(--accent); opacity: .35; border-radius: 2px; }
 .range .mid { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); }
 .range-labels { display: flex; justify-content: space-between; width: 100%; max-width: 128px; font-size: 11px; color: var(--muted); }
-.subs { display: grid; grid-template-columns: 24px 1fr 44px; gap: 2px 5px; align-items: center; font-size: 11px; width: 100%; max-width: 132px; }
+.subs { display: grid; grid-template-columns: auto 1fr 44px; gap: 2px 6px; align-items: center; font-size: 11px; width: 100%; max-width: 190px; }
 .subs .bar { height: 6px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
 .subs .bar i { display: block; height: 100%; background: var(--series-main); }
 .subs .k { color: var(--muted); }
@@ -350,9 +373,18 @@ table.data th { color: var(--muted); font-weight: 500; }
     <div class="top">
       <h1>What to do today</h1>
     </div>
-    <p class="lede">Every IPO in the pipeline, with the chance it closes above its issue price on listing day, the likely gain range, your odds of actually getting shares, and what one application is worth after charges and tax. Built to say <em>“this one is a gamble”</em> before the money is blocked.</p>
+    <p class="lede">Every current IPO, with the chance it ends listing day above its issue price, the likely gain, your odds of actually getting shares, and what one application is worth after charges and tax. Built to say <em>“this one is a gamble”</em> before your money is blocked.</p>
     <div class="asof" id="asof"></div>
   </header>
+  <div class="intro" id="intro" hidden>
+    <h2>New here? Three things to know</h2>
+    <ol>
+      <li><b>Start with the verdict.</b> Apply, Lean apply, Coin flip, Avoid or Too early. It already weighs everything else.</li>
+      <li><b>“70% chance” means 7 in 10.</b> Of ten IPOs that looked like this one, about seven ended their first day above the issue price. It is not the gain you will make.</li>
+      <li><b>Most applicants get nothing.</b> In a popular IPO shares go by lottery. “Worth per application” counts that, so it is the number to compare.</li>
+    </ol>
+    <div class="acts"><button type="button" class="btn primary" id="intro-ok">Got it</button><button type="button" class="howto" data-term="howto"><span class="q">?</span> Read the full guide</button><span class="small muted">Any underlined word can be tapped for its meaning.</span></div>
+  </div>
 
   <div class="tiles" id="tiles"></div>
   <div>
@@ -368,7 +400,7 @@ table.data th { color: var(--muted); font-weight: 500; }
   <section class="screen" id="screen-pipeline" hidden>
     <div class="sec-head">
       <h2>Pipeline</h2>
-      <p>Click a row for the reasons, the warnings, the cost breakdown and a what-if box. Probabilities come from a model fitted on past listings; GMP is the unofficial grey-market quote the model treats as one input among several.</p>
+      <p>Tap an IPO for the reasons behind its verdict, the warnings, the money in and out, and a box to try your own numbers. <button type="button" class="howto" data-term="howto"><span class="q">?</span> What do these columns mean</button></p>
     </div>
     <div class="filters" role="group" aria-label="Filters">
       <div class="line">
@@ -403,7 +435,15 @@ table.data th { color: var(--muted); font-weight: 500; }
       <table class="pipe" id="pipe">
         <colgroup><col class="c-name"><col class="c-price"><col class="c-gmp"><col class="c-sub"><col class="c-p"><col class="c-gain"><col class="c-allot"><col class="c-ev"><col class="c-verdict"></colgroup>
         <thead><tr>
-          <th>IPO</th><th>Price × lot</th><th>GMP</th><th>Subscription</th><th>Chance of a listing gain</th><th>Likely gain, P10 to P90</th><th>Allotment odds</th><th>Worth per application, after charges &amp; tax</th><th>Verdict</th>
+          <th>IPO</th>
+          <th><button type="button" class="th" data-term="lot">Price × lot<span class="cap">smallest application</span></button></th>
+          <th><button type="button" class="th" data-term="gmp">Unofficial premium<span class="cap">GMP, grey market</span></button></th>
+          <th><button type="button" class="th" data-term="sub">Demand<span class="cap">times subscribed, by group</span></button></th>
+          <th><button type="button" class="th" data-term="chance">Chance of a listing gain<span class="cap">closes above issue price</span></button></th>
+          <th><button type="button" class="th" data-term="range">Likely gain<span class="cap">worst to best case</span></button></th>
+          <th><button type="button" class="th" data-term="allot">Chance of getting shares<span class="cap">the allotment lottery</span></button></th>
+          <th><button type="button" class="th" data-term="worth">Worth per application<span class="cap">on average, after charges &amp; tax</span></button></th>
+          <th><button type="button" class="th" data-term="verdicts">Verdict<span class="cap">tap for the meaning</span></button></th>
         </tr></thead>
         <tbody id="pipe-body"></tbody>
       </table>
@@ -412,23 +452,23 @@ table.data th { color: var(--muted); font-weight: 500; }
 
   <section class="screen" id="screen-planner" hidden>
     <div class="sec-head">
-      <h2>Can this make ₹25,000 a month?</h2>
-      <p>One minimum application per demat account: one lot on the mainboard, two lots on SME (when retail is oversubscribed, bidding more lots does not improve the lottery). Expected profit = chance of allotment × profit on that minimum ticket after charges and tax, summed over the IPOs you tick.</p>
+      <h2 id="plan-title">Can this make your monthly target?</h2>
+      <p>Type what you can keep blocked and how many demat accounts you can apply from (yours and family members’). The planner assumes one smallest application per account per IPO, since bidding for more lots does not improve your odds in a popular issue, and adds up the average profit of the IPOs you tick, after charges and tax.</p>
     </div>
     <div class="planner">
       <div class="panel" id="plan-inputs">
         <div class="row2">
-          <label>Capital you can block (₹)<input type="number" id="p-capital" min="0" step="5000" value="200000"></label>
-          <label>Demat accounts<input type="number" id="p-accounts" min="1" max="10" step="1" value="1"></label>
+          <label>Money you can keep blocked (₹)<input type="number" id="p-capital" min="0" step="5000" value="200000"></label>
+          <label>Demat accounts (yours + family)<input type="number" id="p-accounts" min="1" max="10" step="1" value="1"></label>
         </div>
         <div class="row2">
           <label>Monthly target (₹)<input type="number" id="p-target" min="0" step="1000" value="25000"></label>
-          <label>Broker preset<select id="p-broker">
+          <label>Your broker<select id="p-broker">
             <option value="zerodha">Zerodha</option><option value="groww">Groww</option><option value="upstox">Upstox</option><option value="angel">Angel One</option><option value="custom">Custom</option>
           </select></label>
         </div>
         <details>
-          <summary class="small">Charges on the listing-day sale</summary>
+          <summary class="small">Charges and tax on the listing-day sale (preset from your broker; edit if yours differ)</summary>
           <div class="costs" style="margin-top:8px">
             <label>Brokerage %<input type="number" id="c-brok" step="0.01" min="0"></label>
             <label>Brokerage min ₹<input type="number" id="c-min" step="1" min="0"></label>
@@ -439,7 +479,7 @@ table.data th { color: var(--muted); font-weight: 500; }
             <label>Cess %<input type="number" id="c-cess" step="1" min="0"></label>
           </div>
         </details>
-        <p class="small muted">Inputs stay in this browser only.</p>
+        <p class="small muted">These inputs stay on your device only.</p>
       </div>
       <div class="panel result" id="plan-result"></div>
     </div>
@@ -447,7 +487,7 @@ table.data th { color: var(--muted); font-weight: 500; }
 
   <section class="screen" id="screen-calibration" hidden>
     <div class="sec-head">
-      <h2>How good is the model?</h2>
+      <h2>How good is the model? Check it yourself</h2>
       <p id="cal-lede"></p>
     </div>
     <div class="cal">
@@ -461,7 +501,7 @@ table.data th { color: var(--muted); font-weight: 500; }
   </section>
 
   <section class="screen" id="screen-method" hidden>
-    <div class="sec-head"><h2>Method, rules and limits</h2></div>
+    <div class="sec-head"><h2>How it works, the rules, and what it cannot know</h2></div>
     <div class="method" id="method-body"></div>
   </section>
   <section class="screen about" id="screen-about" hidden>
@@ -476,12 +516,14 @@ table.data th { color: var(--muted); font-weight: 500; }
       <div class="row hint" id="s-note"></div>
       <div class="share-row"><button type="button" class="btn small" id="share-shortlist">Share today's shortlist</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
     </div>
+    <div class="sec-head" style="margin-top:8px" id="glossary"><h2>Words used in this app</h2><p>Every term, in plain words. The same text opens when you tap an underlined word anywhere in the app.</p></div>
+    <div class="panel"><div id="glossary-body"></div></div>
     <div class="sec-head" style="margin-top:8px"><h2>About IPO Radar</h2></div>
     <div class="about-grid">
       <div class="panel">
         <h3>What it is</h3>
-        <p>A listing-day decision aid for Indian IPOs, mainboard and SME. For every issue in the pipeline it estimates the chance of closing above the issue price, the likely gain range, your odds in the retail allotment lottery, and what one application is worth after charges and tax, then says in plain words whether it is an apply, a coin flip, or a gamble.</p>
-        <p>It exists because the usual way of chasing listing gains, trusting the grey-market premium and hoping, loses money quietly. Here the GMP is one input among several, every probability is either calibrated on past listings or labelled as a prior, and the allotment lottery is counted rather than wished away.</p>
+        <p>A listing-day decision aid for Indian IPOs, mainboard and SME, made for anyone, not only for people who already know the jargon. For every current issue it estimates the chance of ending listing day above the issue price, the likely gain, your odds in the share lottery, and what one application is worth after charges and tax, then says in plain words whether it is an apply, a coin flip, or a gamble.</p>
+        <p>It exists because the usual way of chasing listing gains, trusting the unofficial premium and hoping, loses money quietly. Here that premium is one input among several, every chance is either checked against past listings or labelled as a starting estimate, and the lottery is counted rather than wished away.</p>
       </div>
       <div class="panel">
         <h3>Who makes it</h3>
@@ -504,6 +546,14 @@ table.data th { color: var(--muted); font-weight: 500; }
 </div>
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="sheet-back" id="explain" hidden role="dialog" aria-modal="true" aria-labelledby="explain-title">
+  <div class="sheet">
+    <button type="button" class="close" id="explain-close" aria-label="Close">&times;</button>
+    <h3 id="explain-title">Term</h3>
+    <div class="body" id="explain-body"></div>
+    <button type="button" class="linklike" id="explain-all">All words used in this app</button>
+  </div>
+</div>
 <div class="sheet-back" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
   <div class="sheet">
     <button type="button" class="close" id="help-close" aria-label="Close">&times;</button>
