@@ -611,6 +611,15 @@
     store('screen', name);
     if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
   }
+  function bindContact() {
+    const b = $('#copy-email'); if (!b) return;
+    b.addEventListener('click', () => {
+      const t = $('#contact-email').textContent;
+      const done = () => { $('#copy-note').textContent = 'Copied'; setTimeout(() => { $('#copy-note').textContent = ''; }, 1500); };
+      const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#contact-email')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#copy-note').textContent = 'Selected: press copy'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(fallback); else fallback();
+    });
+  }
   function bindScreens() {
     document.querySelector('nav.screens').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) showScreen(b.dataset.screen); });
     window.addEventListener('hashchange', () => { const h = location.hash.replace('#', ''); if (SCREENS.includes(h)) showScreen(h, { keepScroll: true }); });
@@ -646,7 +655,7 @@
   }
   function start() {
     computeAll();
-    bindFilters(); bindPlanner(); bindScreens();
+    bindFilters(); bindPlanner(); bindScreens(); bindContact();
     renderAll();
     $('#cal-lede').textContent = !PARAMS ? 'No calibration data in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'Fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + '. Every number below is out of sample: the model was scored on IPOs it was not trained on.'
