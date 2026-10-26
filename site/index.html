@@ -1,10 +1,10 @@
 <title>IPO Radar</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
 <style>
-/* Layout: a ledger. One wide column of dense, scannable rows; summary tiles first,
-   then the pipeline table, then the planner, then the evidence. */
+/* Layout: an app with five screens behind a sticky top bar (Today, Pipeline, Planner,
+   Evidence, Method). One screen is visible at a time; the ledger stays dense and scannable. */
 :root {
   --bg: #f4f6f4; --surface: #ffffff; --surface-2: #eef2ef; --ink: #15191b; --ink-2: #4a5458; --muted: #7b8689;
   --hair: #dfe4e0; --hair-2: #cdd4cf;
@@ -13,8 +13,8 @@
   --warn: #8a5a0b; --warn-fill: #fab219; --warn-soft: #fdf0d0;
   --crit: #b3261e; --crit-fill: #d03b3b; --crit-soft: #fbe3e1;
   --series-main: #2a78d6; --series-sme: #eb6834; --grid: #e4e7e3; --axis: #c3c8c4;
-  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: 6px; --shadow: 0 1px 2px rgba(21,25,27,.06);
 }
 @media (prefers-color-scheme: dark) {
@@ -59,8 +59,29 @@ a { color: var(--accent-ink); }
 button, select, input { font: inherit; color: inherit; }
 button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible, tr[tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* top bar + screens */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--surface); border-bottom: 1px solid var(--hair); }
+.topbar .in { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding-block: 8px; }
+.brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; white-space: nowrap; }
+.brand small { font-weight: 500; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-left: 8px; }
+nav.screens { display: flex; gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0; flex: 1; }
+nav.screens::-webkit-scrollbar { display: none; }
+nav.screens button { background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; color: var(--ink-2); font-weight: 500; white-space: nowrap; border-radius: 4px 4px 0 0; }
+nav.screens button:hover { color: var(--ink); background: var(--surface-2); }
+nav.screens button[aria-current="page"] { color: var(--accent-ink); border-bottom-color: var(--accent); }
+.screen[hidden] { display: none; }
+.today { display: grid; gap: 20px; }
+.picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.pick { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; }
+.pick:hover { background: var(--surface-2); }
+.pick .n { font-weight: 600; }
+.pick .m { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink-2); }
+.pick .m b { color: var(--ink); }
+
 /* header */
 .head { display: grid; gap: 8px; }
+.head h1 { font-size: 24px; }
 .head .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
 .head .asof { font-size: 12px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .head .lede { max-width: 68ch; color: var(--ink-2); }
@@ -200,6 +221,9 @@ table.data th { color: var(--muted); font-weight: 500; }
   .detail, .cal, .planner { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
+  .brand small { display: none; }
+  nav.screens { flex-basis: 100%; order: 2; margin-left: -4px; }
+  .topbar .in { padding-block: 6px 0; }
   table.pipe { min-width: 0; table-layout: auto; }
   table.pipe colgroup { display: none; }
   table.pipe thead { display: none; }
@@ -217,19 +241,34 @@ table.data th { color: var(--muted); font-weight: 500; }
 }
 </style>
 
+<div class="topbar"><div class="in">
+  <div class="brand">IPO Radar<small>India · listing-day gains</small></div>
+  <nav class="screens" aria-label="Screens">
+    <button type="button" data-screen="today" aria-current="page">Today</button>
+    <button type="button" data-screen="pipeline">Pipeline</button>
+    <button type="button" data-screen="planner">Planner</button>
+    <button type="button" data-screen="calibration">Evidence</button>
+    <button type="button" data-screen="method">Method</button>
+  </nav>
+</div></div>
 <div class="wrap">
+  <section class="screen today" id="today">
   <header class="head">
     <div class="top">
-      <h1>IPO Radar</h1>
-      <span class="eyebrow">India · mainboard &amp; SME · listing-day gains</span>
+      <h1>What to do today</h1>
     </div>
     <p class="lede">Every IPO in the pipeline, with the chance it closes above its issue price on listing day, the likely gain range, your odds of actually getting shares, and what one application is worth after charges and tax. Built to say <em>“this one is a gamble”</em> before the money is blocked.</p>
     <div class="asof" id="asof"></div>
   </header>
 
   <div class="tiles" id="tiles"></div>
+  <div>
+    <div class="sec-head"><h2>Shortlist</h2><p>Open or upcoming issues the model leans toward, best first. Tap one to open its row in the pipeline.</p></div>
+    <div class="picks" id="picks" style="margin-top:10px"></div>
+  </div>
+  </section>
 
-  <section id="pipeline">
+  <section class="screen" id="pipeline" hidden>
     <div class="sec-head">
       <h2>Pipeline</h2>
       <p>Click a row for the reasons, the warnings, the cost breakdown and a what-if box. Probabilities come from a model fitted on past listings; GMP is the unofficial grey-market quote the model treats as one input among several.</p>
@@ -266,7 +305,7 @@ table.data th { color: var(--muted); font-weight: 500; }
     </div>
   </section>
 
-  <section id="planner">
+  <section class="screen" id="planner" hidden>
     <div class="sec-head">
       <h2>Can this make ₹25,000 a month?</h2>
       <p>One minimum application per demat account: one lot on the mainboard, two lots on SME (when retail is oversubscribed, bidding more lots does not improve the lottery). Expected profit = chance of allotment × profit on that minimum ticket after charges and tax, summed over the IPOs you tick.</p>
@@ -301,7 +340,7 @@ table.data th { color: var(--muted); font-weight: 500; }
     </div>
   </section>
 
-  <section id="calibration">
+  <section class="screen" id="calibration" hidden>
     <div class="sec-head">
       <h2>How good is the model?</h2>
       <p id="cal-lede"></p>
@@ -316,7 +355,7 @@ table.data th { color: var(--muted); font-weight: 500; }
     </div>
   </section>
 
-  <section id="method">
+  <section class="screen" id="method" hidden>
     <div class="sec-head"><h2>Method, rules and limits</h2></div>
     <div class="method" id="method-body"></div>
   </section>

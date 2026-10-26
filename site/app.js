@@ -601,8 +601,42 @@
     host.append(el('p', { class: 'small ink2', text: 'Snapshot generated ' + (LIVE.generated_at || 'unknown') + '. ' + (hosts.length ? 'Sources read this refresh: ' + hosts.join(', ') + '.' : 'Source list is in the repository’s data/ipos.json.') + ' Subscription figures are the exchanges’ published multiples; GMP figures are what the grey-market trackers published on the stated date.' }));
   }
 
+  // ------------------------------------------------------------ screens ---
+  const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method'];
+  function showScreen(name, opts) {
+    if (!SCREENS.includes(name)) name = 'today';
+    for (const id of SCREENS) { const sec = document.getElementById(id); if (sec) sec.hidden = id !== name; }
+    for (const b of document.querySelectorAll('nav.screens button')) { if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+    try { if (location.hash.replace('#', '') !== name) history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed */ }
+    store('screen', name);
+    if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
+  }
+  function bindScreens() {
+    document.querySelector('nav.screens').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) showScreen(b.dataset.screen); });
+    window.addEventListener('hashchange', () => { const h = location.hash.replace('#', ''); if (SCREENS.includes(h)) showScreen(h, { keepScroll: true }); });
+  }
+  function renderToday() {
+    const host = $('#picks'); host.replaceChildren();
+    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
+      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up)).slice(0, 6);
+    if (!rows.length) { host.append(el('p', { class: 'muted', text: 'Nothing open or upcoming has a usable read right now.' })); return; }
+    for (const r of rows) {
+      const s = r.score, ipo = r.eff;
+      const card = el('button', { class: 'pick', type: 'button', onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
+      card.append(el('div', { class: 'n' }, ipo.name, ' ', el('span', { class: 'chip', text: ipo.board === 'sme' ? 'SME' : 'Mainboard' })));
+      card.append(el('div', null, el('span', { class: 'verdict ' + s.verdict.tier, text: s.verdict.label }), s.verdict.gamble ? el('span', { class: 'gamble ' + s.verdict.gamble, style: 'display:inline;margin-left:8px', text: s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble' }) : null));
+      const m = el('div', { class: 'm' });
+      m.append(el('span', null, 'Chance ', el('b', { class: 'num', text: pct0(s.p_up) })));
+      if (s.gain) m.append(el('span', null, 'Middle gain ', el('b', { class: 'num', text: pct(s.gain.p50, 0) })));
+      if (s.ev.ev !== null && s.ev.ev !== undefined) m.append(el('span', null, 'Worth ', el('b', { class: 'num', text: inr(s.ev.ev, { plus: true }) })));
+      m.append(el('span', null, ipo.status === 'open' ? 'Bids close ' + dshort(ipo.close_date) : 'Opens ' + dshort(ipo.open_date)));
+      card.append(m);
+      host.append(card);
+    }
+  }
+
   // ------------------------------------------------------------- wiring ---
-  function renderAll() { renderHead(); renderTiles(); renderTable(); renderPlanner(); }
+  function renderAll() { renderHead(); renderTiles(); renderToday(); renderTable(); renderPlanner(); }
   function bindFilters() {
     for (const [id, key] of [['#f-board', 'board'], ['#f-status', 'status']]) {
       $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); renderTable(); });
@@ -612,14 +646,15 @@
   }
   function start() {
     computeAll();
-    bindFilters(); bindPlanner();
+    bindFilters(); bindPlanner(); bindScreens();
     renderAll();
     $('#cal-lede').textContent = !PARAMS ? 'No calibration data in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'Fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + '. Every number below is out of sample: the model was scored on IPOs it was not trained on.'
       : 'Not fitted yet. The weights are documented priors (GMP first, then institutional demand, then the rest). The history holds ' + PARAMS.n_rows + ' listings with outcomes' + (PARAMS.date_range[0] ? ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1]) : '') + ', of which ' + (PARAMS.n_rows_gating || 0) + ' have both a model input (GMP or subscription) and a closing-price outcome. Once that count reaches ' + (PARAMS.min_rows_to_calibrate || 120) + ', each refresh fits the model to the data, shrunk toward these priors, and reports out-of-sample accuracy here.';
     chartGmp(); chartRel(); bucketTable(); coefTable(); methodText();
     const h = (location.hash || '').replace('#', '');
-    if (['pipeline', 'planner', 'calibration', 'method'].includes(h)) { const t = document.getElementById(h); if (t) t.scrollIntoView(); }
+    showScreen(SCREENS.includes(h) ? h : (load('screen', 'today') || 'today'), { keepScroll: true });
+    requestAnimationFrame(() => window.scrollTo(0, 0));   // undo the browser's own jump to the #section
   }
   start();
 })();
