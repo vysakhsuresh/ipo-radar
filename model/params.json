@@ -1,7 +1,7 @@
 {
  "version": 1,
  "status": "prior",
- "fitted_at": "2026-10-26T06:23:17Z",
+ "fitted_at": "2026-10-26T07:29:49Z",
  "feature_names": [
   "gmp_pct",
   "gmp_missing",
@@ -22,14 +22,14 @@
  ],
  "base_rate": {
   "mainboard": {
-   "n": 80,
-   "p_up": 0.675,
-   "median_gain": 5.055
+   "n": 83,
+   "p_up": 0.6506024096385542,
+   "median_gain": 4.98
   },
   "sme": {
-   "n": 5,
-   "p_up": 0.2,
-   "median_gain": -5.0
+   "n": 2,
+   "p_up": 0.5,
+   "median_gain": 1.9850000000000003
   }
  },
  "logistic": {
@@ -120,26 +120,26 @@
    "bucket": "0\u20135%",
    "lo": 0.0,
    "hi": 5.0,
-   "n": 5,
+   "n": 7,
    "n_up": 2,
-   "p_up": 0.4,
-   "median_gain": -0.63,
-   "p10_gain": -14.440000000000001,
-   "p90_gain": 6.420000000000001,
-   "mean_gain": -3.2700000000000005
+   "p_up": 0.2857142857142857,
+   "median_gain": -7.32,
+   "p10_gain": -13.76,
+   "p90_gain": 4.740000000000002,
+   "mean_gain": -4.901428571428572
   },
   {
    "board": "mainboard",
    "bucket": "5\u201310%",
    "lo": 5.0,
    "hi": 10.0,
-   "n": 1,
+   "n": 2,
    "n_up": 0,
    "p_up": 0.0,
-   "median_gain": -0.59,
-   "p10_gain": -0.59,
-   "p90_gain": -0.59,
-   "mean_gain": -0.59
+   "median_gain": -1.175,
+   "p10_gain": -1.643,
+   "p90_gain": -0.707,
+   "mean_gain": -1.175
   },
   {
    "board": "mainboard",
@@ -195,10 +195,10 @@
    "n": 1,
    "n_up": 0,
    "p_up": 0.0,
-   "median_gain": -1.76,
-   "p10_gain": -1.76,
-   "p90_gain": -1.76,
-   "mean_gain": -1.76
+   "median_gain": -5.0,
+   "p10_gain": -5.0,
+   "p90_gain": -5.0,
+   "mean_gain": -5.0
   },
   {
    "board": "sme",
@@ -212,13 +212,7 @@
    "bucket": "10\u201320%",
    "lo": 10.0,
    "hi": 20.0,
-   "n": 1,
-   "n_up": 0,
-   "p_up": 0.0,
-   "median_gain": -5.0,
-   "p10_gain": -5.0,
-   "p90_gain": -5.0,
-   "mean_gain": -5.0
+   "n": 0
   },
   {
    "board": "sme",
@@ -252,13 +246,13 @@
    "bucket": "no GMP quote",
    "lo": null,
    "hi": null,
-   "n": 3,
+   "n": 1,
    "n_up": 1,
-   "p_up": 0.3333333333333333,
-   "median_gain": -7.32,
-   "p10_gain": -9.976,
-   "p90_gain": 5.7120000000000015,
-   "mean_gain": -2.9966666666666666
+   "p_up": 1.0,
+   "median_gain": 8.97,
+   "p10_gain": 8.97,
+   "p90_gain": 8.97,
+   "mean_gain": 8.97
   }
  ],
  "coef_table": [
