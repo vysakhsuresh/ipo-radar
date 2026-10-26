@@ -17,7 +17,7 @@
   }
   function boot(DATA) {
   // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status']) {
+  for (const sel of ['nav.screens', '#f-board', '#f-status', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help']) {
     const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
   }
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
@@ -676,7 +676,11 @@
       if (ageH !== null && ageH > 30) host.append(el('span', { class: 'badge off', text: Math.round(ageH / 24) + ' days old' }));
     }
     host.append(el('span', { class: 'spacer' }));
-    if (N) host.append(el('button', { class: 'btn small', type: 'button', id: 'st-refresh', onclick: () => { try { N.refresh(); } catch (e) { /* ignore */ } } }, 'Refresh'));
+    host.append(el('button', { class: 'btn primary small', type: 'button', id: 'st-refresh', onclick: doRefresh }, STATUS && STATUS.refreshing ? 'Refreshing…' : 'Refresh'));
+  }
+  function doRefresh() {
+    if (N) { try { N.refresh(); return; } catch (e) { /* fall through */ } }
+    const b = $('#st-refresh'); if (b) { b.textContent = 'Live refresh works in the app'; setTimeout(() => { b.textContent = 'Refresh'; }, 2200); }
   }
   window.ipoRadarStatus = function (st) { STATUS = st || null; renderStatus(); renderSettings(); };
   if (N) { try { STATUS = JSON.parse(N.status()); } catch (e) { STATUS = null; } }
@@ -739,6 +743,7 @@
     if (chk) chk.addEventListener('change', () => { if (N) { try { N.setNotify(!!chk.checked); } catch (e) { /* ignore */ } } });
     const rem = $('#s-reminder');
     if (rem) rem.addEventListener('change', () => { if (N) { try { N.setReminderHour(Number(rem.value)); } catch (e) { /* ignore */ } } });
+    const sr = $('#s-refresh'); if (sr) sr.addEventListener('click', doRefresh);
     const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
     if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
     if (b2) b2.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText()));
@@ -757,6 +762,15 @@
   }
   function bindContact() {
     for (const b of document.querySelectorAll('[data-goto]')) b.addEventListener('click', () => showScreen(b.dataset.goto));
+    const sheet = $('#help');
+    const open = () => { sheet.hidden = false; const c = $('#help-close'); if (c) c.focus(); };
+    const close = () => { sheet.hidden = true; };
+    for (const b of document.querySelectorAll('[data-help]')) b.addEventListener('click', open);
+    const cl = $('#help-close'); if (cl) cl.addEventListener('click', close);
+    sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); });
+    // on Android hand mailto/WhatsApp to the system (mail app / WhatsApp) through the bridge
+    for (const id of ['help-mail', 'help-wa']) { const a = document.getElementById(id); if (a && N) a.addEventListener('click', (ev) => { ev.preventDefault(); try { N.openExternal(a.href); } catch (e) { /* ignore */ } close(); }); }
   }
   function bindScreens() {
     document.querySelector('nav.screens').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) showScreen(b.dataset.screen); });

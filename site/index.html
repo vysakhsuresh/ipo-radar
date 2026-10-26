@@ -87,9 +87,23 @@ nav.screens button[aria-current="page"] { color: var(--accent-ink); background: 
 .status .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .status .spin { animation: none; } }
-.settings { display: grid; gap: 10px; }
-.settings .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-.settings select { padding: 6px 8px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); }
+.settings { display: grid; gap: 12px; }
+.settings .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 14px; color: var(--ink); }
+.settings .row label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); margin: 0; }
+.settings .row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
+.settings .row select { width: auto; min-width: 150px; padding: 6px 8px; border: 1px solid var(--hair-2); border-radius: 4px; background: var(--surface); font-size: 14px; }
+.settings .hint { font-size: 12px; color: var(--muted); flex-basis: 100%; }
+/* help sheet, mirroring the LayerLink "Contact Layerbit Support" panel */
+.sheet-back { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.sheet-back[hidden] { display: none; }
+.sheet { background: var(--surface); color: var(--ink); border-radius: 16px; padding: 18px; width: 100%; max-width: 420px; display: grid; gap: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.3); position: relative; }
+.sheet h3 { font-size: 17px; margin-right: 32px; }
+.sheet .close { position: absolute; top: 8px; right: 10px; background: transparent; border: 0; font-size: 26px; line-height: 1; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+.sheet .opt { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 14px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--hair-2); color: var(--ink); background: var(--surface-2); }
+.sheet .opt.mail { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.sheet .opt.wa { background: #25d366; color: #0b2b16; border-color: transparent; }
+.sheet .fine { font-size: 12px; color: var(--muted); }
+@media (min-width: 600px) { .sheet-back { align-items: center; } }
 .share-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .today { display: grid; gap: 20px; }
 .picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
@@ -301,7 +315,7 @@ table.data th { color: var(--muted); font-weight: 500; }
   </nav>
   <div class="spacer"></div>
   <div class="support">
-    <a class="btn-help" href="https://layerbit.co.in/contact.html" target="_blank" rel="noopener">Get help</a>
+    <button type="button" class="btn-help" data-help>Get help</button>
     <a class="btn-coffee" href="https://www.buymeacoffee.com/layerbit" target="_blank" rel="noopener">☕ Buy me a coffee</a>
   </div>
 </aside>
@@ -423,13 +437,13 @@ table.data th { color: var(--muted); font-weight: 500; }
   <section class="screen about" id="screen-about" hidden>
     <div class="sec-head"><h2>Settings</h2><p>Refreshing never sends anything; the app only downloads three public files from the IPO Radar repository.</p></div>
     <div class="panel settings" id="settings">
-      <div class="row"><b>Refresh</b><span class="muted">automatically on every open and when you come back to the app; pull down or tap Refresh at the top any time.</span></div>
-      <div class="row"><label for="s-schedule">Also refresh in the background</label>
+      <div class="row"><button type="button" class="btn primary small" id="s-refresh">Refresh now</button><span class="hint">Data also refreshes on every open and when you return to the app; pull down on any screen or tap Refresh in the bar at the top.</span></div>
+      <div class="row"><label for="s-schedule">Background refresh</label>
         <select id="s-schedule"><option value="0">Off</option><option value="3">Every 3 hours</option><option value="6">Every 6 hours</option><option value="12">Every 12 hours</option><option value="24">Once a day</option></select></div>
-      <div class="row"><label><input type="checkbox" id="s-notify"> Notify me when a background refresh brings new data</label></div>
-      <div class="row"><label for="s-reminder">Watchlist reminder on the last bidding day, at</label>
+      <div class="row"><label for="s-notify"><input type="checkbox" id="s-notify">Notify me when a background refresh brings new data</label></div>
+      <div class="row"><label for="s-reminder">Watchlist reminder on the last bidding day</label>
         <select id="s-reminder"><option value="-1">Off</option><option value="9">9:00 am</option><option value="10">10:00 am</option><option value="12">12:00 noon</option><option value="14">2:00 pm</option><option value="16">4:00 pm (bids close at 5)</option></select></div>
-      <div class="row small muted" id="s-note"></div>
+      <div class="row hint" id="s-note"></div>
       <div class="share-row"><button type="button" class="btn small" id="share-shortlist">Share today's shortlist</button><button type="button" class="btn small" id="export-csv">Export pipeline as CSV</button><button type="button" class="btn small" id="export-json">Export raw data (JSON)</button></div>
     </div>
     <div class="sec-head" style="margin-top:8px"><h2>About IPO Radar</h2></div>
@@ -446,9 +460,9 @@ table.data th { color: var(--muted); font-weight: 500; }
       </div>
       <div class="panel">
         <h3>Contact and support</h3>
-        <p>A number that looks wrong, an IPO the radar has missed, a broker whose charges differ from the presets, or a feature you need: use the normal Layerbit help route and it reaches the same people who build this.</p>
+        <p>A number that looks wrong, an IPO the radar has missed, a broker whose charges differ from the presets, or a feature you need: Get help opens the same support options as LayerLink, email or WhatsApp, and reaches the people who build this.</p>
         <div class="actions">
-          <a class="btn-help big" href="https://layerbit.co.in/contact.html" target="_blank" rel="noopener">Get help</a>
+          <button type="button" class="btn-help big" data-help>Get help</button>
           <a class="btn-coffee big" href="https://www.buymeacoffee.com/layerbit" target="_blank" rel="noopener">☕ Buy me a coffee</a>
         </div>
         <p class="small muted">The coffee keeps the data refreshes and the model work going. Most messages get a reply within one to two business days.</p>
@@ -460,6 +474,15 @@ table.data th { color: var(--muted); font-weight: 500; }
 </div>
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="sheet-back" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="sheet">
+    <button type="button" class="close" id="help-close" aria-label="Close">&times;</button>
+    <h3 id="help-title">Contact Layerbit Support</h3>
+    <a class="opt mail" href="mailto:ceo@layerbit.co.in?subject=IPO%20Radar%20support" id="help-mail">Send us an Email</a>
+    <a class="opt wa" href="https://wa.me/916282595823?text=Hi%2C%20I%20need%20help%20with%20IPO%20Radar" target="_blank" rel="noopener" id="help-wa">Chat on WhatsApp</a>
+    <p class="fine">Most messages get a reply within one to two business days.</p>
+  </div>
+</div>
 
 <script id="data" type="application/json">{}</script>
 <script src="score.js"></script>
