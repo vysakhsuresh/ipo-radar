@@ -38,6 +38,12 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Headless browser for sites that draw their tables with JavaScript
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+        continue-on-error: true
+
       - name: Fetch live IPO, GMP, subscription and market data
         # A source that is down must not fail the run; the page shows what is stale.
         run: python -m fetch.run --out data

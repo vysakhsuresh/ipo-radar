@@ -10,6 +10,7 @@ import re
 from bs4 import BeautifulSoup
 
 from fetch.common import Http, Provenance
+from fetch import render
 
 URLS = [
     "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
@@ -34,8 +35,14 @@ def main() -> int:
         title = (soup.title.get_text(strip=True) if soup.title else "")[:100]
         tables = soup.find_all("table")
         print(f"== {url}\n   status {r.status_code}, {len(html)} chars, title: {title!r}, tables: {len(tables)}")
-        if re.search(r"just a moment|attention required|cloudflare|captcha|access denied", html, re.I):
+        if re.search(r"just a moment|attention required|access denied", title, re.I):
             print("   looks like a bot-check / JS wall")
+        hints = [m.group(0)[:160] for m in re.finditer(r"[^\n;{}]{0,60}(?:XMLHttpRequest|fetch\(|\$\.ajax|\$\.get|\.load\(|/api/|\.json|DataTable|report_data|ajax)[^\n;{}]{0,80}", html)][:8]
+        print(f"   script hints: {hints}")
+        if render.available():
+            rendered = render.render_html(url)
+            rt = len(BeautifulSoup(rendered, "lxml").find_all("table")) if rendered else None
+            print(f"   rendered in headless browser: tables={rt}")
         links = [(a.get_text(" ", strip=True)[:40], a["href"]) for a in soup.find_all("a", href=True)
                  if re.search(r"grey|gmp|perf|tracker|subscription|year", (a.get_text(" ", strip=True) or "") + a["href"], re.I)]
         seen = set(); uniq = [l for l in links if not (l[1] in seen or seen.add(l[1]))]

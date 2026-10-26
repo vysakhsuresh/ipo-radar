@@ -45,6 +45,7 @@ from typing import Any
 from urllib.parse import urljoin
 
 from fetch.common import Http
+from fetch import render
 from fetch.normalize import (clean_name, parse_date, parse_price_band, crore, first_number, pct_in_parens,
                              exchange_label, is_sme_marker, category_key, derive_status, row_id, merge, to_date)
 from fetch.sources.htmltable import Table, parse_tables, find_text
@@ -62,6 +63,21 @@ URL_TRACKER_SME = BASE + "report/ipo-perf-tracker/236/sme/"
 URL_GMP = BASE + "report/ipo-gmp-grey-market-premium/97/"      # first guess; the nav link wins when found
 URL_GMP_CANDIDATES = (URL_GMP, BASE + "ipo/ipo_gmp/")
 GMP_LINK_RE = r"grey\s*market\s*premium|\bgmp\b"
+
+
+def html_with_tables(http: Http, url: str) -> str | None:
+    """Static HTML if it carries a <table>; otherwise the headless-rendered page
+    (Chittorgarh builds its report tables with JavaScript)."""
+    html = http.get_html(url)
+    if html and parse_tables(html):
+        return html
+    rendered = render.render_html(url)
+    if rendered and parse_tables(rendered):
+        http.prov.add(url, True, 200, note="rendered in headless browser")
+        return rendered
+    if rendered is None and not render.available():
+        http.prov.add(url, False, None, note="no tables in static HTML and no headless browser available")
+    return html
 
 
 def discover_link(html: str, pattern: str) -> str | None:
@@ -351,7 +367,7 @@ def fetch(http: Http, today: date, with_subscription: bool = True) -> list[dict]
 
     nav_html = None
     for url, board in ((URL_MAINBOARD_LIST, "mainboard"), (URL_SME_LIST, "sme")):
-        html = http.get_html(url)
+        html = html_with_tables(http, url)
         if html:
             nav_html = nav_html or html
             for p in parse_list(html, board, url, today):
@@ -359,18 +375,18 @@ def fetch(http: Http, today: date, with_subscription: bool = True) -> list[dict]
     gmp_urls = []
     if nav_html:
         found = discover_link(nav_html, GMP_LINK_RE)
-        if found:
+        if found and "chittorgarh.com" in found:
             gmp_urls.append(found)
     gmp_urls += [u for u in URL_GMP_CANDIDATES if u not in gmp_urls]
     for url in gmp_urls:
-        html = http.get_html(url)
+        html = html_with_tables(http, url)
         parsed = parse_gmp_report(html, url, today) if html else []
         if parsed:
             for p in parsed:
                 add(p)
             break
     if with_subscription:
-        html = http.get_html(URL_SUBSCRIPTION_LIVE)
+        html = html_with_tables(http, URL_SUBSCRIPTION_LIVE)
         got = parse_subscription_report(html, URL_SUBSCRIPTION_LIVE, today) if html else []
         for p in got:
             add(p)
@@ -398,7 +414,7 @@ def fetch_trackers(http: Http, years: list[int] | tuple[int, ...], today: date) 
         for base, board in ((URL_TRACKER_MAINBOARD, "mainboard"), (URL_TRACKER_SME, "sme")):
             # the year selector's URL shape is not known for certain: try the path form, then the query form
             for url in (f"{base}{year}/", f"{base}?year={year}"):
-                html = http.get_html(url)
+                html = html_with_tables(http, url)
                 got = parse_tracker(html, board, url, today) if html else []
                 if got:
                     out.extend(got)
