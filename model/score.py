@@ -18,7 +18,7 @@ from datetime import date
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model.features import FEATURE_NAMES, features, vector, gmp_pct_of, gmp_trend_of, _f  # noqa: E402
+from model.features import FEATURE_NAMES, features, vector, gmp_pct_of, gmp_trend_of, gmp_history_of, _f  # noqa: E402
 from model.rules import CostConfig, expected_value_of_application, retail_lots_affordable  # noqa: E402
 
 TIERS = {
@@ -82,10 +82,10 @@ def gmp_is_unquoted(ipo: dict) -> bool:
     discount', whatever the issue's status (so a row reads the same before and
     after it closes)."""
     g = ipo.get("gmp") or {}
-    hist = [h for h in (g.get("history") or []) if h.get("rs") is not None]
-    nonzero = [h for h in hist if float(h["rs"]) != 0]
-    return (ipo.get("board") == "sme" and g.get("rs") is not None and float(g["rs"]) == 0
-            and not nonzero and len(hist) <= 2)
+    hist = gmp_history_of(ipo)
+    nonzero = [h for h in hist if h["rs"] != 0]
+    rs = _f(g.get("rs"))
+    return (ipo.get("board") == "sme" and rs is not None and rs == 0 and not nonzero and len(hist) <= 2)
 
 
 def data_quality(ipo: dict, today: str) -> tuple[str, list[str]]:
@@ -170,7 +170,8 @@ def verdict(ipo: dict, p_up: float | None, gain: dict | None, ev: dict, confiden
         fx = lambda v: "–" if v is None else _r1(v)  # noqa: E731
         reasons.append(f"QIB {fx(qib_v)}x, NII {fx(nii_v)}x, retail {fx(ret_v)}x" + (" (final)" if status in ("closed", "listed") else " (so far)"))
     if confidence == "low":
-        reasons.append("Only a GMP quote so far; subscription figures will sharpen this.")
+        reasons.append("No subscription figures were captured for this issue; the read rests on the GMP alone." if status in ("closed", "listed")
+                       else "Only a GMP quote so far; subscription figures will sharpen this.")
     if status == "open" and confidence == "medium":
         reasons.append("Bidding is still on: QIB and HNI books usually fill on the last day.")
 
@@ -257,8 +258,18 @@ def main(argv=None):
     with open(a.params, encoding="utf-8") as f:
         params = json.load(f)
     today = (live.get("generated_at") or "")[:10] or None
+    bad = 0
     for ipo in live["ipos"]:
-        ipo["score"] = score_ipo(ipo, params, live.get("market"), today=today)
+        try:
+            ipo["score"] = score_ipo(ipo, params, live.get("market"), today=today)
+        except Exception as e:  # noqa: BLE001 - one malformed row must not abort the refresh
+            bad += 1
+            ipo["score"] = {"p_up": None, "gain": None, "similar": None, "allotment": {"p_min_lot": None, "basis": "row could not be scored"},
+                            "ev": {"ev": None, "ev_if_allotted": None, "downside_if_allotted": None, "invested_if_allotted": None, "lots_affordable": None, "min_lots": None},
+                            "verdict": {"tier": "nodata", "label": TIERS["nodata"]["label"], "reasons": [f"Could not score this row ({type(e).__name__})."], "warnings": [], "gamble": None},
+                            "confidence": "none", "flags": ["score_error"], "features": None}
+    if bad:
+        print(f"warning: {bad} row(s) could not be scored; marked 'not enough data'")
     live["scored_with"] = {"fitted_at": params.get("fitted_at"), "n_rows": params.get("n_rows")}
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(live, f, ensure_ascii=False, indent=1)

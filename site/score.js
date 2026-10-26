@@ -37,14 +37,25 @@
     return pct;
   }
 
-  function gmpTrendOf(ipo) {
+  function gmpHistoryOf(ipo) {
     const g = ipo.gmp || {};
-    const hist = (g.history || []).filter(h => f(h.rs) !== null);
+    const out = [];
+    for (const h of (g.history || [])) {
+      if (!h || typeof h !== 'object' || Array.isArray(h)) continue;
+      const v = f(h.rs);
+      if (v === null) continue;
+      out.push({ date: String(h.date || ''), rs: v });
+    }
+    out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    return out;
+  }
+
+  function gmpTrendOf(ipo) {
+    const hist = gmpHistoryOf(ipo);
     const price = f(ipo.issue_price);
     if (hist.length < 2 || !price) return null;
-    hist.sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0));
-    const last = f(hist[hist.length - 1].rs);
-    const prev = f(hist[Math.max(0, hist.length - 4)].rs);
+    const last = hist[hist.length - 1].rs;
+    const prev = hist[Math.max(0, hist.length - 4)].rs;
     return 100.0 * (last - prev) / price;
   }
 
@@ -177,9 +188,10 @@
 
   function gmpIsUnquoted(ipo) {
     const g = ipo.gmp || {};
-    const hist = (g.history || []).filter(h => h.rs !== null && h.rs !== undefined);
-    const nonzero = hist.filter(h => Number(h.rs) !== 0);
-    return ipo.board === 'sme' && g.rs !== null && g.rs !== undefined && Number(g.rs) === 0 && nonzero.length === 0 && hist.length <= 2;
+    const hist = gmpHistoryOf(ipo);
+    const nonzero = hist.filter(h => h.rs !== 0);
+    const rs = f(g.rs);
+    return ipo.board === 'sme' && rs !== null && rs === 0 && nonzero.length === 0 && hist.length <= 2;
   }
 
   function dataQuality(ipo, today) {
@@ -238,7 +250,7 @@
       const fx = v => v === null ? '–' : r1(v);
       reasons.push('QIB ' + fx(qibV) + 'x, NII ' + fx(niiV) + 'x, retail ' + fx(retV) + 'x' + ((status === 'closed' || status === 'listed') ? ' (final)' : ' (so far)'));
     }
-    if (confidence === 'low') reasons.push('Only a GMP quote so far; subscription figures will sharpen this.');
+    if (confidence === 'low') reasons.push((status === 'closed' || status === 'listed') ? 'No subscription figures were captured for this issue; the read rests on the GMP alone.' : 'Only a GMP quote so far; subscription figures will sharpen this.');
     if (status === 'open' && confidence === 'medium') reasons.push('Bidding is still on: QIB and HNI books usually fill on the last day.');
 
     const hard = warnings.filter(w => !w.startsWith('SME issue')).length;
@@ -299,6 +311,6 @@
       verdict: v, confidence, flags: uniq, features: feat };
   }
 
-  return { FEATURE_NAMES, TIERS, features, vector, gmpPctOf, gmpTrendOf, defaultCosts, sellCharges, netProfitOnSale,
+  return { FEATURE_NAMES, TIERS, features, vector, gmpPctOf, gmpTrendOf, gmpHistoryOf, defaultCosts, sellCharges, netProfitOnSale,
     retailLotsAffordable, pAllotment, expectedValueOfApplication, modelOutputs, similarPast, dataQuality, verdict, scoreIpo };
 });

@@ -1,19 +1,219 @@
-{"generated_at": "2026-10-26T00:00:00Z", "market": {"nifty_1m_pct": "1.5"},
+{
+ "generated_at": "2026-10-26T00:00:00Z",
+ "market": {
+  "nifty_1m_pct": "1.5"
+ },
  "ipos": [
-  {"id": "e1", "name": "String Numbers", "board": "mainboard", "status": "closed", "issue_price": "500", "lot_size": "30", "issue_size_cr": "1200",
-   "gmp": {"rs": "60", "pct": null, "as_of": "2026-10-25", "history": [{"date": "2026-10-20", "rs": "40"}, {"date": "2026-10-25", "rs": "60"}]},
-   "subscription": {"qib": "45", "nii": 14, "retail": 3.0, "total": "20"}},
-  {"id": "e2", "name": "No Subscription Object", "board": "mainboard", "status": "upcoming", "issue_price": 200, "lot_size": 70,
-   "gmp": {"rs": 20, "as_of": "2026-10-26"}},
-  {"id": "e3", "name": "Listing Null Malformed Dates", "board": "sme", "status": "open", "issue_price": 93, "lot_size": 1200, "issue_size_cr": 54.8,
-   "gmp": {"rs": 0, "as_of": "25/10/2026", "history": [{"date": "bad", "rs": 0}]}, "subscription": {"total": 0.4}, "listing": null},
-  {"id": "e4", "name": "Only Total Known", "board": "mainboard", "status": "closed", "issue_price": 150, "lot_size": 100, "issue_size_cr": 255,
-   "gmp": {"rs": 30, "as_of": "2026-10-20"}, "subscription": {"total": 12}},
-  {"id": "e5", "name": "Whole Number Floats", "board": "mainboard", "status": "closed", "issue_price": 100, "lot_size": 150, "issue_size_cr": 900,
-   "gmp": {"rs": 10.0, "as_of": "2026-10-26"}, "subscription": {"qib": 14.0, "nii": 2.0, "retail": 1.0, "total": 6.0}},
-  {"id": "e6", "name": "Negative GMP Lean Candidate", "board": "mainboard", "status": "closed", "issue_price": 100, "lot_size": 150, "issue_size_cr": 3000,
-   "gmp": {"rs": -2, "as_of": "2026-10-26"}, "subscription": {"qib": 90, "nii": 40, "retail": 8, "total": 40}},
-  {"id": "e7", "name": "Listed With Stale GMP", "board": "mainboard", "status": "listed", "issue_price": 100, "lot_size": 150, "issue_size_cr": 300, "listing_date": "2026-10-20",
-   "gmp": {"rs": 8, "as_of": "2026-10-15"}, "subscription": {"qib": 10, "nii": 5, "retail": 2, "total": 5}, "listing": {"open": 104, "close": 101, "gain_pct": 1.0, "gain_basis": "close"}},
-  {"id": "e8", "name": "No Price", "board": "sme", "status": "upcoming", "lot_size": 2000, "gmp": {"rs": 5, "as_of": "2026-10-26"}}
- ]}
+  {
+   "id": "e1",
+   "name": "String Numbers",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": "500",
+   "lot_size": "30",
+   "issue_size_cr": "1200",
+   "gmp": {
+    "rs": "60",
+    "pct": null,
+    "as_of": "2026-10-25",
+    "history": [
+     {
+      "date": "2026-10-20",
+      "rs": "40"
+     },
+     {
+      "date": "2026-10-25",
+      "rs": "60"
+     }
+    ]
+   },
+   "subscription": {
+    "qib": "45",
+    "nii": 14,
+    "retail": 3.0,
+    "total": "20"
+   }
+  },
+  {
+   "id": "e2",
+   "name": "No Subscription Object",
+   "board": "mainboard",
+   "status": "upcoming",
+   "issue_price": 200,
+   "lot_size": 70,
+   "gmp": {
+    "rs": 20,
+    "as_of": "2026-10-26"
+   }
+  },
+  {
+   "id": "e3",
+   "name": "Listing Null Malformed Dates",
+   "board": "sme",
+   "status": "open",
+   "issue_price": 93,
+   "lot_size": 1200,
+   "issue_size_cr": 54.8,
+   "gmp": {
+    "rs": 0,
+    "as_of": "25/10/2026",
+    "history": [
+     {
+      "date": "bad",
+      "rs": 0
+     }
+    ]
+   },
+   "subscription": {
+    "total": 0.4
+   },
+   "listing": null
+  },
+  {
+   "id": "e4",
+   "name": "Only Total Known",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 150,
+   "lot_size": 100,
+   "issue_size_cr": 255,
+   "gmp": {
+    "rs": 30,
+    "as_of": "2026-10-20"
+   },
+   "subscription": {
+    "total": 12
+   }
+  },
+  {
+   "id": "e5",
+   "name": "Whole Number Floats",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 100,
+   "lot_size": 150,
+   "issue_size_cr": 900,
+   "gmp": {
+    "rs": 10.0,
+    "as_of": "2026-10-26"
+   },
+   "subscription": {
+    "qib": 14.0,
+    "nii": 2.0,
+    "retail": 1.0,
+    "total": 6.0
+   }
+  },
+  {
+   "id": "e6",
+   "name": "Negative GMP Lean Candidate",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 100,
+   "lot_size": 150,
+   "issue_size_cr": 3000,
+   "gmp": {
+    "rs": -2,
+    "as_of": "2026-10-26"
+   },
+   "subscription": {
+    "qib": 90,
+    "nii": 40,
+    "retail": 8,
+    "total": 40
+   }
+  },
+  {
+   "id": "e7",
+   "name": "Listed With Stale GMP",
+   "board": "mainboard",
+   "status": "listed",
+   "issue_price": 100,
+   "lot_size": 150,
+   "issue_size_cr": 300,
+   "listing_date": "2026-10-20",
+   "gmp": {
+    "rs": 8,
+    "as_of": "2026-10-15"
+   },
+   "subscription": {
+    "qib": 10,
+    "nii": 5,
+    "retail": 2,
+    "total": 5
+   },
+   "listing": {
+    "open": 104,
+    "close": 101,
+    "gain_pct": 1.0,
+    "gain_basis": "close"
+   }
+  },
+  {
+   "id": "e8",
+   "name": "No Price",
+   "board": "sme",
+   "status": "upcoming",
+   "lot_size": 2000,
+   "gmp": {
+    "rs": 5,
+    "as_of": "2026-10-26"
+   }
+  },
+  {
+   "id": "e9",
+   "name": "Malformed History Strings",
+   "board": "mainboard",
+   "status": "closed",
+   "issue_price": 100,
+   "lot_size": 150,
+   "issue_size_cr": 900,
+   "gmp": {
+    "rs": 12,
+    "as_of": "2026-10-26",
+    "history": [
+     {
+      "date": "2026-10-20",
+      "rs": "abc"
+     },
+     {
+      "date": "2026-10-24",
+      "rs": "9"
+     },
+     {
+      "date": "2026-10-26",
+      "rs": 12
+     }
+    ]
+   },
+   "subscription": {
+    "qib": 30,
+    "nii": 10,
+    "retail": 5,
+    "total": 12
+   }
+  },
+  {
+   "id": "e10",
+   "name": "Malformed History Scalars",
+   "board": "sme",
+   "status": "open",
+   "issue_price": 93,
+   "lot_size": 1200,
+   "issue_size_cr": 54.8,
+   "gmp": {
+    "rs": 0,
+    "as_of": "2026-10-26",
+    "history": [
+     5,
+     6,
+     null,
+     "x"
+    ]
+   },
+   "subscription": {
+    "total": 3
+   }
+  }
+ ]
+}

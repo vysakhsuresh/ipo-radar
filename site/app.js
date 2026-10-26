@@ -217,7 +217,7 @@
       const gtd = el('td', { 'data-l': 'GMP' });
       gtd.append(el('div', { class: 'big num ' + (g === null ? 'muted' : g > 0 ? 'pos' : 'neg'), text: g === null ? (unq ? 'no quote' : '–') : pct(g, 1) }));
       if (!unq && gm.rs !== null && gm.rs !== undefined) gtd.append(el('div', { class: 'small muted num', text: '₹' + gm.rs + (gm.as_of ? ' · ' + dshort(gm.as_of) : '') }));
-      const sp = sparkline(gm.history, ipo.issue_price); if (sp) gtd.append(sp);
+      const sp = sparkline(S.gmpHistoryOf(ipo), ipo.issue_price); if (sp) gtd.append(sp);
       if (s && s.flags.includes('gmp_stale')) gtd.append(el('div', { class: 'small stale', text: 'stale' }));
       tr.append(gtd);
       // subscription
@@ -239,7 +239,9 @@
         ptd.append(el('div', { class: 'big num', text: pct0(s.p_up) }));
         ptd.append(el('div', { class: 'meter' }, el('i', { class: meterClass(s.p_up), style: 'width:' + Math.round(s.p_up * 100) + '%' })));
         if (s.similar && s.similar.n >= 8 && s.similar.lo !== null && s.similar.lo !== undefined) ptd.append(el('div', { class: 'small muted', text: 'past GMP ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' listed up' }));
-        ptd.append(el('div', { class: 'small muted', text: ({ high: 'final figures', medium: 'bidding still on', low: 'GMP only', none: '' })[s.confidence] }));
+        const cap = s.confidence === 'high' ? 'final figures' : s.confidence === 'low' ? 'GMP only'
+          : s.confidence === 'medium' ? (ipo.status === 'open' ? 'bidding still on' : 'final figures, no GMP quote') : '';
+        ptd.append(el('div', { class: 'small muted', text: cap }));
       } else ptd.append(el('span', { class: 'muted', text: 'not enough data' }));
       tr.append(ptd);
       // gain range

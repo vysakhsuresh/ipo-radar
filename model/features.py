@@ -49,16 +49,30 @@ def gmp_pct_of(ipo: dict) -> float | None:
     return pct
 
 
+def gmp_history_of(ipo: dict) -> list[dict]:
+    """Dated, numeric GMP quotes, oldest first; anything malformed is dropped.
+    KEEP IN STEP WITH score.js gmpHistoryOf."""
+    g = ipo.get("gmp") or {}
+    out = []
+    for h in (g.get("history") or []):
+        if not isinstance(h, dict):
+            continue
+        v = _f(h.get("rs"))
+        if v is None:
+            continue
+        out.append({"date": str(h.get("date") or ""), "rs": v})
+    out.sort(key=lambda h: h["date"])
+    return out
+
+
 def gmp_trend_of(ipo: dict) -> float | None:
     """GMP% change between the latest quote and the quote ~3 entries earlier."""
-    g = ipo.get("gmp") or {}
-    hist = [h for h in (g.get("history") or []) if _f(h.get("rs")) is not None]
+    hist = gmp_history_of(ipo)
     price = _f(ipo.get("issue_price"))
     if len(hist) < 2 or not price:
         return None
-    hist = sorted(hist, key=lambda h: h.get("date") or "")
-    last = _f(hist[-1]["rs"])
-    prev = _f(hist[max(0, len(hist) - 4)]["rs"])
+    last = hist[-1]["rs"]
+    prev = hist[max(0, len(hist) - 4)]["rs"]
     return 100.0 * (last - prev) / price
 
 
