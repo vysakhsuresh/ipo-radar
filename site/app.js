@@ -605,7 +605,7 @@
   const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method'];
   function showScreen(name, opts) {
     if (!SCREENS.includes(name)) name = 'today';
-    for (const id of SCREENS) { const sec = document.getElementById(id); if (sec) sec.hidden = id !== name; }
+    for (const id of SCREENS) { const sec = document.getElementById('screen-' + id); if (sec) sec.hidden = id !== name; }
     for (const b of document.querySelectorAll('nav.screens button')) { if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
     try { if (location.hash.replace('#', '') !== name) history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed */ }
     store('screen', name);
@@ -654,7 +654,6 @@
     chartGmp(); chartRel(); bucketTable(); coefTable(); methodText();
     const h = (location.hash || '').replace('#', '');
     showScreen(SCREENS.includes(h) ? h : (load('screen', 'today') || 'today'), { keepScroll: true });
-    requestAnimationFrame(() => window.scrollTo(0, 0));   // undo the browser's own jump to the #section
   }
   start();
 })();
