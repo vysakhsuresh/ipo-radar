@@ -1,7 +1,7 @@
 {
  "version": 1,
  "status": "prior",
- "fitted_at": "2026-10-26T18:52:24Z",
+ "fitted_at": "2026-10-27T09:20:27Z",
  "feature_names": [
   "gmp_pct",
   "gmp_missing",
@@ -192,13 +192,13 @@
    "bucket": "0\u20135%",
    "lo": 0.0,
    "hi": 5.0,
-   "n": 5,
-   "n_up": 0,
-   "p_up": 0.0,
-   "median_gain": -13.79,
-   "p10_gain": -15.192,
-   "p90_gain": -5.236,
-   "mean_gain": -10.872
+   "n": 6,
+   "n_up": 1,
+   "p_up": 0.16666666666666666,
+   "median_gain": -9.69,
+   "p10_gain": -14.99,
+   "p90_gain": -1.205,
+   "mean_gain": -8.628333333333332
   },
   {
    "board": "sme",
@@ -270,13 +270,13 @@
    "bucket": "no GMP quote",
    "lo": null,
    "hi": null,
-   "n": 8,
-   "n_up": 6,
-   "p_up": 0.75,
-   "median_gain": 6.845000000000001,
-   "p10_gain": -10.7,
-   "p90_gain": 64.40599999999999,
-   "mean_gain": 20.05375
+   "n": 7,
+   "n_up": 5,
+   "p_up": 0.7142857142857143,
+   "median_gain": 8.97,
+   "p10_gain": -12.599999999999998,
+   "p90_gain": 69.418,
+   "mean_gain": 22.548571428571428
   }
  ],
  "coef_table": [
