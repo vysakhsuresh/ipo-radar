@@ -3,6 +3,10 @@
  * the planner and the calibration evidence. No framework, no external calls. */
 (function () {
   'use strict';
+  // Some Android WebViews report vh as 0, which collapses anything sized in vh
+  // (the dropdown sheet's option list). CSS sizes use --vh, set from the real height.
+  const setVh = () => { if (window.innerHeight) document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 'px'); };
+  setVh(); window.addEventListener('resize', setVh);
   const S = window.IpoScore;
   const INLINE = JSON.parse(document.getElementById('data').textContent || '{}');
   // The Android shell (and any host) can hand in fresher data: window.ipoRadarLoad({live, params, history})
