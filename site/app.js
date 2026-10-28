@@ -17,11 +17,12 @@
   }
   function boot(DATA) {
   // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help', '#explain', '#intro', '#glossary', '#picker']) {
+  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help', '#explain', '#intro', '#glossary', '#picker', '#cardsheet']) {
     const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
   }
   for (const b of document.querySelectorAll('.pick-btn')) b.remove();
   for (const sel of document.querySelectorAll('select.enhanced')) { sel.classList.remove('enhanced'); sel.removeAttribute('aria-hidden'); sel.tabIndex = 0; }
+  applyTheme(load('theme', 'system'));
   const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
   const PARAMS = DATA.params || null;
   const HIST = slimHistory(DATA.history instanceof Object && DATA.history.rows ? DATA.history.rows : DATA.history);
@@ -111,6 +112,7 @@
     for (const line of t.d) body.append(el('p', { text: line }));
     sheet.hidden = false; const c = $('#explain-close'); if (c) c.focus();
   }
+  function applyTheme(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.setAttribute('data-theme', v); else r.removeAttribute('data-theme'); }
   function store(k, v) { try { localStorage.setItem('ipo-radar:' + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
   function load(k, d) { try { const v = localStorage.getItem('ipo-radar:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 
@@ -213,7 +215,7 @@
   }
 
   // --------------------------------------------------------------- tiles ---
-  function tile(label, value, sub) { return el('div', { class: 'tile' }, el('div', { class: 'label', text: label }), el('div', { class: 'value', text: value }), sub ? el('div', { class: 'sub', text: sub }) : null); }
+  function tile(label, value, sub) { return el('div', { class: 'tile', style: '--i:' + document.querySelectorAll('#tiles .tile').length }, el('div', { class: 'label', text: label }), el('div', { class: 'value', text: value }), sub ? el('div', { class: 'sub', text: sub }) : null); }
   function renderTiles() {
     const t = $('#tiles'); t.replaceChildren();
     const open = SCORED.filter(r => r.ipo.status === 'open');
@@ -270,6 +272,15 @@
     return svg;
   }
   function meterClass(p) { return p >= 0.7 ? 'g' : p >= 0.5 ? 'w' : 'c'; }
+  function ringEl(p, size) {
+    const r = 23, circ = 2 * Math.PI * r, off = circ * (1 - Math.max(0, Math.min(1, p)));
+    const w = el('div', { class: 'ring ' + meterClass(p), style: size ? 'width:' + size + 'px;height:' + size + 'px' : null, role: 'img', 'aria-label': pct0(p) + ' chance of a listing gain' });
+    w.append(svgEl('svg', { viewBox: '0 0 56 56', 'aria-hidden': 'true' },
+      svgEl('circle', { class: 't', cx: 28, cy: 28, r }),
+      svgEl('circle', { class: 'v', cx: 28, cy: 28, r, 'stroke-dasharray': circ.toFixed(1), 'stroke-dashoffset': off.toFixed(1), style: '--circ:' + circ.toFixed(1) })));
+    w.append(el('div', { class: 'pv', text: pct0(p) }));
+    return w;
+  }
   function rangeBar(g) {
     const lo = -30, hi = 90; // fixed scale so rows compare
     const cx = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
@@ -298,7 +309,7 @@
     if (!rows.length) { body.append(el('tr', null, el('td', { colspan: 9, class: 'empty' }, LIVE.ipos.length ? 'Nothing matches these filters.' : 'No IPO data in this snapshot yet.'))); return; }
     for (const r of rows) {
       const ipo = r.eff, s = r.score;
-      const tr = el('tr', { class: 'row', id: 'row-' + ipo.id, tabindex: 0, 'aria-expanded': state.open === ipo.id ? 'true' : 'false', 'data-id': ipo.id });
+      const tr = el('tr', { class: 'row', id: 'row-' + ipo.id, tabindex: 0, 'aria-expanded': state.open === ipo.id ? 'true' : 'false', 'data-id': ipo.id, style: '--i:' + Math.min(12, body.children.length / 2) });
       // name
       const name = el('td', { class: 'name', 'data-l': 'IPO' }, el('div', { class: 'n', text: ipo.name }));
       const chips = el('div', { class: 'chips' },
@@ -339,18 +350,18 @@
       } else std.append(el('span', { class: 'muted', text: ipo.status === 'upcoming' ? 'not open yet' : '–' }));
       tr.append(std);
       // probability
-      const ptd = el('td', { 'data-l': 'Chance of listing gain' });
+      const ptd = el('td', { 'data-l': 'Chance of listing gain', class: 'pcell' });
       if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined) {
         ptd.append(el('div', { class: 'big num ' + (ipo.listing.gain_pct > 0 ? 'pos' : 'neg'), text: 'Listed ' + pct(ipo.listing.gain_pct, 1) }));
         if (s && s.p_up !== null) ptd.append(el('div', { class: 'small muted', text: 'model said ' + pct0(s.p_up) + ' chance of a gain' }));
       } else if (s && s.p_up !== null) {
-        ptd.append(el('div', { class: 'big num', text: pct0(s.p_up) }));
-        ptd.append(el('div', { class: 'meter' }, el('i', { class: meterClass(s.p_up), style: 'width:' + Math.round(s.p_up * 100) + '%' })));
-        ptd.append(el('div', { class: 'small ink2', text: oddsText(s.p_up) }));
-        if (s.similar && s.similar.n >= 8 && s.similar.lo !== null && s.similar.lo !== undefined) ptd.append(el('div', { class: 'small muted', text: 'past IPOs with premium ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' listed up' }));
+        const txt = el('div', { class: 'txt' });
+        txt.append(el('div', { class: 'ink2', text: oddsText(s.p_up) }));
+        if (s.similar && s.similar.n >= 8 && s.similar.lo !== null && s.similar.lo !== undefined) txt.append(el('div', { class: 'muted', text: 'past IPOs with premium ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' listed up' }));
         const cap = s.confidence === 'high' ? 'based on final demand figures' : s.confidence === 'low' ? 'based on the premium only'
           : s.confidence === 'medium' ? (ipo.status === 'open' ? 'bidding still on; will firm up' : 'final demand figures, no premium quote') : '';
-        ptd.append(el('div', { class: 'small muted', text: cap }));
+        if (cap) txt.append(el('div', { class: 'muted', text: cap }));
+        ptd.append(el('div', { class: 'chance' }, ringEl(s.p_up), txt));
       } else ptd.append(el('span', { class: 'muted', text: 'not enough data' }));
       tr.append(ptd);
       // gain range
@@ -449,7 +460,7 @@
     c3.append(el('h3', { text: 'Try your own numbers' }));
     const wi = el('div', { class: 'whatif' });
     const e = state.edits[ipo.id] || {};
-    const inp = (k, lab, v, step) => { const i = el('input', { type: 'number', step: step || 'any', id: 'wi-' + ipo.id + '-' + k, value: v === null || v === undefined ? '' : v, placeholder: '–' }); wi.append(el('label', null, lab, i)); return i; };
+    const inp = (k, lab, v, step) => { const i = el('input', { type: 'number', step: step || 'any', id: 'wi-' + ipo.id + '-' + k, value: v === null || v === undefined ? '' : (Number.isInteger(Number(v)) ? v : Number(v).toFixed(2)), placeholder: '–' }); wi.append(el('label', null, lab, i)); return i; };
     const iG = inp('gmp', 'Premium ₹ (GMP)', e.gmp_rs !== undefined ? e.gmp_rs : (ipo.gmp && ipo.gmp.rs), 1);
     const iQ = inp('qib', 'Institutions x', e.qib !== undefined ? e.qib : sub.qib, 0.1);
     const iN = inp('nii', 'Wealthy x', e.nii !== undefined ? e.nii : sub.nii, 0.1);
@@ -806,6 +817,8 @@
     const rem = $('#s-reminder');
     if (rem) rem.addEventListener('change', () => { if (N) { try { N.setReminderHour(Number(rem.value)); } catch (e) { /* ignore */ } } });
     const sr = $('#s-refresh'); if (sr) sr.addEventListener('click', doRefresh);
+    const th = $('#s-theme'); if (th) { const cur = load('theme', 'system'); for (const o of th.querySelectorAll('button')) o.setAttribute('aria-pressed', o.dataset.v === cur ? 'true' : 'false');
+      th.addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; store('theme', b.dataset.v); applyTheme(b.dataset.v); for (const o of th.querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); }); }
     const b0 = $('#share-shortlist-img'); if (b0) b0.addEventListener('click', shareShortlistCard);
     const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
     if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
@@ -1003,18 +1016,31 @@
       const bin = atob(dataUrl.split(',')[1]); const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
       const f = new File([arr], name, { type: 'image/png' });
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name, text: caption }).catch(() => {}); return; }
-      const a = document.createElement('a'); a.href = dataUrl; a.download = name; document.body.append(a); a.click(); a.remove(); alertNote('Card saved as ' + name);
+      const a = document.createElement('a'); a.href = dataUrl; a.download = name; a.target = '_blank'; a.rel = 'noopener'; document.body.append(a); a.click(); a.remove();
     } catch (e) { shareText(caption, name); }
   }
-  async function shareIpoCard(r) {
-    const b = document.getElementById('shc-' + r.ipo.id); if (b) b.disabled = true;
-    try { const cv = await drawIpoCard(r); shareImage(r.eff.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-ipo-radar.png', canvasPng(cv), readText(r)); }
-    catch (e) { shareText(readText(r), r.eff.name); }
-    if (b) b.disabled = false;
+  // The card is shown before it is sent: the person sees exactly what goes out,
+  // and on a platform with no share sheet (a browser preview) they still get the picture.
+  let CARD_CUR = null;
+  function openCardSheet(title, drawFn, name, caption) {
+    const sheet = $('#cardsheet'), pv = $('#card-preview'); if (!sheet) return;
+    $('#card-title').textContent = title;
+    pv.replaceChildren(el('div', { class: 'wait' }, el('span', { class: 'spin' }), 'Drawing the card…'));
+    CARD_CUR = null; sheet.hidden = false;
+    const close = () => { sheet.hidden = true; CARD_CUR = null; };
+    $('#card-close').onclick = close; sheet.onclick = (ev) => { if (ev.target === sheet) close(); };
+    $('#card-share').onclick = () => { if (CARD_CUR) shareImage(CARD_CUR.name, CARD_CUR.data, CARD_CUR.caption); };
+    $('#card-save').onclick = () => { if (!CARD_CUR) return; const a = document.createElement('a'); a.href = CARD_CUR.data; a.download = CARD_CUR.name; a.target = '_blank'; a.rel = 'noopener'; document.body.append(a); a.click(); a.remove(); };
+    Promise.resolve().then(drawFn).then((cv) => {
+      const data = canvasPng(cv); CARD_CUR = { name, data, caption };
+      const img = new Image(); img.alt = title + ' as a shareable card'; img.src = data; pv.replaceChildren(img);
+    }).catch(() => { pv.replaceChildren(el('div', { class: 'wait', text: 'Could not draw the card on this device. Share as text instead.' })); });
   }
-  async function shareShortlistCard() {
-    try { const cv = await drawShortlistCard(); shareImage('ipo-radar-shortlist-' + (LIVE.generated_at || '').slice(0, 10) + '.png', canvasPng(cv), shortlistText()); }
-    catch (e) { shareText(shortlistText(), 'IPO Radar shortlist'); }
+  function shareIpoCard(r) {
+    openCardSheet(r.eff.name, () => drawIpoCard(r), r.eff.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-ipo-radar.png', readText(r));
+  }
+  function shareShortlistCard() {
+    openCardSheet('Today’s shortlist', drawShortlistCard, 'ipo-radar-shortlist-' + (LIVE.generated_at || '').slice(0, 10) + '.png', shortlistText());
   }
   function cardButton(r) {
     return el('button', { class: 'star share', type: 'button', id: 'shc-' + r.ipo.id, 'aria-label': 'Share ' + r.eff.name + ' as an image card', onclick: (ev) => { ev.stopPropagation(); shareIpoCard(r); } },
@@ -1056,7 +1082,7 @@
     if (!window.__ipoExplainBound) { window.__ipoExplainBound = true; document.addEventListener('click', (ev) => { const t = ev.target.closest('[data-term]'); if (!t) return; ev.preventDefault(); ev.stopPropagation(); openExplain(t.dataset.term); }, true); }
     $('#explain-close').addEventListener('click', close);
     sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); if (ev.key === 'Escape') { const pk = $('#picker'); if (pk && !pk.hidden) pk.hidden = true; } });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); if (ev.key === 'Escape') { for (const id of ['#picker', '#cardsheet']) { const pk = $(id); if (pk && !pk.hidden) pk.hidden = true; } } });
     $('#explain-all').addEventListener('click', () => { close(); showScreen('about'); const g = $('#glossary'); if (g) g.scrollIntoView({ block: 'start' }); });
     // glossary on the More screen, from the same text
     const g = $('#glossary-body'); if (g) { g.replaceChildren(); for (const k of TERM_ORDER) { const t = TERMS[k]; g.append(el('details', { class: 'gl' }, el('summary', { text: t.t }), ...t.d.map(line => el('p', { text: line })))); } }
@@ -1086,8 +1112,9 @@
     if (!rows.length) { host.append(el('p', { class: 'muted', text: 'Nothing open or upcoming has a usable read right now.' })); return; }
     for (const r of rows) {
       const s = r.score, ipo = r.eff;
-      const card = el('button', { class: 'pick', type: 'button', id: 'pick-' + ipo.id, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
+      const card = el('button', { class: 'pick', type: 'button', id: 'pick-' + ipo.id, style: '--i:' + host.children.length, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
       card.append(el('div', { class: 'n' }, ipo.name, ' ', el('span', { class: 'chip', text: ipo.board === 'sme' ? 'SME' : 'Mainboard' })));
+      card.append(ringEl(s.p_up, 64));
       card.append(el('div', null, el('span', { class: 'verdict ' + s.verdict.tier, 'data-term': 'verdicts', text: s.verdict.label }), s.verdict.gamble ? el('span', { class: 'gamble ' + s.verdict.gamble, 'data-term': 'gamble', style: 'display:inline;margin-left:8px', text: s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble' }) : null));
       const m = el('div', { class: 'm' });
       m.append(el('span', null, 'Chance of a gain ', el('b', { class: 'num', text: pct0(s.p_up) }), el('span', { class: 'muted', text: ' (' + oddsText(s.p_up).replace(' such IPOs list up', '') + ')' })));
@@ -1137,6 +1164,7 @@
   function start() {
     computeAll();
     bindFilters(); bindPlanner(); bindScreens(); bindContact(); bindSettings(); bindExplain(); enhanceSelects();
+    const pk = $('#picks'); if (pk && !pk.parentNode.classList.contains('hwrap')) { const par = pk.parentNode, nx = pk.nextSibling; par.insertBefore(scrollCue(pk), nx); }
     renderAll(); renderStatus(); renderSettings();
     $('#cal-lede').textContent = !PARAMS ? 'No model report in this snapshot.'
       : PARAMS.status === 'calibrated' ? 'This is the model’s report card. It was fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + ', and every figure below was measured on IPOs it had not seen while learning.'
