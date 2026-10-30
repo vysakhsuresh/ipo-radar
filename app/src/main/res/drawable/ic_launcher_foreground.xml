@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything stays inside the 66dp safe circle (radius 33 around 54,54),
+     so no launcher mask can clip the rocket. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+
+    <!-- soft halo -->
+    <path android:pathData="M54,27a27,27 0 1,0 0.01,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="54" android:centerY="54"
+                android:gradientRadius="27"
+                android:startColor="#40FFFFFF" android:endColor="#00FFFFFF" />
+        </aapt:attr>
+    </path>
+
+    <!-- radar rings -->
+    <path android:pathData="M54,23a31,31 0 1,0 0.01,0z"
+        android:strokeColor="#FFFFFF" android:strokeAlpha="0.22" android:strokeWidth="1.4"
+        android:fillColor="#00000000" />
+    <path android:pathData="M54,32a22,22 0 1,0 0.01,0z"
+        android:strokeColor="#FFFFFF" android:strokeAlpha="0.14" android:strokeWidth="1.2"
+        android:fillColor="#00000000" />
+
+    <!-- sparkles -->
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.9"
+        android:pathData="M34,34.5 Q34.6,37.4 37.5,38 Q34.6,38.6 34,41.5 Q33.4,38.6 30.5,38 Q33.4,37.4 34,34.5z" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.75"
+        android:pathData="M76,69.5 Q76.4,71.6 78.5,72 Q76.4,72.4 76,74.5 Q75.6,72.4 73.5,72 Q75.6,71.6 76,69.5z" />
+    <path android:fillColor="#FFD23F" android:pathData="M42,29.5a1.5,1.5 0 1,0 0.01,0z" />
+
+    <!-- rocket, drawn upright then tilted up-right -->
+    <group android:translateX="54" android:translateY="55"
+        android:rotation="45" android:scaleX="1.12" android:scaleY="1.12">
+        <!-- flame -->
+        <path android:pathData="M-6,13 Q0,33 6,13z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="0" android:startY="13"
+                    android:endX="0" android:endY="23"
+                    android:startColor="#FFD23F" android:endColor="#FF7A3D" />
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FFF6C9" android:pathData="M-2.6,13 Q0,22 2.6,13z" />
+        <!-- fins -->
+        <path android:fillColor="#FFD23F" android:pathData="M-9.6,3 L-17.5,14.5 L-8.5,12.5z" />
+        <path android:fillColor="#FFD23F" android:pathData="M9.6,3 L17.5,14.5 L8.5,12.5z" />
+        <!-- body -->
+        <path android:pathData="M0,-24 C9,-16 11,-2 10,9.5 L5.5,14 L-5.5,14 L-10,9.5 C-11,-2 -9,-16 0,-24z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="-10" android:startY="-24"
+                    android:endX="10" android:endY="14"
+                    android:startColor="#FFFFFF" android:endColor="#D6F3EE" />
+            </aapt:attr>
+        </path>
+        <!-- nose band -->
+        <path android:fillColor="#FFD23F"
+            android:pathData="M0,-24 C3.2,-21.2 5.4,-18 6.8,-14.6 Q0,-12.6 -6.8,-14.6 C-5.4,-18 -3.2,-21.2 0,-24z" />
+        <!-- window -->
+        <path android:fillColor="#0B6E6D" android:pathData="M-4.4,-4a4.4,4.4 0 1,0 8.8,0a4.4,4.4 0 1,0 -8.8,0z" />
+        <path android:fillColor="#9FE8E3" android:pathData="M-2.5,-4a2.5,2.5 0 1,0 5,0a2.5,2.5 0 1,0 -5,0z" />
+    </group>
+</vector>
