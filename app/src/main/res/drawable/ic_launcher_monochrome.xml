@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Single-colour layer for Android 13+ themed icons. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- radar ring with a rising trend arrow, kept well inside the 66dp safe circle -->
-    <path android:pathData="M54,32a22,22 0 1,0 0.01,0z"
-        android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:fillColor="#00000000" />
-    <path android:pathData="M40,62 L48.5,53.5 L55,59 L66,48 M57.5,48 L66,48 L66,56.5"
-        android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:fillColor="#00000000"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
+    <path android:pathData="M54,44a10,10 0 1,0 0.01,0z M54,36a18,18 0 1,0 0.01,0z M54,28a26,26 0 1,0 0.01,0z"
+        android:strokeColor="#FFFFFF" android:strokeAlpha="0.5" android:strokeWidth="1.8"
+        android:fillColor="#00000000" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.35"
+        android:pathData="M54,54 L54,28 A26,26 0 0,1 78.43,45.11 Z" />
+    <path android:pathData="M54,54 L78.43,45.11"
+        android:strokeColor="#FFFFFF" android:strokeWidth="2.2" android:strokeLineCap="round" />
+    <path android:fillColor="#FFFFFF" android:pathData="M68.7,40a3.7,3.7 0 1,0 0.01,0z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,51.2a2.8,2.8 0 1,0 0.01,0z" />
 </vector>

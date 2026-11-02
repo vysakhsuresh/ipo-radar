@@ -1,8 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72" width="512" height="512">
-  <rect x="18" y="18" width="72" height="72" rx="16" fill="#0B6E6D"/>
-  <g fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="54" cy="54" r="22"/>
-    <path d="M40 62 L48.5 53.5 L55 59 L66 48"/>
-    <path d="M57.5 48 L66 48 L66 56.5"/>
-  </g>
+  <defs>
+    <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="18" y1="18" x2="90" y2="90"><stop offset="0" stop-color="#143A55"/><stop offset="1" stop-color="#071521"/></linearGradient>
+    <linearGradient id="sweep" gradientUnits="userSpaceOnUse" x1="54" y1="28" x2="78" y2="45"><stop offset="0" stop-color="#5EEAD4" stop-opacity="0"/><stop offset="1" stop-color="#5EEAD4" stop-opacity=".6"/></linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#FFD166" stop-opacity=".7"/><stop offset="1" stop-color="#FFD166" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="18" y="18" width="72" height="72" rx="16" fill="url(#bg)"/>
+  <g fill="none" stroke="#5EEAD4" stroke-opacity=".35" stroke-width="1.5"><circle cx="54" cy="54" r="10"/><circle cx="54" cy="54" r="18"/><circle cx="54" cy="54" r="26"/></g>
+  <path d="M54 54 L54 28 A26 26 0 0 1 78.43 45.11 Z" fill="url(#sweep)"/>
+  <path d="M54 54 L78.43 45.11" stroke="#5EEAD4" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="68.7" cy="43.7" r="7" fill="url(#glow)"/>
+  <circle cx="68.7" cy="43.7" r="3.2" fill="#FFD166"/>
+  <circle cx="42" cy="63" r="1.8" fill="#5EEAD4" fill-opacity=".6"/>
+  <circle cx="54" cy="54" r="2.6" fill="#5EEAD4"/>
 </svg>

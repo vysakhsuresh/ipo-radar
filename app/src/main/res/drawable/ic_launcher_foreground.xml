@@ -1,11 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Radar scope with a sweep catching a gold blip (a new listing).
+     Everything sits inside the 66dp safe circle (radius 33 around 54,54). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- radar ring with a rising trend arrow, kept well inside the 66dp safe circle -->
-    <path android:pathData="M54,32a22,22 0 1,0 0.01,0z"
-        android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:fillColor="#00000000" />
-    <path android:pathData="M40,62 L48.5,53.5 L55,59 L66,48 M57.5,48 L66,48 L66,56.5"
-        android:strokeColor="#FFFFFF" android:strokeWidth="4.5" android:fillColor="#00000000"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
+
+    <!-- range rings -->
+    <path android:pathData="M54,44a10,10 0 1,0 0.01,0z M54,36a18,18 0 1,0 0.01,0z M54,28a26,26 0 1,0 0.01,0z"
+        android:strokeColor="#5EEAD4" android:strokeAlpha="0.35" android:strokeWidth="1.5"
+        android:fillColor="#00000000" />
+
+    <!-- sweep, fading out behind the beam -->
+    <path android:pathData="M54,54 L54,28 A26,26 0 0,1 78.43,45.11 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear"
+                android:startX="54" android:startY="28" android:endX="78" android:endY="45"
+                android:startColor="#005EEAD4" android:endColor="#995EEAD4" />
+        </aapt:attr>
+    </path>
+
+    <!-- beam -->
+    <path android:pathData="M54,54 L78.43,45.11"
+        android:strokeColor="#5EEAD4" android:strokeWidth="2" android:strokeLineCap="round" />
+
+    <!-- gold blip with glow -->
+    <path android:pathData="M68.7,36.7a7,7 0 1,0 0.01,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="68.7" android:centerY="43.7"
+                android:gradientRadius="7"
+                android:startColor="#B3FFD166" android:endColor="#00FFD166" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFD166" android:pathData="M68.7,40.5a3.2,3.2 0 1,0 0.01,0z" />
+
+    <!-- faint second blip and centre -->
+    <path android:fillColor="#5EEAD4" android:fillAlpha="0.6" android:pathData="M42,61.2a1.8,1.8 0 1,0 0.01,0z" />
+    <path android:fillColor="#5EEAD4" android:pathData="M54,51.4a2.6,2.6 0 1,0 0.01,0z" />
 </vector>
