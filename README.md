@@ -33,7 +33,7 @@ How it works: `MainActivity` is a WebView served from the bundled `assets/www` (
 
 ## Icon
 
-`site/icons/icon.svg` is the app mark (a radar sweep catching a rising listing-day candle); the PNG sizes next to it are rendered from it and the build copies them to `dist/icons/` for the favicon, the Apple touch icon and the web manifest, so the hosted site can be installed to a phone home screen.
+`site/icons/icon.svg` is the app mark (a white radar ring around a rising trend arrow on flat teal, matching the Android launcher icon); the PNG sizes next to it are rendered from it and the build copies them to `dist/icons/` for the favicon, the Apple touch icon and the web manifest, so the hosted site can be installed to a phone home screen.
 
 ## Layout
 
