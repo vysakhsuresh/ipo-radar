@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-11-03T11:15:05Z",
+ "generated_at": "2026-11-03T18:37:19Z",
  "market": {
   "nifty": 23810.85,
-  "nifty_1w_pct": 4.66,
+  "nifty_1w_pct": 3.02,
   "nifty_1m_pct": 6.19,
-  "nifty_3m_pct": -3.27,
+  "nifty_3m_pct": -5.38,
   "vix": 15.67,
   "as_of": "2026-11-03"
  },
  "sources": [
   {
    "url": "https://www.nseindia.com/",
-   "fetched_at": "2026-11-03T11:09:08Z",
+   "fetched_at": "2026-11-03T18:30:57Z",
    "ok": false,
    "status": null,
    "rows": 0,
@@ -19,7 +19,7 @@
   },
   {
    "url": "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
-   "fetched_at": "2026-11-03T11:09:10Z",
+   "fetched_at": "2026-11-03T18:30:59Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -27,7 +27,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/allIndices",
-   "fetched_at": "2026-11-03T11:09:12Z",
+   "fetched_at": "2026-11-03T18:31:01Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -35,7 +35,7 @@
   },
   {
    "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=3mo&interval=1d",
-   "fetched_at": "2026-11-03T11:09:12Z",
+   "fetched_at": "2026-11-03T18:31:01Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -43,7 +43,7 @@
   },
   {
    "url": "https://www.nseindia.com/",
-   "fetched_at": "2026-11-03T11:09:13Z",
+   "fetched_at": "2026-11-03T18:31:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -51,7 +51,7 @@
   },
   {
    "url": "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
-   "fetched_at": "2026-11-03T11:09:15Z",
+   "fetched_at": "2026-11-03T18:31:04Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -59,7 +59,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-current-issue",
-   "fetched_at": "2026-11-03T11:09:17Z",
+   "fetched_at": "2026-11-03T18:31:05Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -67,7 +67,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
-   "fetched_at": "2026-11-03T11:09:18Z",
+   "fetched_at": "2026-11-03T18:31:07Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -75,23 +75,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/public-past-issues",
-   "fetched_at": "2026-11-03T11:09:20Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
-   "fetched_at": "2026-11-03T11:09:22Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/ipo-active-category?symbol=BCSSL",
-   "fetched_at": "2026-11-03T11:09:24Z",
+   "fetched_at": "2026-11-03T18:31:09Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -99,7 +83,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=VPFL&series=SME",
-   "fetched_at": "2026-11-03T11:09:25Z",
+   "fetched_at": "2026-11-03T18:31:11Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -107,7 +91,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=VPFL",
-   "fetched_at": "2026-11-03T11:09:27Z",
+   "fetched_at": "2026-11-03T18:31:12Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -115,7 +99,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
-   "fetched_at": "2026-11-03T11:09:29Z",
+   "fetched_at": "2026-11-03T18:31:19Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -123,23 +107,23 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=HGSINDIALT",
-   "fetched_at": "2026-11-03T11:09:30Z",
+   "fetched_at": "2026-11-03T18:31:21Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-   "fetched_at": "2026-11-03T11:09:32Z",
+   "url": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=EQ",
+   "fetched_at": "2026-11-03T18:31:27Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/ipo-active-category?symbol=MAXENGS",
-   "fetched_at": "2026-11-03T11:09:33Z",
+   "url": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
+   "fetched_at": "2026-11-03T18:31:33Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -147,7 +131,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=MKSONS&series=EQ",
-   "fetched_at": "2026-11-03T11:09:40Z",
+   "fetched_at": "2026-11-03T18:31:40Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -155,7 +139,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SMCG04&series=EQ",
-   "fetched_at": "2026-11-03T11:09:41Z",
+   "fetched_at": "2026-11-03T18:31:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -163,7 +147,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=NSE&series=EQ",
-   "fetched_at": "2026-11-03T11:09:48Z",
+   "fetched_at": "2026-11-03T18:31:52Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -171,7 +155,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=MOMSBELIEF&series=EQ",
-   "fetched_at": "2026-11-03T11:09:54Z",
+   "fetched_at": "2026-11-03T18:31:58Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -179,7 +163,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ICEL&series=EQ",
-   "fetched_at": "2026-11-03T11:10:00Z",
+   "fetched_at": "2026-11-03T18:32:05Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -187,7 +171,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SPGCL&series=EQ",
-   "fetched_at": "2026-11-03T11:10:07Z",
+   "fetched_at": "2026-11-03T18:32:11Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -195,7 +179,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SAMPOORNA&series=EQ",
-   "fetched_at": "2026-11-03T11:10:13Z",
+   "fetched_at": "2026-11-03T18:32:17Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -203,7 +187,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=PFCZCB1&series=EQ",
-   "fetched_at": "2026-11-03T11:10:20Z",
+   "fetched_at": "2026-11-03T18:32:24Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -211,7 +195,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SMCG03&series=EQ",
-   "fetched_at": "2026-11-03T11:10:26Z",
+   "fetched_at": "2026-11-03T18:32:30Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -219,7 +203,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=NSDL&series=EQ",
-   "fetched_at": "2026-11-03T11:10:33Z",
+   "fetched_at": "2026-11-03T18:32:36Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -227,7 +211,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SMCG02&series=EQ",
-   "fetched_at": "2026-11-03T11:10:39Z",
+   "fetched_at": "2026-11-03T18:32:43Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -235,7 +219,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=C2CW&series=EQ",
-   "fetched_at": "2026-11-03T11:10:45Z",
+   "fetched_at": "2026-11-03T18:32:50Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -243,7 +227,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SARTELEFPO&series=EQ",
-   "fetched_at": "2026-11-03T11:10:52Z",
+   "fetched_at": "2026-11-03T18:32:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -251,7 +235,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SMCG01&series=EQ",
-   "fetched_at": "2026-11-03T11:10:58Z",
+   "fetched_at": "2026-11-03T18:33:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -259,7 +243,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=IHFL13&series=EQ",
-   "fetched_at": "2026-11-03T11:11:04Z",
+   "fetched_at": "2026-11-03T18:33:09Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -267,7 +251,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=PKH&series=EQ",
-   "fetched_at": "2026-11-03T11:11:11Z",
+   "fetched_at": "2026-11-03T18:33:15Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -275,7 +259,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ADANIENTPP&series=EQ",
-   "fetched_at": "2026-11-03T11:11:18Z",
+   "fetched_at": "2026-11-03T18:33:21Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -283,7 +267,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=DCX&series=EQ",
-   "fetched_at": "2026-11-03T11:11:24Z",
+   "fetched_at": "2026-11-03T18:33:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -291,7 +275,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=UGROD3&series=EQ",
-   "fetched_at": "2026-11-03T11:11:30Z",
+   "fetched_at": "2026-11-03T18:33:36Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -299,7 +283,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=UGROD2&series=EQ",
-   "fetched_at": "2026-11-03T11:11:37Z",
+   "fetched_at": "2026-11-03T18:33:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -307,7 +291,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=PROPEQUITY&series=EQ",
-   "fetched_at": "2026-11-03T11:11:43Z",
+   "fetched_at": "2026-11-03T18:33:48Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -315,7 +299,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=TIMESCAN&series=EQ",
-   "fetched_at": "2026-11-03T11:11:49Z",
+   "fetched_at": "2026-11-03T18:33:55Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -323,7 +307,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ABCOTS&series=EQ",
-   "fetched_at": "2026-11-03T11:11:56Z",
+   "fetched_at": "2026-11-03T18:34:01Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -331,7 +315,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=UGROD1&series=EQ",
-   "fetched_at": "2026-11-03T11:12:02Z",
+   "fetched_at": "2026-11-03T18:34:07Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -339,7 +323,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=DKEGL&series=EQ",
-   "fetched_at": "2026-11-03T11:12:08Z",
+   "fetched_at": "2026-11-03T18:34:13Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -347,7 +331,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=DYNAMIC&series=EQ",
-   "fetched_at": "2026-11-03T11:12:15Z",
+   "fetched_at": "2026-11-03T18:34:20Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -355,7 +339,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=JMFPIV&series=EQ",
-   "fetched_at": "2026-11-03T11:12:21Z",
+   "fetched_at": "2026-11-03T18:34:26Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -363,7 +347,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=PCHFRD&series=EQ",
-   "fetched_at": "2026-11-03T11:12:27Z",
+   "fetched_at": "2026-11-03T18:34:33Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -371,7 +355,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=VMARCIND&series=EQ",
-   "fetched_at": "2026-11-03T11:12:34Z",
+   "fetched_at": "2026-11-03T18:34:39Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -379,7 +363,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=YESBANK&series=EQ",
-   "fetched_at": "2026-11-03T11:12:40Z",
+   "fetched_at": "2026-11-03T18:34:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -387,7 +371,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ITI&series=EQ",
-   "fetched_at": "2026-11-03T11:12:46Z",
+   "fetched_at": "2026-11-03T18:34:52Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -395,7 +379,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SNCD9T2&series=EQ",
-   "fetched_at": "2026-11-03T11:12:53Z",
+   "fetched_at": "2026-11-03T18:34:58Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -403,7 +387,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ASCOM&series=EQ",
-   "fetched_at": "2026-11-03T11:12:59Z",
+   "fetched_at": "2026-11-03T18:35:05Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -411,7 +395,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SONAHISONA&series=EQ",
-   "fetched_at": "2026-11-03T11:13:05Z",
+   "fetched_at": "2026-11-03T18:35:11Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -419,7 +403,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=TCFNCD2&series=EQ",
-   "fetched_at": "2026-11-03T11:13:11Z",
+   "fetched_at": "2026-11-03T18:35:18Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -427,7 +411,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SWSL&series=EQ",
-   "fetched_at": "2026-11-03T11:13:18Z",
+   "fetched_at": "2026-11-03T18:35:24Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -435,7 +419,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=KPRAGRO&series=EQ",
-   "fetched_at": "2026-11-03T11:13:24Z",
+   "fetched_at": "2026-11-03T18:35:31Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -443,7 +427,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ABINFRA&series=EQ",
-   "fetched_at": "2026-11-03T11:13:30Z",
+   "fetched_at": "2026-11-03T18:35:37Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -451,7 +435,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ALUMILITE&series=EQ",
-   "fetched_at": "2026-11-03T11:13:36Z",
+   "fetched_at": "2026-11-03T18:35:43Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -459,7 +443,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ICL&series=EQ",
-   "fetched_at": "2026-11-03T11:13:43Z",
+   "fetched_at": "2026-11-03T18:35:49Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -467,7 +451,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=DEPL&series=EQ",
-   "fetched_at": "2026-11-03T11:13:49Z",
+   "fetched_at": "2026-11-03T18:35:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -475,7 +459,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=STFNCD8&series=EQ",
-   "fetched_at": "2026-11-03T11:13:56Z",
+   "fetched_at": "2026-11-03T18:36:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -483,7 +467,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SORICH&series=EQ",
-   "fetched_at": "2026-11-03T11:14:02Z",
+   "fetched_at": "2026-11-03T18:36:09Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -491,7 +475,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=PENTAGOLD&series=EQ",
-   "fetched_at": "2026-11-03T11:14:09Z",
+   "fetched_at": "2026-11-03T18:36:15Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -499,7 +483,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=SHBL&series=EQ",
-   "fetched_at": "2026-11-03T11:14:15Z",
+   "fetched_at": "2026-11-03T18:36:21Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -507,7 +491,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=GSBPL&series=EQ",
-   "fetched_at": "2026-11-03T11:14:21Z",
+   "fetched_at": "2026-11-03T18:36:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -515,7 +499,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=EHFLNCD&series=EQ",
-   "fetched_at": "2026-11-03T11:14:27Z",
+   "fetched_at": "2026-11-03T18:36:34Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -523,7 +507,7 @@
   },
   {
    "url": "source:nse",
-   "fetched_at": "2026-11-03T11:14:27Z",
+   "fetched_at": "2026-11-03T18:36:34Z",
    "ok": true,
    "status": null,
    "rows": 1440,
@@ -531,7 +515,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-   "fetched_at": "2026-11-03T11:14:27Z",
+   "fetched_at": "2026-11-03T18:36:35Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -539,7 +523,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-   "fetched_at": "2026-11-03T11:14:31Z",
+   "fetched_at": "2026-11-03T18:36:40Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -547,7 +531,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-   "fetched_at": "2026-11-03T11:14:31Z",
+   "fetched_at": "2026-11-03T18:36:40Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -555,7 +539,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-   "fetched_at": "2026-11-03T11:14:34Z",
+   "fetched_at": "2026-11-03T18:36:44Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -563,7 +547,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-gmp-grey-market-premium/97/",
-   "fetched_at": "2026-11-03T11:14:35Z",
+   "fetched_at": "2026-11-03T18:36:45Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -571,7 +555,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-gmp-grey-market-premium/97/",
-   "fetched_at": "2026-11-03T11:14:37Z",
+   "fetched_at": "2026-11-03T18:36:47Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -579,7 +563,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ipo_gmp/",
-   "fetched_at": "2026-11-03T11:14:38Z",
+   "fetched_at": "2026-11-03T18:36:48Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -587,7 +571,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ipo_gmp/",
-   "fetched_at": "2026-11-03T11:14:40Z",
+   "fetched_at": "2026-11-03T18:36:50Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -595,7 +579,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-   "fetched_at": "2026-11-03T11:14:40Z",
+   "fetched_at": "2026-11-03T18:36:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -603,7 +587,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-   "fetched_at": "2026-11-03T11:14:43Z",
+   "fetched_at": "2026-11-03T18:36:55Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -611,7 +595,7 @@
   },
   {
    "url": "source:chittorgarh",
-   "fetched_at": "2026-11-03T11:14:43Z",
+   "fetched_at": "2026-11-03T18:36:55Z",
    "ok": true,
    "status": null,
    "rows": 103,
@@ -619,7 +603,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
-   "fetched_at": "2026-11-03T11:14:43Z",
+   "fetched_at": "2026-11-03T18:36:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -627,7 +611,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
-   "fetched_at": "2026-11-03T11:14:46Z",
+   "fetched_at": "2026-11-03T18:36:59Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -635,7 +619,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
-   "fetched_at": "2026-11-03T11:14:47Z",
+   "fetched_at": "2026-11-03T18:37:00Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -643,7 +627,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
-   "fetched_at": "2026-11-03T11:14:49Z",
+   "fetched_at": "2026-11-03T18:37:03Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -651,7 +635,7 @@
   },
   {
    "url": "source:chittorgarh_tracker",
-   "fetched_at": "2026-11-03T11:14:49Z",
+   "fetched_at": "2026-11-03T18:37:03Z",
    "ok": true,
    "status": null,
    "rows": 50,
@@ -659,7 +643,7 @@
   },
   {
    "url": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-   "fetched_at": "2026-11-03T11:14:50Z",
+   "fetched_at": "2026-11-03T18:37:04Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -667,7 +651,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/antala-industries-ipo/2375/",
-   "fetched_at": "2026-11-03T11:14:51Z",
+   "fetched_at": "2026-11-03T18:37:05Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -675,7 +659,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/vedant-poly-fabs-ipo/2297/",
-   "fetched_at": "2026-11-03T11:14:53Z",
+   "fetched_at": "2026-11-03T18:37:07Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -683,7 +667,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/hgs-india-ipo/2241/",
-   "fetched_at": "2026-11-03T11:14:54Z",
+   "fetched_at": "2026-11-03T18:37:09Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -691,7 +675,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/johnsoncab-electricals-ipo/2371/",
-   "fetched_at": "2026-11-03T11:14:56Z",
+   "fetched_at": "2026-11-03T18:37:10Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -699,7 +683,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/vectras-enprocon-ipo/1998/",
-   "fetched_at": "2026-11-03T11:14:58Z",
+   "fetched_at": "2026-11-03T18:37:12Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -707,7 +691,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/maxwell-engineering-solutions-ipo/1965/",
-   "fetched_at": "2026-11-03T11:14:59Z",
+   "fetched_at": "2026-11-03T18:37:13Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -715,7 +699,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/bombay-coated-and-special-steels-ipo/1936/",
-   "fetched_at": "2026-11-03T11:15:01Z",
+   "fetched_at": "2026-11-03T18:37:15Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -723,7 +707,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/mksons-fine-jewels-ipo/2288/",
-   "fetched_at": "2026-11-03T11:15:02Z",
+   "fetched_at": "2026-11-03T18:37:16Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -731,7 +715,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/ajwa-projects-ipo/2017/",
-   "fetched_at": "2026-11-03T11:15:04Z",
+   "fetched_at": "2026-11-03T18:37:18Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -739,7 +723,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/carver-roboweld-ipo/2393/",
-   "fetched_at": "2026-11-03T11:15:05Z",
+   "fetched_at": "2026-11-03T18:37:19Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -747,7 +731,7 @@
   },
   {
    "url": "source:investorgain",
-   "fetched_at": "2026-11-03T11:15:05Z",
+   "fetched_at": "2026-11-03T18:37:19Z",
    "ok": true,
    "status": null,
    "rows": 31,
@@ -846,13 +830,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.20703933747412007,
@@ -1093,13 +1077,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
      "p_min_lot": 0.4329004329004329,
@@ -1355,13 +1339,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.7936507936507936,
@@ -1521,13 +1505,13 @@
      "bucket": "> 40%",
      "lo": 40.0,
      "hi": 1000000000.0,
-     "n": 4,
-     "n_up": 4,
+     "n": 5,
+     "n_up": 5,
      "p_up": 1.0,
-     "median_gain": 59.605000000000004,
-     "p10_gain": 51.771,
-     "p90_gain": 61.601,
-     "mean_gain": 57.52
+     "median_gain": 60.74,
+     "p10_gain": 52.728,
+     "p90_gain": 72.308,
+     "mean_gain": 61.85600000000001
     },
     "allotment": {
      "p_min_lot": 0.03104625892579944,
@@ -1748,13 +1732,13 @@
     "ref1": "https://www.chittorgarh.com/ipo/sai-urja-indo-ipo-ipo/2655/",
     "ref2": "https://ipowatch.in/sai-urja-ipo-review/",
     "ref3": "https://www.angelone.in/news/ipos/sai-urja-indo-ventures-limited-ipo-allotment-status",
-    "name": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
-    "board": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
+    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "listing_date": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
+    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "issue_price": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/"
    },
@@ -3263,13 +3247,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.41841004184100417,
@@ -3617,13 +3601,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.24570024570024568,
@@ -4856,13 +4840,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.3215434083601286,
@@ -5504,13 +5488,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.1669449081803005,
@@ -5649,13 +5633,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.2857142857142857,
@@ -6069,13 +6053,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.32894736842105265,
@@ -6216,13 +6200,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
      "p_min_lot": 0.01708233686368295,
@@ -6381,13 +6365,13 @@
      "bucket": "> 40%",
      "lo": 40.0,
      "hi": 1000000000.0,
-     "n": 4,
-     "n_up": 4,
+     "n": 5,
+     "n_up": 5,
      "p_up": 1.0,
-     "median_gain": 59.605000000000004,
-     "p10_gain": 51.771,
-     "p90_gain": 61.601,
-     "mean_gain": 57.52
+     "median_gain": 60.74,
+     "p10_gain": 52.728,
+     "p90_gain": 72.308,
+     "mean_gain": 61.85600000000001
     },
     "allotment": {
      "p_min_lot": 0.032144005143040826,
@@ -6502,13 +6486,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.3225806451612903,
@@ -6777,13 +6761,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 1.0,
@@ -7561,13 +7545,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.47619047619047616,
@@ -7863,13 +7847,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
      "p_min_lot": 1.0,
@@ -8158,13 +8142,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.9259259259259258,
@@ -8456,10 +8440,18 @@
     "gmp_history": "https://www.investorgain.com/gmp/bls-polymers-ipo/1849/",
     "board": "https://www.nseindia.com/api/public-past-issues",
     "exchange": "https://www.nseindia.com/api/public-past-issues",
-    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/"
+    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/",
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
    },
    "exchange": "NSE",
-   "listing": null,
+   "listing": {
+    "open": null,
+    "close": 268.8,
+    "high": null,
+    "low": null,
+    "gain_pct": 79.2,
+    "gain_basis": "close"
+   },
    "score": {
     "p_up": 0.9989307193789062,
     "gain": {
@@ -8475,13 +8467,13 @@
      "bucket": "> 40%",
      "lo": 40.0,
      "hi": 1000000000.0,
-     "n": 4,
-     "n_up": 4,
+     "n": 5,
+     "n_up": 5,
      "p_up": 1.0,
-     "median_gain": 59.605000000000004,
-     "p10_gain": 51.771,
-     "p90_gain": 61.601,
-     "mean_gain": 57.52
+     "median_gain": 60.74,
+     "p10_gain": 52.728,
+     "p90_gain": 72.308,
+     "mean_gain": 61.85600000000001
     },
     "allotment": {
      "p_min_lot": 0.007790701176199473,
@@ -8754,10 +8746,18 @@
     "gmp_history": "https://www.investorgain.com/gmp/sfc-environmental-technologies-ipo/1642/",
     "board": "https://www.nseindia.com/api/public-past-issues",
     "exchange": "https://www.nseindia.com/api/public-past-issues",
-    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/"
+    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/",
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/"
    },
    "exchange": "NSE",
-   "listing": null,
+   "listing": {
+    "open": null,
+    "close": 426.1,
+    "high": null,
+    "low": null,
+    "gain_pct": 29.12,
+    "gain_basis": "close"
+   },
    "score": {
     "p_up": 0.7583413832486909,
     "gain": {
@@ -8773,13 +8773,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 15,
-     "n_up": 8,
-     "p_up": 0.5333333333333333,
-     "median_gain": 0.22,
-     "p10_gain": -18.112000000000002,
-     "p90_gain": 11.106,
-     "mean_gain": -1.9759999999999998
+     "n": 16,
+     "n_up": 9,
+     "p_up": 0.5625,
+     "median_gain": 0.7999999999999999,
+     "p10_gain": -18.03,
+     "p90_gain": 14.565000000000001,
+     "mean_gain": -0.03250000000000047
     },
     "allotment": {
      "p_min_lot": 0.3693802256442684,
@@ -8983,11 +8983,19 @@
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/wiscon-industries-ipo/2356/",
     "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/"
+    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/",
+    "listing": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/"
    },
    "lot_size": 600,
    "min_investment": 244800.0,
-   "listing": null,
+   "listing": {
+    "open": null,
+    "close": 203.55,
+    "high": null,
+    "low": null,
+    "gain_pct": -0.22,
+    "gain_basis": "close"
+   },
    "exchange": "BSE SME",
    "score": {
     "p_up": 0.35719404981665936,
@@ -9004,13 +9012,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
      "p_min_lot": 0.8547008547008548,
@@ -9160,6 +9168,10 @@
       "rs": 10.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 1.0
+     },
+     {
       "date": "2023-10-26",
       "rs": 10.0
      },
@@ -9214,17 +9226,17 @@
     "ref2": "https://www.business-standard.com/amp/markets/ipo/ajwa-projects-ltd-ipo-96155",
     "ref3": "https://www.bajajfinservmarkets.in/ipo/ajwa-projects-ltd",
     "ref4": "https://ipocentral.in/",
-    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "name": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
+    "board": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "listing_date": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/ajwa-projects-ipo/2017/",
     "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
@@ -9252,13 +9264,13 @@
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
      "p_min_lot": 0.8928571428571428,
@@ -9330,8 +9342,8 @@
     "sub_partial"
    ],
    "gmp": {
-    "rs": 3.0,
-    "pct": 3.75,
+    "rs": 4.0,
+    "pct": 5.0,
     "as_of": "2023-11-02",
     "history": [
      {
@@ -9423,6 +9435,10 @@
       "rs": 5.0
      },
      {
+      "date": "2021-11-03",
+      "rs": 4.0
+     },
+     {
       "date": "2022-10-26",
       "rs": 0.0
      },
@@ -9440,7 +9456,7 @@
      },
      {
       "date": "2023-11-02",
-      "rs": 3.0
+      "rs": 4.0
      },
      {
       "date": "2026-10-25",
@@ -9467,17 +9483,17 @@
     "ref2": "https://ipocentral.in/carver-roboweld-ipo-gmp-price-allotment/",
     "ref3": "https://www.ipomarket.in/ipo/carver-roboweld-sme-ipo",
     "ref4": "https://www.angelone.in/news/ipos/upcoming-ipos-this-week-october-26-october-30-2026-in-india-eaaa-india-alternatives-bls-polymers-and-others",
-    "name": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "name": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
+    "board": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "listing_date": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/sme/2026/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/carver-roboweld-ipo/2393/",
     "exchange": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
@@ -9487,27 +9503,27 @@
    "listing": null,
    "exchange": "BSE SME",
    "score": {
-    "p_up": 0.7375244165373407,
+    "p_up": 0.7564181180223184,
     "gain": {
-     "mean": 9.284705662550433,
-     "p10": -15.715294337449567,
-     "p25": -0.715294337449567,
-     "p50": 9.284705662550433,
-     "p75": 19.284705662550433,
-     "p90": 39.28470566255044
+     "mean": 10.222205662550433,
+     "p10": -14.777794337449567,
+     "p25": 0.22220566255043295,
+     "p50": 10.222205662550433,
+     "p75": 20.222205662550433,
+     "p90": 40.22220566255044
     },
     "similar": {
      "board": "sme",
-     "bucket": "0–5%",
-     "lo": 0.0,
-     "hi": 5.0,
-     "n": 7,
+     "bucket": "5–10%",
+     "lo": 5.0,
+     "hi": 10.0,
+     "n": 1,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
-     "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p_up": 1.0,
+     "median_gain": 7.55,
+     "p10_gain": 7.55,
+     "p90_gain": 7.55,
+     "mean_gain": 7.55
     },
     "allotment": {
      "p_min_lot": 0.03875968992248062,
@@ -9515,9 +9531,9 @@
      "basis": "lottery at 25.8x: about 1 in 25.8 applicants (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": 718.0225369264132,
-     "ev_if_allotted": 18524.98145270146,
-     "downside_if_allotted": -40470.07879260021,
+     "ev": 791.601263345762,
+     "ev_if_allotted": 20423.31259432066,
+     "downside_if_allotted": -38072.56573500018,
      "invested_if_allotted": 256000.0,
      "lots_affordable": 2,
      "min_lots": 2
@@ -9526,10 +9542,9 @@
      "tier": "coinflip",
      "label": "Coin flip",
      "reasons": [
-      "Unofficial premium +3.8% of the issue price."
+      "Unofficial premium +5.0% of the issue price."
      ],
      "warnings": [
-      "Premium under 5%: a thin cushion that a weak market on listing day wipes out.",
       "The premium has fallen sharply over the last few days.",
       "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
       "The premium quote is 3+ days old; check a fresh one before applying.",
@@ -9544,7 +9559,7 @@
      "sub_partial"
     ],
     "features": {
-     "gmp_pct": 3.75,
+     "gmp_pct": 5.0,
      "gmp_missing": 0.0,
      "log_sub_qib": 3.288401887516811,
      "log_sub_nii": 3.288401887516811,
@@ -9582,8 +9597,8 @@
     "price_band_only"
    ],
    "gmp": {
-    "rs": 10.0,
-    "pct": 6.17,
+    "rs": 11.5,
+    "pct": 7.1,
     "as_of": "2023-11-02",
     "history": [
      {
@@ -9675,6 +9690,10 @@
       "rs": 8.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 10.5
+     },
+     {
       "date": "2023-10-24",
       "rs": 7.0
      },
@@ -9712,7 +9731,7 @@
      },
      {
       "date": "2023-11-02",
-      "rs": 10.0
+      "rs": 11.5
      },
      {
       "date": "2026-10-22",
@@ -9760,13 +9779,13 @@
     "name": "https://www.nseindia.com/api/ipo-detail?symbol=MKSONS&series=EQ",
     "price_band_low": "https://www.nseindia.com/api/public-past-issues",
     "price_band_high": "https://www.nseindia.com/api/public-past-issues",
-    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
     "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "listing_date": "https://www.chittorgarh.com/report/ipo-perf-tracker/236/mainboard/2026/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/mksons-fine-jewels-ipo/2288/",
     "board": "https://www.nseindia.com/api/ipo-detail?symbol=MKSONS&series=EQ",
@@ -9776,14 +9795,14 @@
    "exchange": "NSE",
    "listing": null,
    "score": {
-    "p_up": 0.6866704671359488,
+    "p_up": 0.7024514848734974,
     "gain": {
-     "mean": 9.154207529594247,
-     "p10": -2.845792470405753,
-     "p25": 4.154207529594247,
-     "p50": 9.154207529594247,
-     "p75": 14.154207529594247,
-     "p90": 23.154207529594245
+     "mean": 9.851707529594247,
+     "p10": -2.148292470405753,
+     "p25": 4.851707529594247,
+     "p50": 9.851707529594247,
+     "p75": 14.851707529594247,
+     "p90": 23.851707529594247
     },
     "similar": {
      "board": "mainboard",
@@ -9804,9 +9823,9 @@
      "basis": "lottery at 3.1x: about 1 in 3.1 applicants"
     },
     "ev": {
-     "ev": 337.25260761859846,
-     "ev_if_allotted": 1040.1120382654988,
-     "downside_if_allotted": -449.70804517805334,
+     "ev": 363.62421143980913,
+     "ev_if_allotted": 1121.444019051337,
+     "downside_if_allotted": -346.9891455828048,
      "invested_if_allotted": 14742.0,
      "lots_affordable": 13,
      "min_lots": 1
@@ -9815,7 +9834,7 @@
      "tier": "lean",
      "label": "Lean apply",
      "reasons": [
-      "Unofficial premium +6.2% of the issue price.",
+      "Unofficial premium +7.1% of the issue price.",
       "Demand: institutions 1.8x, wealthy 14.1x, retail 3.1x (final)"
      ],
      "warnings": [
@@ -9829,7 +9848,7 @@
      "price_band_only"
     ],
     "features": {
-     "gmp_pct": 6.17,
+     "gmp_pct": 7.1,
      "gmp_missing": 0.0,
      "log_sub_qib": 1.044668322328866,
      "log_sub_nii": 2.7161733540723176,
@@ -9937,6 +9956,10 @@
       "rs": 9.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 7.75
+     },
+     {
       "date": "2023-10-23",
       "rs": 8.0
      },
@@ -10008,13 +10031,13 @@
    "status": "closed",
    "sources": {
     "name": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
-    "price_band_low": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
-    "price_band_high": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
+    "price_band_low": "https://www.nseindia.com/api/public-past-issues",
+    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
     "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "issue_size_cr": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
+    "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "open_date": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
-    "close_date": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
+    "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "listing_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
@@ -10028,7 +10051,7 @@
     "ref7": "https://trendlyne.com/ipo/detail/2200/bombay-coated-and-special-steels-ltd/",
     "board": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
     "exchange": "https://www.nseindia.com/api/ipo-detail?symbol=BCSSL&series=EQ",
-    "subscription": "https://www.nseindia.com/api/ipo-active-category?symbol=BCSSL"
+    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/"
    },
    "flags": [
     "price_band_only"
@@ -10041,8 +10064,8 @@
     "snii": null,
     "retail": 33.73272777275457,
     "employee": null,
-    "total": 60.772412189624006,
-    "as_of": "2026-11-02",
+    "total": 63.89,
+    "as_of": "2026-11-03",
     "day": 3
    },
    "listing": null,
@@ -10126,8 +10149,8 @@
   },
   {
    "gmp": {
-    "rs": 20.0,
-    "pct": 16.67,
+    "rs": 25.0,
+    "pct": 20.83,
     "as_of": "2023-11-02",
     "history": [
      {
@@ -10179,6 +10202,10 @@
       "rs": 30.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 25.0
+     },
+     {
       "date": "2023-10-30",
       "rs": 30.0
      },
@@ -10192,7 +10219,7 @@
      },
      {
       "date": "2023-11-02",
-      "rs": 20.0
+      "rs": 25.0
      },
      {
       "date": "2026-10-27",
@@ -10208,7 +10235,7 @@
    "close_date": "2026-11-03",
    "allotment_date": "2026-11-04",
    "listing_date": "2026-11-06",
-   "price_band_low": 120.0,
+   "price_band_low": 114.0,
    "price_band_high": 120.0,
    "issue_price": 120.0,
    "lot_size": 1200,
@@ -10223,10 +10250,10 @@
    "sources": {
     "name": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
     "board": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
-    "price_band_low": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
-    "price_band_high": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
-    "issue_price": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
-    "issue_size_cr": "https://www.nseindia.com/api/ipo-detail?symbol=HGSINDIALT&series=SME",
+    "price_band_low": "https://www.nseindia.com/api/public-past-issues",
+    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "open_date": "https://www.nseindia.com/api/ipo-current-issue",
     "close_date": "https://www.nseindia.com/api/ipo-current-issue",
@@ -10251,27 +10278,27 @@
    },
    "listing": null,
    "score": {
-    "p_up": 0.3849003068127789,
+    "p_up": 0.4660523085855035,
     "gain": {
-     "mean": 5.359500000000001,
-     "p10": -19.6405,
-     "p25": -4.640499999999999,
-     "p50": 5.359500000000001,
-     "p75": 15.3595,
-     "p90": 35.3595
+     "mean": 8.479499999999998,
+     "p10": -16.520500000000002,
+     "p25": -1.520500000000002,
+     "p50": 8.479499999999998,
+     "p75": 18.479499999999998,
+     "p90": 38.4795
     },
     "similar": {
      "board": "sme",
-     "bucket": "10–20%",
-     "lo": 10.0,
-     "hi": 20.0,
+     "bucket": "20–40%",
+     "lo": 20.0,
+     "hi": 40.0,
      "n": 1,
      "n_up": 1,
      "p_up": 1.0,
-     "median_gain": 80.33,
-     "p10_gain": 80.33,
-     "p90_gain": 80.33,
-     "mean_gain": 80.33
+     "median_gain": 18.39,
+     "p10_gain": 18.39,
+     "p90_gain": 18.39,
+     "mean_gain": 18.39
     },
     "allotment": {
      "p_min_lot": null,
@@ -10290,7 +10317,7 @@
      "tier": "watch",
      "label": "Too early",
      "reasons": [
-      "Unofficial premium +16.7% of the issue price.",
+      "Unofficial premium +20.8% of the issue price.",
       "Demand: institutions 0.0x, wealthy 0.0x, retail –x (so far)",
       "Bidding is still on: institutions and wealthy investors usually bid on the last day."
      ],
@@ -10311,7 +10338,7 @@
      "sub_partial"
     ],
     "features": {
-     "gmp_pct": 16.67,
+     "gmp_pct": 20.83,
      "gmp_missing": 0.0,
      "log_sub_qib": 0.0,
      "log_sub_nii": 0.0,
@@ -10383,6 +10410,10 @@
       "rs": 5.0
      },
      {
+      "date": "2021-11-03",
+      "rs": 8.0
+     },
+     {
       "date": "2023-10-28",
       "rs": 10.0
      },
@@ -10452,43 +10483,43 @@
     "snii": null,
     "retail": null,
     "employee": null,
-    "total": 7.93,
+    "total": 23.82,
     "as_of": "2026-11-03",
     "day": 3
    },
    "listing": null,
    "score": {
-    "p_up": 0.6344255140893976,
+    "p_up": 0.7621657171230706,
     "gain": {
-     "mean": 7.225249184665223,
-     "p10": -17.774750815334777,
-     "p25": -2.7747508153347766,
-     "p50": 7.225249184665223,
-     "p75": 17.225249184665223,
-     "p90": 37.22524918466522
+     "mean": 10.291949339329383,
+     "p10": -14.708050660670617,
+     "p25": 0.29194933932938305,
+     "p50": 10.291949339329383,
+     "p75": 20.291949339329385,
+     "p90": 40.291949339329385
     },
     "similar": {
      "board": "sme",
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
-     "p_min_lot": 0.12610340479192939,
-     "expected_lots": 0.12610340479192939,
-     "basis": "lottery at 7.9x: about 1 in 7.9 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
+     "p_min_lot": 0.041981528127623846,
+     "expected_lots": 0.041981528127623846,
+     "basis": "lottery at 23.8x: about 1 in 23.8 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": 1696.9584382255657,
-     "ev_if_allotted": 13456.880415128735,
-     "downside_if_allotted": -42879.231415351365,
+     "ev": 809.3405886119266,
+     "ev_if_allotted": 19278.49282073609,
+     "downside_if_allotted": -35526.777750800095,
      "invested_if_allotted": 240000.0,
      "lots_affordable": 2,
      "min_lots": 2
@@ -10516,9 +10547,9 @@
     "features": {
      "gmp_pct": 4.0,
      "gmp_missing": 0.0,
-     "log_sub_qib": 2.189416394888408,
-     "log_sub_nii": 2.189416394888408,
-     "log_sub_retail": 2.189416394888408,
+     "log_sub_qib": 3.211649779776461,
+     "log_sub_nii": 3.211649779776461,
+     "log_sub_retail": 3.211649779776461,
      "sub_missing": 0.0,
      "is_sme": 1.0,
      "log_issue_size": 4.0257087698319625,
@@ -10586,6 +10617,10 @@
       "rs": 70.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 80.0
+     },
+     {
       "date": "2023-10-27",
       "rs": 27.0
      },
@@ -10618,40 +10653,40 @@
    "issue_size_cr": 57.64,
    "id": "maxwell-engineering-solutions-2026",
    "name": "Maxwell Engineering Solutions Limited",
-   "board": "sme",
+   "board": "mainboard",
    "open_date": "2026-10-30",
    "close_date": "2026-11-03",
    "allotment_date": "2026-11-04",
    "listing_date": "2026-11-06",
-   "price_band_low": 158.0,
+   "price_band_low": 150.0,
    "price_band_high": 158.0,
    "issue_price": 158.0,
    "lot_size": 800,
    "status": "open",
-   "min_lots": 2,
-   "min_investment": 252800.0,
+   "min_lots": 1,
+   "min_investment": 126400.0,
    "sources": {
-    "name": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "board": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "price_band_low": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "price_band_high": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "issue_price": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "issue_size_cr": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
+    "name": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=EQ",
+    "board": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=EQ",
+    "price_band_low": "https://www.nseindia.com/api/public-past-issues",
+    "price_band_high": "https://www.nseindia.com/api/public-past-issues",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-    "open_date": "https://www.nseindia.com/api/ipo-current-issue",
-    "close_date": "https://www.nseindia.com/api/ipo-current-issue",
+    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
+    "close_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "allotment_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "listing_date": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "gmp_history": "https://www.investorgain.com/gmp/maxwell-engineering-solutions-ipo/1965/",
-    "exchange": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=SME",
-    "subscription": "https://www.nseindia.com/api/ipo-active-category?symbol=MAXENGS"
+    "exchange": "https://www.nseindia.com/api/ipo-detail?symbol=MAXENGS&series=EQ",
+    "subscription": "https://www.investorgain.com/report/live-ipo-gmp/331/"
    },
    "flags": [
     "price_band_only",
     "sub_partial"
    ],
-   "exchange": "NSE SME",
+   "exchange": "NSE",
    "subscription": {
     "qib": 0.0,
     "nii": 0.0,
@@ -10659,46 +10694,46 @@
     "snii": null,
     "retail": null,
     "employee": null,
-    "total": 0.0,
+    "total": 536.8,
     "as_of": "2026-11-03",
     "day": 3
    },
    "listing": null,
    "score": {
-    "p_up": 0.9603753735726357,
+    "p_up": 0.9839619324592068,
     "gain": {
-     "mean": 37.09532278481013,
-     "p10": 12.09532278481013,
-     "p25": 27.09532278481013,
-     "p50": 37.09532278481013,
-     "p75": 47.09532278481013,
-     "p90": 67.09532278481012
+     "mean": 38.09532278481013,
+     "p10": 26.09532278481013,
+     "p25": 33.09532278481013,
+     "p50": 38.09532278481013,
+     "p75": 43.09532278481013,
+     "p90": 52.09532278481013
     },
     "similar": {
-     "board": "sme",
+     "board": "mainboard",
      "bucket": "> 40%",
      "lo": 40.0,
      "hi": 1000000000.0,
-     "n": 1,
-     "n_up": 1,
+     "n": 5,
+     "n_up": 5,
      "p_up": 1.0,
-     "median_gain": 40.82,
-     "p10_gain": 40.82,
-     "p90_gain": 40.82,
-     "mean_gain": 40.82
+     "median_gain": 60.74,
+     "p10_gain": 52.728,
+     "p90_gain": 72.308,
+     "mean_gain": 61.85600000000001
     },
     "allotment": {
-     "p_min_lot": null,
-     "expected_lots": null,
-     "basis": "bidding still on and retail not yet full: odds unknown"
+     "p_min_lot": 0.0018628912071535025,
+     "expected_lots": 0.0018628912071535025,
+     "basis": "lottery at 536.8x: about 1 in 536.8 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": null,
-     "ev_if_allotted": null,
-     "downside_if_allotted": null,
-     "invested_if_allotted": 252800.0,
-     "lots_affordable": 2,
-     "min_lots": 2
+     "ev": 70.6875198285455,
+     "ev_if_allotted": 37945.060643963225,
+     "downside_if_allotted": 25947.60782892988,
+     "invested_if_allotted": 126400.0,
+     "lots_affordable": 1,
+     "min_lots": 1
     },
     "verdict": {
      "tier": "watch",
@@ -10710,7 +10745,6 @@
      ],
      "warnings": [
       "Institutions (banks and funds) have not filled their share so far (they usually bid on the last day).",
-      "SME issue: thin liquidity, 5% circuit on listing day, lot of ₹2 lakh or more, and a wider spread of outcomes than mainboard.",
       "The premium quote is 3+ days old; check a fresh one before applying."
      ],
      "gamble": "possible"
@@ -10726,9 +10760,9 @@
      "gmp_missing": 0.0,
      "log_sub_qib": 0.0,
      "log_sub_nii": 0.0,
-     "log_sub_retail": 0.0,
+     "log_sub_retail": 6.287486743834764,
      "sub_missing": 0.0,
-     "is_sme": 1.0,
+     "is_sme": 0.0,
      "log_issue_size": 4.054216771131322,
      "nifty_1m_pct": 6.19,
      "gmp_trend_pct": 6.329113924050633
@@ -10739,7 +10773,7 @@
    "gmp": {
     "rs": 0.0,
     "pct": 0.0,
-    "as_of": "2016-11-03",
+    "as_of": "2022-11-03",
     "history": [
      {
       "date": "2011-10-28",
@@ -10790,6 +10824,10 @@
       "rs": 0.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 0.0
+     },
+     {
       "date": "2023-11-02",
       "rs": 0.0
      },
@@ -10807,7 +10845,7 @@
    "close_date": "2026-11-03",
    "allotment_date": "2026-11-04",
    "listing_date": "2026-11-06",
-   "price_band_low": 99.0,
+   "price_band_low": 105.0,
    "price_band_high": 105.0,
    "issue_price": 105.0,
    "lot_size": 1200,
@@ -10824,7 +10862,7 @@
     "board": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_low": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "price_band_high": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
-    "issue_price": "https://www.investorgain.com/report/live-ipo-gmp/331/",
+    "issue_price": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
     "issue_size_cr": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "lot_size": "https://www.investorgain.com/report/live-ipo-gmp/331/",
     "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/sme/",
@@ -10844,43 +10882,43 @@
     "snii": null,
     "retail": null,
     "employee": null,
-    "total": 2.08,
+    "total": 4.2,
     "as_of": "2026-11-03",
     "day": 3
    },
    "listing": null,
    "score": {
-    "p_up": 0.406743945060374,
+    "p_up": 0.4842040520247342,
     "gain": {
-     "mean": 1.2317887909564496,
-     "p10": -23.76821120904355,
-     "p25": -8.76821120904355,
-     "p50": 1.2317887909564496,
-     "p75": 11.23178879095645,
-     "p90": 31.23178879095645
+     "mean": 2.8029758767621447,
+     "p10": -22.197024123237856,
+     "p25": -7.197024123237855,
+     "p50": 2.8029758767621447,
+     "p75": 12.802975876762144,
+     "p90": 32.80297587676215
     },
     "similar": {
      "board": "sme",
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
-     "p_min_lot": 0.4807692307692307,
-     "expected_lots": 0.4807692307692307,
-     "basis": "lottery at 2.1x: about 1 in 2.1 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
+     "p_min_lot": 0.23809523809523808,
+     "expected_lots": 0.23809523809523808,
+     "basis": "lottery at 4.2x: about 1 in 4.2 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": 1049.9426744589334,
-     "ev_if_allotted": 2183.8807628745817,
-     "downside_if_allotted": -60110.29551795044,
+     "ev": 1265.629953781954,
+     "ev_if_allotted": 5315.645805884207,
+     "downside_if_allotted": -56155.0068860912,
      "invested_if_allotted": 252000.0,
      "lots_affordable": 2,
      "min_lots": 2
@@ -10909,9 +10947,9 @@
     "features": {
      "gmp_pct": 0.0,
      "gmp_missing": 0.0,
-     "log_sub_qib": 1.1249295969854831,
-     "log_sub_nii": 1.1249295969854831,
-     "log_sub_retail": 1.1249295969854831,
+     "log_sub_qib": 1.6486586255873816,
+     "log_sub_nii": 1.6486586255873816,
+     "log_sub_retail": 1.6486586255873816,
      "sub_missing": 0.0,
      "is_sme": 1.0,
      "log_issue_size": 3.971234865059992,
@@ -10922,8 +10960,8 @@
   },
   {
    "gmp": {
-    "rs": 15.0,
-    "pct": 15.96,
+    "rs": 11.0,
+    "pct": 11.7,
     "as_of": "2023-11-02",
     "history": [
      {
@@ -10951,6 +10989,10 @@
       "rs": 5.0
      },
      {
+      "date": "2022-11-03",
+      "rs": 11.0
+     },
+     {
       "date": "2023-10-31",
       "rs": 5.0
      },
@@ -10960,7 +11002,7 @@
      },
      {
       "date": "2023-11-02",
-      "rs": 15.0
+      "rs": 11.0
      },
      {
       "date": "2026-10-28",
@@ -11023,14 +11065,14 @@
    },
    "listing": null,
    "score": {
-    "p_up": 0.43675964960842095,
+    "p_up": 0.3554601728578893,
     "gain": {
-     "mean": 6.635510638297873,
-     "p10": -18.364489361702127,
-     "p25": -3.3644893617021268,
-     "p50": 6.635510638297873,
-     "p75": 16.635510638297873,
-     "p90": 36.63551063829787
+     "mean": 3.4405106382978703,
+     "p10": -21.55948936170213,
+     "p25": -6.55948936170213,
+     "p50": 3.4405106382978703,
+     "p75": 13.44051063829787,
+     "p90": 33.44051063829787
     },
     "similar": {
      "board": "sme",
@@ -11062,7 +11104,7 @@
      "tier": "watch",
      "label": "Too early",
      "reasons": [
-      "Unofficial premium +16.0% of the issue price.",
+      "Unofficial premium +11.7% of the issue price.",
       "Demand: institutions 0.0x, wealthy 0.0x, retail –x (so far)",
       "Bidding is still on: institutions and wealthy investors usually bid on the last day."
      ],
@@ -11082,7 +11124,7 @@
      "sub_partial"
     ],
     "features": {
-     "gmp_pct": 15.96,
+     "gmp_pct": 11.7,
      "gmp_missing": 0.0,
      "log_sub_qib": 0.0,
      "log_sub_nii": 0.0,
@@ -11116,7 +11158,7 @@
     "sub_partial"
    ],
    "gmp": {
-    "as_of": "2015-11-03",
+    "as_of": "2021-11-03",
     "history": [
      {
       "date": "2011-10-28",
@@ -11203,6 +11245,10 @@
       "rs": 0.0
      },
      {
+      "date": "2021-11-03",
+      "rs": 0.0
+     },
+     {
       "date": "2022-10-26",
       "rs": 0.0
      },
@@ -11222,7 +11268,7 @@
     "snii": null,
     "retail": null,
     "employee": null,
-    "total": 1.15,
+    "total": 1.33,
     "day": 4
    },
    "status": "open",
@@ -11254,37 +11300,37 @@
    "listing": null,
    "exchange": "BSE SME",
    "score": {
-    "p_up": 0.35591946375462585,
+    "p_up": 0.3670533250485423,
     "gain": {
-     "mean": 0.15340352641871435,
-     "p10": -24.846596473581286,
-     "p25": -9.846596473581286,
-     "p50": 0.15340352641871435,
-     "p75": 10.153403526418714,
-     "p90": 30.153403526418714
+     "mean": 0.39460480273282794,
+     "p10": -24.60539519726717,
+     "p25": -9.605395197267171,
+     "p50": 0.39460480273282794,
+     "p75": 10.394604802732829,
+     "p90": 30.39460480273283
     },
     "similar": {
      "board": "sme",
      "bucket": "0–5%",
      "lo": 0.0,
      "hi": 5.0,
-     "n": 7,
+     "n": 8,
      "n_up": 1,
-     "p_up": 0.14285714285714285,
-     "median_gain": -13.79,
+     "p_up": 0.125,
+     "median_gain": -9.69,
      "p10_gain": -16.0,
-     "p90_gain": -1.9639999999999973,
-     "mean_gain": -9.68142857142857
+     "p90_gain": 0.6229999999999996,
+     "mean_gain": -8.49875
     },
     "allotment": {
-     "p_min_lot": 0.8695652173913044,
-     "expected_lots": 0.8695652173913044,
-     "basis": "lottery at 1.2x: about 1 in 1.2 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
+     "p_min_lot": 0.7518796992481203,
+     "expected_lots": 0.7518796992481203,
+     "basis": "lottery at 1.3x: about 1 in 1.3 applicants so far; the last day usually adds the most (overall multiple used; retail figure missing)"
     },
     "ev": {
-     "ev": 31.833094513302175,
-     "ev_if_allotted": 36.6080586902975,
-     "downside_if_allotted": -65815.94709456216,
+     "ev": 406.2225130362718,
+     "ev_if_allotted": 540.2759423382415,
+     "downside_if_allotted": -65179.83556414199,
      "invested_if_allotted": 264000.0,
      "lots_affordable": 2,
      "min_lots": 2
@@ -11313,9 +11359,9 @@
     "features": {
      "gmp_pct": 0.0,
      "gmp_missing": 0.0,
-     "log_sub_qib": 0.7654678421395714,
-     "log_sub_nii": 0.7654678421395714,
-     "log_sub_retail": 0.7654678421395714,
+     "log_sub_qib": 0.8458682675776092,
+     "log_sub_nii": 0.8458682675776092,
+     "log_sub_retail": 0.8458682675776092,
      "sub_missing": 0.0,
      "is_sme": 1.0,
      "log_issue_size": 3.1346242724206097,
@@ -11326,7 +11372,7 @@
   }
  ],
  "scored_with": {
-  "fitted_at": "2026-11-03T11:15:24Z",
-  "n_rows": 180
+  "fitted_at": "2026-11-03T18:37:42Z",
+  "n_rows": 183
  }
 }

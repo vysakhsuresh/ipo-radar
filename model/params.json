@@ -1,7 +1,7 @@
 {
  "version": 1,
  "status": "prior",
- "fitted_at": "2026-11-03T11:15:24Z",
+ "fitted_at": "2026-11-03T18:37:42Z",
  "feature_names": [
   "gmp_pct",
   "gmp_missing",
@@ -14,22 +14,22 @@
   "nifty_1m_pct",
   "gmp_trend_pct"
  ],
- "n_rows": 180,
+ "n_rows": 183,
  "min_rows_to_calibrate": 120,
  "date_range": [
   "2025-01-07",
-  "2026-11-02"
+  "2026-11-03"
  ],
  "base_rate": {
   "mainboard": {
-   "n": 109,
-   "p_up": 0.6513761467889908,
-   "median_gain": 4.07
+   "n": 111,
+   "p_up": 0.6576576576576577,
+   "median_gain": 4.58
   },
   "sme": {
-   "n": 18,
-   "p_up": 0.5555555555555556,
-   "median_gain": 3.655
+   "n": 19,
+   "p_up": 0.5263157894736842,
+   "median_gain": 2.59
   }
  },
  "logistic": {
@@ -120,13 +120,13 @@
    "bucket": "0\u20135%",
    "lo": 0.0,
    "hi": 5.0,
-   "n": 15,
-   "n_up": 8,
-   "p_up": 0.5333333333333333,
-   "median_gain": 0.22,
-   "p10_gain": -18.112000000000002,
-   "p90_gain": 11.106,
-   "mean_gain": -1.9759999999999998
+   "n": 16,
+   "n_up": 9,
+   "p_up": 0.5625,
+   "median_gain": 0.7999999999999999,
+   "p10_gain": -18.03,
+   "p90_gain": 14.565000000000001,
+   "mean_gain": -0.03250000000000047
   },
   {
    "board": "mainboard",
@@ -172,13 +172,13 @@
    "bucket": "> 40%",
    "lo": 40.0,
    "hi": 1000000000.0,
-   "n": 4,
-   "n_up": 4,
+   "n": 5,
+   "n_up": 5,
    "p_up": 1.0,
-   "median_gain": 59.605000000000004,
-   "p10_gain": 51.771,
-   "p90_gain": 61.601,
-   "mean_gain": 57.52
+   "median_gain": 60.74,
+   "p10_gain": 52.728,
+   "p90_gain": 72.308,
+   "mean_gain": 61.85600000000001
   },
   {
    "board": "sme",
@@ -192,13 +192,13 @@
    "bucket": "0\u20135%",
    "lo": 0.0,
    "hi": 5.0,
-   "n": 7,
+   "n": 8,
    "n_up": 1,
-   "p_up": 0.14285714285714285,
-   "median_gain": -13.79,
+   "p_up": 0.125,
+   "median_gain": -9.69,
    "p10_gain": -16.0,
-   "p90_gain": -1.9639999999999973,
-   "mean_gain": -9.68142857142857
+   "p90_gain": 0.6229999999999996,
+   "mean_gain": -8.49875
   },
   {
    "board": "sme",
@@ -359,10 +359,10 @@
    "gmp_trend_pct": 0.2
   }
  },
- "n_rows_informative": 125,
- "n_rows_gating": 79,
+ "n_rows_informative": 128,
+ "n_rows_gating": 82,
  "basis_counts": {
-  "close": 64,
+  "close": 67,
   "open": 46,
   "reported": 15
  }
