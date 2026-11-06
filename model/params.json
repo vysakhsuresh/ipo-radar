@@ -1,7 +1,7 @@
 {
  "version": 1,
  "status": "prior",
- "fitted_at": "2026-11-06T11:20:54Z",
+ "fitted_at": "2026-11-06T18:15:45Z",
  "feature_names": [
   "gmp_pct",
   "gmp_missing",
@@ -14,21 +14,21 @@
   "nifty_1m_pct",
   "gmp_trend_pct"
  ],
- "n_rows": 187,
+ "n_rows": 191,
  "min_rows_to_calibrate": 120,
  "date_range": [
   "2025-01-07",
-  "2026-11-05"
+  "2026-11-06"
  ],
  "base_rate": {
   "mainboard": {
-   "n": 113,
-   "p_up": 0.6637168141592921,
-   "median_gain": 4.58
+   "n": 115,
+   "p_up": 0.6695652173913044,
+   "median_gain": 4.98
   },
   "sme": {
-   "n": 21,
-   "p_up": 0.5238095238095238,
+   "n": 23,
+   "p_up": 0.5652173913043478,
    "median_gain": 2.59
   }
  },
@@ -159,26 +159,26 @@
    "bucket": "20\u201340%",
    "lo": 20.0,
    "hi": 40.0,
-   "n": 9,
-   "n_up": 9,
+   "n": 10,
+   "n_up": 10,
    "p_up": 1.0,
-   "median_gain": 47.89,
-   "p10_gain": 23.982,
-   "p90_gain": 76.288,
-   "mean_gain": 44.79222222222222
+   "median_gain": 43.945,
+   "p10_gain": 25.331,
+   "p90_gain": 76.249,
+   "mean_gain": 44.313
   },
   {
    "board": "mainboard",
    "bucket": "> 40%",
    "lo": 40.0,
    "hi": 1000000000.0,
-   "n": 5,
-   "n_up": 5,
+   "n": 6,
+   "n_up": 6,
    "p_up": 1.0,
-   "median_gain": 60.74,
-   "p10_gain": 52.728,
-   "p90_gain": 72.308,
-   "mean_gain": 61.85600000000001
+   "median_gain": 61.355000000000004,
+   "p10_gain": 53.685,
+   "p90_gain": 89.345,
+   "mean_gain": 68.12833333333334
   },
   {
    "board": "sme",
@@ -192,13 +192,13 @@
    "bucket": "0\u20135%",
    "lo": 0.0,
    "hi": 5.0,
-   "n": 9,
-   "n_up": 1,
-   "p_up": 0.1111111111111111,
-   "median_gain": -5.59,
+   "n": 11,
+   "n_up": 3,
+   "p_up": 0.2727272727272727,
+   "median_gain": -5.0,
    "p10_gain": -16.0,
-   "p90_gain": 0.3420000000000005,
-   "mean_gain": -8.11
+   "p90_gain": 2.59,
+   "mean_gain": -4.705454545454544
   },
   {
    "board": "sme",
@@ -359,10 +359,10 @@
    "gmp_trend_pct": 0.2
   }
  },
- "n_rows_informative": 132,
- "n_rows_gating": 86,
+ "n_rows_informative": 136,
+ "n_rows_gating": 90,
  "basis_counts": {
-  "close": 71,
+  "close": 75,
   "open": 46,
   "reported": 15
  }
