@@ -553,7 +553,7 @@
       if (n >= 3) { big = Math.round(100 * up / n) + '%'; txt = el('p', null, t('When we said'), ' ', el('b', null, t('Apply')), ' ', t('or'), ' ', el('b', null, t('Leaning yes')), ', ', t('{u} of {n} IPOs listed above their price.', { u: up, n })); }
     }
     if (!txt) txt = el('p', null, t('Every call is saved before listing and checked against what actually happened. Nothing is edited afterwards.'));
-    return el('div', { class: 'card trust' }, el('div', { class: 'big num', text: big }), el('div', { class: 'stack', style: 'gap:8px' }, el('b', null, t('Our track record')), txt, el('div', null, el('button', { type: 'button', class: 'btn sm', onclick: () => go('proof') }, t('See every call')))));
+    return el('div', { class: 'card trust' }, el('div', { class: 'big num', text: big }), el('div', { class: 'stack', style: 'gap:8px' }, el('b', null, tk && tk.n_backfill && !tk.n_locked ? t('Our record on past IPOs (back-test)') : t('Our track record')), txt, el('div', null, el('button', { type: 'button', class: 'btn sm', onclick: () => go('proof') }, t('See every call')))));
   }
   function renderHome() {
     const host = $('#screen-home'); host.replaceChildren();
@@ -1014,10 +1014,12 @@
       const bv = tk.by_verdict || {}, a = bv.apply || {}, l = bv.lean || {};
       const n = (a.n || 0) + (l.n || 0), up = (a.n_up || 0) + (l.n_up || 0);
       const hero = el('div', { class: 'card proof-hero' });
-      hero.append(el('span', { class: 'seal' }, icon('lock'), t('Saved before listing · never edited')));
+      const live = tk.n_locked || 0;
+      hero.append(el('span', { class: 'seal' }, icon('lock'), live ? t('Saved before listing · never edited') : t('Back-test on past IPOs')));
       hero.append(el('div', { class: 'big num', text: n ? Math.round(100 * up / n) + '%' : '–' }));
       hero.append(el('p', null, t('When we said'), ' ', el('b', null, t('Apply')), ' ', t('or'), ' ', el('b', null, t('Leaning yes')), ', ', el('b', null, t('{u} of {n}', { u: up, n })), ' ', t('IPOs listed above their issue price.'), fin(tk.base_rate) ? ' ' + t('Across all IPOs in the same period, {b} did.', { b: pct0(tk.base_rate) }) : ''));
-      if (tk.n_backfill) hero.append(el('p', { class: 'tiny', text: t('{a} calls were saved live; {b} older ones were reconstructed from the data we had before they listed and are marked as such.', { a: tk.n_locked || 0, b: tk.n_backfill }) }));
+      if (tk.n_backfill && !live) hero.append(el('p', { class: 'tiny', text: t('These {b} calls were worked out afterwards, from the numbers known before each IPO listed. The model learned from these same IPOs, so real results will likely be a little worse. Live calls, saved before listing and never edited, start from {d}.', { b: tk.n_backfill, d: dshort(tk.started) }) }));
+      else if (tk.n_backfill) hero.append(el('p', { class: 'tiny', text: t('{a} calls were saved live; {b} older ones were reconstructed from the data we had before they listed and are marked as such.', { a: live, b: tk.n_backfill }) }));
       host.append(hero);
       const vb = el('div', { class: 'vbars' });
       for (const tier of ['apply', 'lean', 'coinflip', 'watch', 'avoid']) {
@@ -1667,6 +1669,9 @@
     "Did you get shares?": "क्या आपको शेयर मिले?",
     "The allotment result is published by the registrar. Check with your PAN number. You can also see it in your broker app or bank statement.": "अलॉटमेंट रिज़ल्ट रजिस्ट्रार जारी करता है। अपने PAN नंबर से देखें। आप इसे अपने ब्रोकर ऐप या बैंक स्टेटमेंट में भी देख सकते हैं।",
     "Check on {r}": "{r} पर देखें",
+    "Back-test on past IPOs": "पिछले IPO पर जाँच",
+    "These {b} calls were worked out afterwards, from the numbers known before each IPO listed. The model learned from these same IPOs, so real results will likely be a little worse. Live calls, saved before listing and never edited, start from {d}.": "ये {b} अनुमान बाद में, हर IPO की लिस्टिंग से पहले मौजूद आंकड़ों से निकाले गए। मॉडल ने इन्हीं IPO से सीखा है, इसलिए असली नतीजे थोड़े कमज़ोर हो सकते हैं। लिस्टिंग से पहले सेव होने वाले और कभी न बदलने वाले लाइव अनुमान {d} से शुरू हैं।",
+    "Our record on past IPOs (back-test)": "पिछले IPO पर हमारा रिकॉर्ड (बैक-टेस्ट)",
     "registrar": "रजिस्ट्रार",
     "Check on BSE": "BSE पर देखें",
     "Registrar not captured for this IPO; the exchange pages work for every issue.": "इस IPO का रजिस्ट्रार हमारे पास नहीं है; एक्सचेंज के पेज हर इश्यू के लिए काम करते हैं।",
