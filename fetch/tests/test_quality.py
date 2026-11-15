@@ -39,6 +39,15 @@ def test_exchange_and_sme_category_labels():
     assert k("Anchor Investors") is None and k("Market Maker") is None and k("Corporates") is None
 
 
+def test_time_is_not_read_as_a_year_and_old_misreads_are_repaired():
+    assert nz.parse_date("26-Nov 14:02", ref=TODAY) == "2026-11-26"
+    assert nz.parse_date("06-Nov-24") == "2024-11-06"
+    row = nz.finalise_row({"name": "X", "close_date": "2026-11-20",
+                           "gmp": {"rs": 5, "as_of": "2014-11-19", "history": [{"date": "2014-11-19", "rs": 4}, {"date": "2026-11-18", "rs": 3},
+                                                                              {"date": "2011-03-02", "rs": 9}]}}, TODAY)
+    assert [h["date"] for h in row["gmp"]["history"]] == ["2026-11-18", "2026-11-19"] and row["gmp"]["as_of"] == "2026-11-19"
+
+
 def test_subscription_multiples_rounded_to_two_places():
     row = nz.canonical_row({"name": "Bls Polymers", "open_date": "2026-10-27", "subscription": {"retail": 128.3581512605042, "total": 241.2249}},
                            TODAY, as_of="2026-10-29")
@@ -239,3 +248,30 @@ def test_run_drops_non_ipo_rows_and_infers_sme_board(tmp_path):
     assert [r["name"] for r in rows] == ["Small Works"]
     assert rows[0]["board"] == "sme" and rows[0]["board_basis"] == "inferred" and rows[0]["min_lots"] == 2
     assert "board_inferred" in rows[0]["flags"] and sum(s["dropped"].values()) == 2
+
+
+# ------------------------------------------------------------ history ---
+
+class _GmpStub:
+    def __init__(self):
+        from fetch.common import Provenance
+        self.prov = Provenance()
+
+    def get_json(self, url, **kw):
+        return {"lists": [{"id": 1818, "company_short_name": "Watrana Rentals", "urlrewrite_folder_name": "watrana-rentals-ipo",
+                           "issue_open_dt": "2026-11-19T00:00:00.000Z", "issue_end_dt": "2026-11-23T00:00:00.000Z"}]}
+
+    def get_html(self, url, **kw):
+        return ("<table><tr><th>GMP Date</th><th>GMP</th></tr>"
+                "<tr><td>28-Nov 10:00</td><td>₹40</td></tr><tr><td>26-Nov 14:02</td><td>₹22</td></tr>"
+                "<tr><td>20-Nov 14:02</td><td>₹16</td></tr></table>")
+
+
+def test_history_gmp_is_the_last_quote_before_listing():
+    from fetch import history
+    rows = [{"id": "watrana-rentals-2026", "name": "Watrana Rentals Ltd.", "open_date": "2026-11-19", "close_date": "2026-11-23",
+             "listing_date": "2026-11-27", "issue_price": 245.0, "gmp": {}}]
+    assert history.enrich_gmp(_GmpStub(), rows, date(2026, 12, 1)) == 1
+    g = rows[0]["gmp"]
+    assert g["rs"] == 22.0 and g["as_of"] == "2026-11-26" and [h["date"] for h in g["history"]] == ["2026-11-20", "2026-11-26"]
+    assert "gmp_pre_listing" in rows[0]["flags"]

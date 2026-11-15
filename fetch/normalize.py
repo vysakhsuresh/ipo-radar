@@ -86,7 +86,8 @@ def parse_date(s: Any, ref: date | None = None) -> str | None:
     m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", t)
     if m:
         return _iso(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?[-/ ,]+([A-Za-z]{3,9})\.?[-/ ,]+(\d{4}|\d{2})\b", t)
+    # a two-digit year must not be the hour of a time ('26-Nov 14:02' is 26 Nov, not 2014)
+    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?[-/ ,]+([A-Za-z]{3,9})\.?[-/ ,]+(\d{4}|\d{2}(?![:.]\d))\b", t)
     if m and m.group(2)[:3].lower() in _MONTHS:
         y = int(m.group(3))
         return _iso(y + 2000 if y < 100 else y, _MONTHS[m.group(2)[:3].lower()], int(m.group(1)))
@@ -403,6 +404,35 @@ def canonical_row(parts: dict, today: date, as_of: str | None, default_board: st
     return out
 
 
+def repair_history_years(hist: list[dict], row: dict) -> list[dict]:
+    """GMP pages print 'DD-Mon HH:MM' with no year; an older parser read the hour as a
+    two-digit year ('26-Nov 14:02' -> 2014-11-26). Put such a quote back in the year
+    that lands it nearest the issue's own dates (day and month are the source's);
+    drop a quote that is nowhere near them."""
+    ref = next((to_date(row.get(k)) for k in ("close_date", "open_date", "listing_date") if to_date(row.get(k))), None)
+    if not ref:
+        return hist
+    out: dict[str, dict] = {}
+    for h in hist:
+        d = to_date(h["date"])
+        if d is None:
+            continue
+        if abs((d - ref).days) > 120:
+            best = None
+            for y in (ref.year - 1, ref.year, ref.year + 1):
+                try:
+                    c = date(y, d.month, d.day)
+                except ValueError:
+                    continue
+                if abs((c - ref).days) <= 60 and (best is None or abs((c - ref).days) < abs((best - ref).days)):
+                    best = c
+            if best is None:
+                continue
+            d = best
+        out[d.isoformat()] = {"date": d.isoformat(), "rs": h["rs"]}
+    return list(out.values())
+
+
 def finalise_row(row: dict, today: date) -> dict:
     """Re-derive every computed field in place; safe to call after a merge.
 
@@ -414,7 +444,9 @@ def finalise_row(row: dict, today: date) -> dict:
     _fill_issue_price(row)
     price = row.get("issue_price")
     gmp = dict(row.get("gmp") or {})
-    hist = sorted(_history_entries(gmp.get("history")), key=lambda h: h["date"])
+    hist = sorted(repair_history_years(_history_entries(gmp.get("history")), row), key=lambda h: h["date"])
+    if gmp.get("as_of") and hist and to_date(gmp["as_of"]) and abs((to_date(gmp["as_of"]) - to_date(hist[-1]["date"])).days) > 200:
+        gmp["as_of"] = hist[-1]["date"]
     gmp["history"] = hist
     gmp.setdefault("rs", None)
     gmp.setdefault("pct", None)
