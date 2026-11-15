@@ -27,6 +27,7 @@ Assumptions baked in:
 """
 from __future__ import annotations
 
+import functools
 import os
 import re
 import sys
@@ -650,6 +651,11 @@ _CORP_WORDS = {"ltd", "limited", "pvt", "private", "india", "the", "co", "compan
 
 
 def name_key(name: Any) -> str:
+    return _name_key(str(name or ""))
+
+
+@functools.lru_cache(maxsize=8192)
+def _name_key(name: str) -> str:
     """A loose matching key: 'Zetwerk Manufacturing Businesses Limited', 'Zetwerk
     Manufacturing Business Ltd.' -> 'zetwerk manufacturing busines'. Lower-case,
     punctuation and '(India)' / Ltd / Limited / Private dropped, a trailing plural
