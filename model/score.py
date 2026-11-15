@@ -59,6 +59,13 @@ def model_outputs(ipo: dict, params: dict, market: dict | None) -> tuple[float, 
     feat = features(ipo, market)
     xs = _std(vector(feat), params)
     lg, gn = params["logistic"], params["gain"]
+    pre = params.get("pre_bid")
+    if pre and feat["sub_missing"] == 1.0:
+        # no subscription figures yet: use the model fitted without them
+        # (calibrate.fit_pre_bid) instead of reading "unknown" as "zero demand"
+        lg, gn = pre["logistic"], pre["gain"]
+        for name in ("log_sub_qib", "log_sub_nii", "log_sub_retail", "sub_missing"):
+            xs[FEATURE_NAMES.index(name)] = 0.0
     z = lg["intercept"] + sum(c * x for c, x in zip(lg["coef"], xs))
     p_up = _sigmoid(z)
     mean_gain = gn["intercept"] + sum(c * x for c, x in zip(gn["coef"], xs))

@@ -157,8 +157,14 @@
 
   function modelOutputs(ipo, params, market) {
     const feat = features(ipo, market);
-    const lg = params.logistic, gn = params.gain;
+    let lg = params.logistic, gn = params.gain;
     const xs = vector(feat).map((v, i) => (v - lg.mean[i]) / lg.scale[i]);
+    const pre = params.pre_bid;
+    if (pre && feat.sub_missing === 1.0) {
+      // no subscription figures yet: use the model fitted without them (mirrors score.py)
+      lg = pre.logistic; gn = pre.gain;
+      for (const name of ['log_sub_qib', 'log_sub_nii', 'log_sub_retail', 'sub_missing']) xs[FEATURE_NAMES.indexOf(name)] = 0.0;
+    }
     let z = lg.intercept; for (let i = 0; i < xs.length; i++) z += lg.coef[i] * xs[i];
     const pUp = sigmoid(z);
     let mean = gn.intercept; for (let i = 0; i < xs.length; i++) mean += gn.coef[i] * xs[i];

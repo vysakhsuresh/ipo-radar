@@ -193,6 +193,45 @@ def basis_counts(rows: list[dict]) -> dict:
     return out
 
 
+# Subscription columns: unknown before bidding opens. Almost every history row has
+# final figures, so the full model has never seen "no subscription yet" and reads
+# it as zero demand. The pre-bid model is fitted on the same rows with these
+# columns blanked (standardised value 0), so the GMP and size terms absorb what
+# demand usually looks like at that premium. score.py / score.js use it whenever
+# an IPO has no subscription figures at all.
+SUB_COLUMNS = [FEATURE_NAMES.index(f) for f in ("log_sub_qib", "log_sub_nii", "log_sub_retail", "sub_missing")]
+
+
+def fit_pre_bid(Xs, y_up, y_gain, boards, l2, l2g, prior_lg, prior_gn) -> dict:
+    Xp = Xs.copy()
+    Xp[:, SUB_COLUMNS] = 0.0
+    plg, pgn = prior_lg.copy(), prior_gn.copy()
+    plg[SUB_COLUMNS] = 0.0
+    pgn[SUB_COLUMNS] = 0.0
+    coef, b = fit_logistic(Xp, y_up, l2=l2, prior=plg)
+    oof = cv_logistic(Xp, y_up, l2, prior=plg, seed=REPORT_SEED)
+    gcoef, gb = fit_ridge(Xp, y_gain, l2=l2g, prior=pgn)
+    oofg = cv_ridge(Xp, y_gain, l2g, prior=pgn, seed=REPORT_SEED)
+    coef = np.array(coef, dtype=float)
+    gcoef = np.array(gcoef, dtype=float)
+    coef[SUB_COLUMNS] = 0.0
+    gcoef[SUB_COLUMNS] = 0.0
+    resid = y_gain - oofg
+    resid_q = {}
+    for board in ("mainboard", "sme"):
+        m = boards == board
+        src = resid[m] if m.sum() >= 15 else resid
+        resid_q[board] = {"p10": float(np.percentile(src, 10)), "p25": float(np.percentile(src, 25)),
+                          "p50": float(np.percentile(src, 50)), "p75": float(np.percentile(src, 75)),
+                          "p90": float(np.percentile(src, 90)), "n": int(m.sum())}
+    return {
+        "logistic": {"coef": coef.tolist(), "intercept": float(b)},
+        "gain": {"coef": gcoef.tolist(), "intercept": float(gb), "resid_quantiles": resid_q},
+        "metrics": {"auc": auc(oof, y_up), "brier": brier(oof, y_up),
+                    "gain_mae": float(np.mean(np.abs(resid)))},
+    }
+
+
 def calibrate(rows: list[dict]) -> dict:
     all_rows = [r for r in rows if usable(r)]
     rows = [r for r in all_rows if informative(r)]
@@ -233,6 +272,8 @@ def calibrate(rows: list[dict]) -> dict:
         else:
             resid_q[board] = dict(PRIOR_RESID[board], n=int(m.sum()))
 
+    pre_bid = fit_pre_bid(Xs, y_up, y_gain, boards, l2, l2g, prior_lg, prior_gn)
+
     dates = sorted(r.get("listing_date") for r in rows if r.get("listing_date"))
     cb = close_basis(all_rows)
     cb_boards = np.array([r.get("board") for r in cb])
@@ -252,6 +293,7 @@ def calibrate(rows: list[dict]) -> dict:
         "min_rows_to_calibrate": MIN_ROWS_TO_CALIBRATE,
         "date_range": [dates[0] if dates else None, dates[-1] if dates else None],
         "base_rate": base_rate,
+        "pre_bid": pre_bid,
         "logistic": {"coef": coef.tolist(), "intercept": float(b), "mean": mean.tolist(), "scale": scale.tolist(), "l2": l2},
         "gain": {"coef": gcoef.tolist(), "intercept": float(gb), "l2": l2g, "resid_quantiles": resid_q},
         "metrics": {
