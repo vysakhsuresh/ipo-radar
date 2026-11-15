@@ -156,3 +156,135 @@ def fetch(http: Http, today: date) -> dict[str, Any]:
     if out["as_of"] is None and out["nifty"] is not None:
         out["as_of"] = today.isoformat()
     return out
+
+
+# ------------------------------------------------- post-listing performance ---
+
+URL_YF_STOCK = "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range={rng}&interval=1d"
+# Trading sessions after the listing day (the listing day is session 0).
+HORIZONS = (("d1", 0), ("w1", 4), ("m1", 20), ("m3", 62), ("m6", 124))
+
+
+def yahoo_tickers(symbol: str | None, board: str | None) -> list[str]:
+    """Yahoo's names for an NSE symbol: 'ZETWERK.NS' for the main board; NSE Emerge
+    (SME) lines trade as 'VPFL-SM.NS' (checked 2026-11-15), with '.NS' as a fallback."""
+    if not symbol:
+        return []
+    s = str(symbol).strip().upper().replace("&", "%26")
+    return [f"{s}-SM.NS", f"{s}.NS"] if board == "sme" else [f"{s}.NS"]
+
+
+def parse_yahoo_ohlc(obj: Any) -> list[dict]:
+    """Yahoo chart payload -> [{date, open, high, low, close}] in date order (IST dates), null closes skipped."""
+    try:
+        res = obj["chart"]["result"][0]
+        ts = res.get("timestamp") or []
+        q = res["indicators"]["quote"][0]
+        off = int((res.get("meta") or {}).get("gmtoffset") or 19800)
+    except (KeyError, IndexError, TypeError, ValueError):
+        return []
+    out = []
+    for i, t in enumerate(ts):
+        try:
+            closes = q.get("close") or []
+            c = closes[i] if i < len(closes) else None
+            if c is None or t is None:
+                continue
+            d = datetime.fromtimestamp(int(t) + off, tz=timezone.utc).date().isoformat()
+
+            def pick(k: str):
+                arr = q.get(k) or []
+                return arr[i] if i < len(arr) else None
+            out.append({"date": d, "open": pick("open"), "high": pick("high"), "low": pick("low"), "close": float(c)})
+        except (ValueError, OverflowError, TypeError):
+            continue
+    out.sort(key=lambda r: r["date"])
+    return out
+
+
+def post_listing_from(series: list[dict], listing_date: str | None, issue_price: float | None) -> dict | None:
+    """{last_price, as_of, d1, w1, m1, m3, m6}: % of the close at each horizon over the issue
+    price (None until that many sessions have passed), counted from the first session on
+    or after the listing date (d1 = listing-day close, w1 = 5th session, m1 = 21st,
+    m3 = 63rd, m6 = 125th)."""
+    if not series or not issue_price or not listing_date:
+        return None
+    sess = [r for r in series if r["date"] >= str(listing_date)[:10]]
+    if not sess:
+        return None
+    out: dict[str, Any] = {"last_price": round(sess[-1]["close"], 2), "as_of": sess[-1]["date"]}
+    try:
+        gap = (date.fromisoformat(sess[0]["date"]) - date.fromisoformat(str(listing_date)[:10])).days
+    except ValueError:
+        gap = 99
+    if gap > 6:
+        # the chart does not reach back to the listing day: horizons would be measured from the wrong day
+        out.update({k: None for k, _ in HORIZONS})
+        out["listing_open"] = out["listing_close"] = None
+        return out
+    for key, n in HORIZONS:
+        out[key] = round(100.0 * (sess[n]["close"] - issue_price) / issue_price, 2) if len(sess) > n else None
+    out["listing_open"] = round(sess[0]["open"], 2) if sess[0].get("open") is not None else None
+    out["listing_close"] = round(sess[0]["close"], 2)
+    return out
+
+
+URL_NSE_HIST = ("https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData"
+                "?from={frm}&to={to}&symbol={sym}&type=priceVolumeDeliverable&series=ALL")
+
+
+def parse_nse_history(obj: Any) -> list[dict]:
+    """NSE security-wise history ({"data": [{"mTIMESTAMP": "13-Nov-2026", "CH_OPENING_PRICE", "CH_CLOSING_PRICE",
+    "CH_TRADE_HIGH_PRICE", "CH_TRADE_LOW_PRICE"}]}) -> [{date, open, high, low, close}] in date order."""
+    out = []
+    for r in _rows(obj):
+        d = parse_date(r.get("mTIMESTAMP") or r.get("mtimestamp"))
+        c = num(r.get("CH_CLOSING_PRICE", r.get("chClosingPrice")))
+        if not d or c is None:
+            continue
+        out.append({"date": d, "open": num(r.get("CH_OPENING_PRICE", r.get("chOpeningPrice"))),
+                    "high": num(r.get("CH_TRADE_HIGH_PRICE", r.get("chTradeHighPrice"))),
+                    "low": num(r.get("CH_TRADE_LOW_PRICE", r.get("chTradeLowPrice"))), "close": c})
+    by_date = {r["date"]: r for r in out}
+    return [by_date[k] for k in sorted(by_date)]
+
+
+_NSE_WARM: set[int] = set()
+
+
+def fetch_post_listing(http: Http, symbol: str | None, board: str | None, listing_date: str | None,
+                       issue_price: float | None, today: date) -> dict | None:
+    """Post-listing performance: NSE's own daily history first (official closes; it
+    covers new and SME listings Yahoo has no history for), Yahoo's chart as the
+    fallback. None on any failure (non-fatal)."""
+    ld = parse_date(listing_date)
+    if not ld or not issue_price:
+        return None
+    if symbol:
+        try:
+            from fetch.sources.nse import warm_up, HEADERS
+            if id(http) not in _NSE_WARM:
+                warm_up(http)
+                _NSE_WARM.add(id(http))
+            start = date.fromisoformat(ld)
+            end = min(today, start + timedelta(days=360))
+            url = URL_NSE_HIST.format(frm=start.strftime("%d-%m-%Y"), to=end.strftime("%d-%m-%Y"), sym=str(symbol).strip().upper().replace("&", "%26"))
+            got = post_listing_from(parse_nse_history(http.get_json(url, headers=HEADERS, retries=1)), ld, issue_price)
+            if got and got.get("d1") is not None:
+                got["ticker"] = f"NSE:{symbol}"
+                return got
+        except Exception:  # noqa: BLE001
+            pass
+    # a period1/period2 window came back with only the latest candle (2026-11-15); a range does not
+    age = (today - date.fromisoformat(ld)).days
+    rng = "1y" if age < 330 else ("2y" if age < 690 else "5y")
+    for ticker in yahoo_tickers(symbol, board):
+        try:
+            obj = http.get_json(URL_YF_STOCK.format(ticker=ticker, rng=rng), headers=YF_HEADERS, retries=1)
+        except Exception:  # noqa: BLE001
+            obj = None
+        got = post_listing_from(parse_yahoo_ohlc(obj), ld, issue_price) if obj else None
+        if got:
+            got["ticker"] = ticker
+            return got
+    return None

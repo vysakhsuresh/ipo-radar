@@ -34,6 +34,13 @@ class Table:
     headers: list[str]            # normalised: lowercase, single spaces, no punctuation noise
     raw_headers: list[str]
     rows: list[list[Cell]]
+    extras: list[dict] = field(default_factory=list)   # hidden per-row fields of a JSON report
+
+    def extra(self, i: int, key: str):
+        if i < len(self.extras):
+            v = self.extras[i].get(key)
+            return None if v in ("", None) else v
+        return None
 
     def col(self, *patterns: str, exclude: tuple[str, ...] = ()) -> int | None:
         """Index of the first header that contains any of `patterns` (checked in
@@ -96,6 +103,39 @@ def parse_tables(html: str) -> list[Table]:
             rows.append([_cell_of(c) for c in cells])
         out.append(Table(headers=[norm_header(h) for h in raw], raw_headers=raw, rows=rows))
     return out
+
+
+def table_from_records(records: list[dict]) -> Table | None:
+    """A JSON report (a list of {column header: cell HTML or value} dicts, as the
+    Chittorgarh / InvestorGain `data-read` endpoints return) as a Table, so the
+    header-driven parsers work on it unchanged. Keys starting with '~' are the
+    sites' hidden columns (ids, ISO dates, NSE symbol); they are kept per row in
+    `Table.extras` instead of becoming visible columns."""
+    recs = [r for r in records or [] if isinstance(r, dict)]
+    if not recs:
+        return None
+    raw: list[str] = []
+    for r in recs:
+        for k in r:
+            if not str(k).startswith("~") and k not in raw:
+                raw.append(k)
+    rows: list[list[Cell]] = []
+    extras: list[dict] = []
+    for r in recs:
+        cells = []
+        for k in raw:
+            v = r.get(k)
+            if v is None:
+                cells.append(Cell(text=""))
+                continue
+            frag = BeautifulSoup("<td>" + str(v) + "</td>", "lxml").find("td")
+            cells.append(_cell_of(frag) if frag is not None else Cell(text=str(v)))
+        rows.append(cells)
+        extras.append({str(k)[1:]: v for k, v in r.items() if str(k).startswith("~")})
+    raw_clean = [BeautifulSoup(h, "lxml").get_text(" ", strip=True) if "<" in h or "&" in h else h for h in raw]
+    t = Table(headers=[norm_header(h) for h in raw_clean], raw_headers=raw_clean, rows=rows)
+    t.extras = extras
+    return t
 
 
 def find_table(tables: list[Table], *required: str) -> Table | None:

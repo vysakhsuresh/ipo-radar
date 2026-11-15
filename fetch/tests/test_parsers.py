@@ -362,7 +362,10 @@ def test_run_precedence_exchange_wins_dates_trackers_win_gmp(tmp_path):
     row = by_id(load_json(os.path.join(str(tmp_path), "ipos.json"))["ipos"])["lenskart-solutions-2026"]
     assert row["close_date"] == "2026-11-04" and row["open_date"] == "2026-10-31"       # NSE wins dates
     assert row["subscription"]["total"] == 2.0 and row["subscription"]["qib"] == 3.0     # NSE wins, gaps filled
-    assert row["gmp"]["rs"] == 47 and row["gmp"]["pct"] == 11.69                        # InvestorGain wins GMP
+    # two fresh quotes: the consensus is their median, every source is kept
+    assert row["gmp"]["rs"] == 46.0 and row["gmp"]["pct"] == 11.44
+    assert {q["source"]: q["rs"] for q in row["gmp"]["sources"]} == {"investorgain": 47.0, "chittorgarh": 45.0}
+    assert row["gmp"]["spread_rs"] == 2.0 and row["gmp"]["disagree"] is False
     assert row["issue_price"] == 402 and row["lot_size"] == 37 and row["status"] == "upcoming"
     assert "sub_partial" in row["flags"]
 

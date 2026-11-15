@@ -37,7 +37,7 @@ from urllib.parse import urljoin
 from fetch.common import Http
 from fetch.normalize import (clean_name, parse_date, parse_price_band, crore, first_number, pct_in_parens,
                              is_sme_marker, derive_status)
-from fetch.sources.htmltable import Table, parse_tables
+from fetch.sources.htmltable import Table, parse_tables, table_from_records
 
 BASE = "https://www.investorgain.com/"
 URL_LIVE_GMP = BASE + "report/live-ipo-gmp/331/"
@@ -73,8 +73,12 @@ def _with_sources(row: dict, url: str) -> dict:
 
 def parse_live_gmp(html: str, url: str, today: date | None = None) -> list[dict]:
     """The live GMP table -> partial rows with gmp {rs, pct, as_of}, price, lot, size, dates."""
+    return parse_live_gmp_tables(parse_tables(html), url, today)
+
+
+def parse_live_gmp_tables(tables: list[Table], url: str, today: date | None = None) -> list[dict]:
     out: list[dict] = []
-    for t in parse_tables(html):
+    for t in tables:
         nc = _name_col(t)
         gc = t.col("gmp", exclude=("updated", "date", "%", "pct", "trend", "time"))
         if nc is None or gc is None or not t.rows:
@@ -189,6 +193,47 @@ def parse_gmp_performance(html: str, url: str, today: date | None = None) -> lis
 
 # --------------------------------------------------------------- fetching ---
 
+API_LIVE = "https://webnodejs.investorgain.com/cloud/v2/report/data-read/331/1/{m}/{y}/{fy}/0/all?search=&v=1"
+API_URL_LIST = "https://webnodejs.investorgain.com/cloud/v2/ipo/ipo-url-lists"
+API_HEADERS = {"Accept": "application/json", "Referer": BASE, "Origin": "https://www.investorgain.com"}
+
+
+def live_gmp_from_api(http: Http, today: date) -> list[dict]:
+    """The JSON endpoint behind the live GMP page (seen in the browser, Nov 2026); the
+    same columns as the page, so the same parser reads it. [] on any failure."""
+    fy = f"{today.year}-{(today.year + 1) % 100:02d}" if today.month >= 4 else f"{today.year - 1}-{today.year % 100:02d}"
+    url = API_LIVE.format(m=today.month, y=today.year, fy=fy)
+    try:
+        obj = http.get_json(url, headers=API_HEADERS)
+        recs = obj.get("reportTableData") if isinstance(obj, dict) else None
+        t = table_from_records(recs or [])
+    except Exception:  # noqa: BLE001
+        return []
+    if t is None:
+        return []
+    rows = parse_live_gmp_tables([t], url, today)
+    for i, r in enumerate(rows):
+        if not r.get("gmp_url") and i < len(t.extras) and t.extras[i].get("urlrewrite_folder_name"):
+            r["gmp_url"] = urljoin(BASE, t.extras[i]["urlrewrite_folder_name"])
+    return rows
+
+
+def gmp_url_index(http: Http) -> list[dict]:
+    """Every IPO InvestorGain has a GMP page for: [{name, url, open_date, close_date}]
+    (from the site's own URL list endpoint). [] on failure."""
+    try:
+        obj = http.get_json(API_URL_LIST, headers=API_HEADERS)
+    except Exception:  # noqa: BLE001
+        return []
+    out = []
+    for r in (obj or {}).get("lists") or [] if isinstance(obj, dict) else []:
+        if not isinstance(r, dict) or not r.get("urlrewrite_folder_name") or not r.get("id"):
+            continue
+        out.append({"name": clean_name(r.get("company_short_name")), "url": f"{BASE}gmp/{r['urlrewrite_folder_name']}/{r['id']}/",
+                    "open_date": parse_date(r.get("issue_open_dt")), "close_date": parse_date(r.get("issue_end_dt"))})
+    return out
+
+
 def gmp_history(http: Http, url: str, today: date | None = None) -> list[dict]:
     html = http.get_html(url)
     return parse_gmp_history(html, today) if html else []
@@ -198,6 +243,8 @@ def fetch(http: Http, today: date, with_history: bool = True, max_history_pages:
     """Live GMP rows; for not-yet-listed issues also the dated GMP series from the per-IPO page."""
     html = http.get_html(URL_LIVE_GMP)
     rows = parse_live_gmp(html, URL_LIVE_GMP, today) if html else []
+    if not rows:
+        rows = live_gmp_from_api(http, today)
     if with_history:
         n = 0
         for r in rows:
