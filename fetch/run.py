@@ -28,13 +28,15 @@ import argparse
 import os
 import sys
 import traceback
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Callable
 
 from fetch.common import Http, Provenance, dump_json, load_json, now_iso, slugify, today as today_iso
 from fetch.normalize import (canonical_row, finalise_row, merge, derive_status, accrue_gmp_history,
-                             subscription_day, quality_flags, within_days, strip_empty_groups, is_junk, clean_name, year_for)
-from fetch.sources import chittorgarh, investorgain, market, nse
+                             subscription_day, quality_flags, within_days, strip_empty_groups, junk_reason, clean_name, year_for,
+                             dedupe, resolve_board, infer_board, gmp_consensus, fill_timeline, registrar_info, to_date,
+                             NSE_HOLIDAYS)
+from fetch.sources import chittorgarh, investorgain, ipowatch, market, nse
 from fetch import history as history_mod
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,11 +45,11 @@ SourceFn = Callable[[Http, date], list[dict]]
 
 # Lowest to highest priority per field group; a source not named ranks lowest.
 PRECEDENCE: dict[str, tuple[str, ...]] = {
-    "gmp": ("chittorgarh", "investorgain"),
+    "gmp": ("ipowatch", "chittorgarh", "investorgain"),
     "subscription": ("investorgain", "chittorgarh", "nse"),
     "listing": ("investorgain", "nse", "chittorgarh", "chittorgarh_tracker"),
     "issue_size_cr": ("nse", "investorgain", "chittorgarh"),   # NSE gives a share count, the aggregators give rupees
-    "*": ("investorgain", "chittorgarh", "chittorgarh_tracker", "nse"),
+    "*": ("ipowatch", "investorgain", "chittorgarh", "chittorgarh_tracker", "nse"),
 }
 GROUPED = tuple(k for k in PRECEDENCE if k != "*")
 
@@ -58,7 +60,73 @@ def default_sources() -> list[tuple[str, SourceFn]]:
         ("chittorgarh", chittorgarh.fetch),
         ("chittorgarh_tracker", lambda http, today: chittorgarh.fetch_trackers(http, chittorgarh.tracker_years(today), today)),
         ("investorgain", investorgain.fetch),
+        ("ipowatch", ipowatch.fetch),
     ]
+
+
+POST_LISTING_DAYS = 200
+POST_LISTING_MAX_FETCH = 60
+IPO_SOURCES = ("nse", "chittorgarh", "chittorgarh_tracker", "investorgain", "ipowatch")
+
+
+def gmp_quotes(partials: list[tuple[str, dict]]) -> list[dict]:
+    """Each source's GMP quote in a group of partial rows: [{source, rs, as_of, url}]."""
+    out = []
+    for src, p in partials:
+        g = p.get("gmp") or {}
+        if g.get("rs") is None:
+            continue
+        url = (p.get("sources") or {}).get("gmp") or (p.get("sources") or {}).get("gmp_history") or (p.get("sources") or {}).get("name")
+        out.append({"source": src, "rs": g.get("rs"), "as_of": g.get("as_of"), "url": url})
+    return out
+
+
+def regroup(pool: dict[str, dict], partials: dict[str, list[tuple[str, dict]]]) -> tuple[dict[str, dict], dict[str, list[tuple[str, dict]]], dict[str, str]]:
+    """Merge ids that name the same IPO ('Zetwerk', 'Zetwerk Manufacturing Business Ltd',
+    'Zetwerk Manufacturing Businesses Limited') across the previous pool and this run's
+    partial rows. Returns the re-keyed pool and partials and the alias map."""
+    reps: dict[str, dict] = {rid: dict(r) for rid, r in pool.items()}
+    for rid, parts in partials.items():
+        m: dict = dict(reps.get(rid) or {})
+        for _src, p in parts:
+            m = merge(m, {k: v for k, v in p.items() if k not in ("sources",)})
+        m["id"] = rid
+        reps[rid] = m
+    _rows, alias = dedupe(list(reps.values()))
+    new_pool: dict[str, dict] = {}
+    for rid in sorted(pool, key=lambda i: len(pool[i])):
+        k = alias.get(rid, rid)
+        row = dict(pool[rid], id=k)
+        new_pool[k] = merge(new_pool[k], row) if k in new_pool else row
+    for old, k in alias.items():
+        if k in new_pool:
+            new_pool[k]["aliases"] = sorted(set(new_pool[k].get("aliases") or []) | {old})
+    new_parts: dict[str, list[tuple[str, dict]]] = {}
+    for rid, parts in partials.items():
+        k = alias.get(rid, rid)
+        new_parts.setdefault(k, []).extend((src, dict(p, id=k)) for src, p in parts)
+        if k != rid:
+            new_pool.setdefault(k, {"id": k})
+            new_pool[k]["aliases"] = sorted(set(new_pool[k].get("aliases") or []) | {rid})
+    return new_pool, new_parts, alias
+
+
+def update_source_status(prev: dict, summary_sources: dict, now: str) -> dict:
+    """{name: {ok, last_ok_at, rows, typical_rows, last_note}} carried across runs, so the
+    health check can tell a source that has been silent for a day from one blip."""
+    out = {k: dict(v) for k, v in (prev or {}).items() if isinstance(v, dict)}
+    for name, v in summary_sources.items():
+        st = out.get(name, {"ok": False, "last_ok_at": None, "rows": 0, "typical_rows": None})
+        st["ok"] = bool(v.get("ok"))
+        st["rows"] = int(v.get("rows") or 0)
+        st["last_note"] = v.get("note") or ""
+        st["checked_at"] = now
+        if st["ok"]:
+            st["last_ok_at"] = now
+            t = st.get("typical_rows")
+            st["typical_rows"] = st["rows"] if not t else round(0.8 * t + 0.2 * st["rows"], 1)
+        out[name] = st
+    return out
 
 
 def canonical_pool(rows: list[dict], today: date) -> dict[str, dict]:
@@ -104,6 +172,7 @@ def refresh(out_dir: str, today: date, *, cache: bool = True, sources: list[tupl
             history_years: list[int] | tuple[int, ...] = (), http: Http | None = None) -> dict[str, Any]:
     """Run the refresh and write the two files. Returns a summary dict (used by main and the tests)."""
     prov = Provenance()
+    online = sources is None or http is not None     # injected test sources never trigger extra network calls
     http = http or Http(prov, cache=cache)
     prov = http.prov
     sources = default_sources() if sources is None else sources
@@ -150,30 +219,86 @@ def refresh(out_dir: str, today: date, *, cache: bool = True, sources: list[tupl
             prov.add(f"source:{name}", False, note=f"{type(e).__name__}: {e}")
             summary["sources"][name] = {"ok": False, "rows": 0, "note": f"{type(e).__name__}: {e}"}
 
-    # ---- merge onto the previous pool
+    # ---- exchange holidays for the T+3 timetable (non-fatal)
+    holidays = set(NSE_HOLIDAYS)
+    try:
+        if online:
+            holidays |= nse.fetch_holidays(http)
+    except Exception:  # noqa: BLE001
+        pass
+
+    # ---- merge onto the previous pool (same IPO under several names merged first)
+    pool, partials, alias = regroup(pool, partials)
+    summary["merged_aliases"] = len(alias)
     seen = set(partials)
+    dropped: dict[str, int] = {}
     for rid, parts in partials.items():
-        pool[rid] = combine(pool.get(rid, {}), parts)
+        prev_board, prev_basis = (pool.get(rid) or {}).get("board"), (pool.get(rid) or {}).get("board_basis")
+        row = combine(pool.get(rid, {}), parts)
+        board, basis = resolve_board(parts)
+        if board:
+            row["board"], row["board_basis"] = board, basis
+        elif prev_basis == "source" and prev_board:
+            row["board"], row["board_basis"] = prev_board, prev_basis
+        else:
+            row.pop("board", None)
+            row.pop("board_basis", None)
+        quotes = gmp_quotes(parts)
+        finalise_row(row, today)
+        gmp_consensus(row, quotes, today)
+        pool[rid] = row
     for rid in list(pool):
         row = pool[rid]
-        if is_junk(row):
+        if not row.get("board"):
+            guess = infer_board(row)
+            row["board"] = guess or "mainboard"
+            row["board_basis"] = "inferred" if guess else "default"
+            if guess:
+                row.setdefault("flags", []).append("board_inferred")
+        finalise_row(row, today)
+        why = junk_reason(row)
+        if why:
+            dropped[why] = dropped.get(why, 0) + 1
             del pool[rid]
             continue
-        row.setdefault("board", "mainboard")
-        finalise_row(row, today)
         accrue_gmp_history(row)
         if rid in seen:
             day = subscription_day(row)
             if day is not None:
                 row["subscription"]["day"] = day
+        fill_timeline(row, holidays)
+        reg = registrar_info(row.get("registrar"))
+        if reg:
+            row["registrar"] = reg
         row["flags"] = quality_flags(row, today)
         row["status"] = derive_status(row, today)
+    summary["dropped"] = dropped
+
+    # ---- post-listing performance for recent listings (Yahoo; non-fatal, refreshed daily)
+    n_pl = 0
+    for row in pool.values():
+        ld = to_date(row.get("listing_date"))
+        if row["status"] != "listed" or not ld or ld < today - timedelta(days=POST_LISTING_DAYS) or not row.get("symbol"):
+            continue
+        pl = row.get("post_listing") or {}
+        if not online or pl.get("checked") == today.isoformat() or n_pl >= POST_LISTING_MAX_FETCH:
+            continue
+        n_pl += 1
+        try:
+            got = market.fetch_post_listing(http, row["symbol"], row.get("board"), row.get("listing_date"), row.get("issue_price"), today)
+        except Exception:  # noqa: BLE001
+            got = None
+        if got:
+            got["checked"] = today.isoformat()
+            row["post_listing"] = got
+        elif pl:
+            row["post_listing"] = dict(pl, checked=today.isoformat())
 
     # ---- split pipeline / history
     pipeline = [r for r in pool.values() if r["status"] != "listed" or within_days(r.get("listing_date"), today, PIPELINE_DAYS)]
     outcomes = [r for r in pool.values() if r["status"] == "listed" and r.get("listing") and r["listing"].get("gain_pct") is not None]
     pipeline.sort(key=lambda r: (r.get("listing_date") or r.get("close_date") or "9999", r["name"]))
-    hist_rows = list(outcomes)
+    hist_rows = [dict(r, aliases=sorted(set(r.get("aliases") or []))) for r in outcomes]
     if build_history:
         years = list(history_years) or [today.year - 2, today.year - 1, today.year]
         log: dict[str, Any] = {}
@@ -193,7 +318,8 @@ def refresh(out_dir: str, today: date, *, cache: bool = True, sources: list[tupl
     generated_at = now_iso() if any_ipo_source_ok else (prev.get("generated_at") or now_iso())
     if not any_ipo_source_ok:
         prov.add("refresh", False, note="no IPO source returned rows; previous snapshot and its timestamp kept")
-    live = {"generated_at": generated_at, "market": mkt, "sources": prov.to_json(), "ipos": pipeline}
+    status = update_source_status(prev.get("source_status") or {}, {k: v for k, v in summary["sources"].items() if k in dict(sources)}, now_iso())
+    live = {"generated_at": generated_at, "market": mkt, "sources": prov.to_json(), "source_status": status, "ipos": pipeline}
     dump_json(ipos_path, live)
     dump_json(hist_path, hist)
     counts = {s: sum(1 for r in pipeline if r["status"] == s) for s in ("upcoming", "open", "closed", "listed")}

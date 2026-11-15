@@ -284,6 +284,17 @@ def main(argv=None):
     if bad:
         print(f"warning: {bad} row(s) could not be scored; marked 'not enough data'")
     live["scored_with"] = {"fitted_at": params.get("fitted_at"), "n_rows": params.get("n_rows")}
+    # data health: compared with the previous scored snapshot (non-fatal; never changes a score)
+    try:
+        from model.health import check
+        prev = None
+        if os.path.exists(a.out):
+            with open(a.out, encoding="utf-8") as f:
+                prev = json.load(f)
+        live["health"] = check(live, prev)
+    except Exception as e:  # noqa: BLE001
+        live["health"] = {"ok": True, "checked_at": None, "issues": [{"level": "warn", "ipo_id": None, "code": "health_check_failed",
+                                                                       "msg": f"The data health check could not run ({type(e).__name__})."}], "sources": []}
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(live, f, ensure_ascii=False, indent=1)
         f.write("\n")

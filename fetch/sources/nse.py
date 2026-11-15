@@ -33,12 +33,13 @@ Returns canonical partial rows (see fetch/normalize.py) and nothing else.
 """
 from __future__ import annotations
 
-from datetime import date
+import re
+from datetime import date, timedelta
 from typing import Any, Iterable
 
 from fetch.common import Http, num
 from fetch.normalize import (clean_name, pretty_case, parse_date, parse_price_band, is_sme_marker,
-                             derive_status, category_key)
+                             derive_status, category_key, to_date, first_number)
 
 HOME = "https://www.nseindia.com/"
 REFERER = "https://www.nseindia.com/market-data/all-upcoming-issues-ipo"
@@ -54,8 +55,9 @@ _ALIASES: dict[str, tuple[str, ...]] = {
     "name": ("companyName", "company", "name", "issuerName", "issuer"),
     "symbol": ("symbol", "scripCode", "nseSymbol"),
     "series": ("series", "seriesName"),
-    "open_date": ("issueStartDate", "startDate", "openDate", "issueOpenDate", "biddingStartDate", "issuePeriodStart", "bidOpenDate"),
-    "close_date": ("issueEndDate", "endDate", "closeDate", "issueCloseDate", "biddingEndDate", "issuePeriodEnd", "bidCloseDate"),
+    "security_type": ("securityType", "secType", "instrumentType"),
+    "open_date": ("issueStartDate", "ipoStartDate", "startDate", "openDate", "issueOpenDate", "biddingStartDate", "issuePeriodStart", "bidOpenDate"),
+    "close_date": ("issueEndDate", "ipoEndDate", "endDate", "closeDate", "issueCloseDate", "biddingEndDate", "issuePeriodEnd", "bidCloseDate"),
     "listing_date": ("listingDate", "dateOfListing", "listingDt", "tentativeListingDate", "listing"),
     "allotment_date": ("allotmentDate", "basisOfAllotmentDate", "boaDate"),
     "price": ("issuePrice", "priceBand", "priceRange", "price", "issuePriceRange"),
@@ -66,7 +68,7 @@ _ALIASES: dict[str, tuple[str, ...]] = {
     "status": ("status", "issueStatus"),
     "is_bse": ("isBse", "bse", "listedOnBse"),
     "sme": ("isSme", "sme", "category", "segment", "platform", "issueType", "type", "market", "board"),
-    "times": ("noOfTotalMeant", "noOfTimes", "timesSubscribed", "subscription", "times"),
+    "times": ("noOfTotalMeant", "noOfTime", "noOfTimes", "timesSubscribed", "subscription", "times"),
     "category": ("category", "categoryName", "investorCategory"),
     "updated": ("updateTime", "updatedTime", "asOn", "timestamp", "lastUpdated"),
 }
@@ -119,7 +121,30 @@ def _rows(obj: Any) -> list[dict]:
     return []
 
 
+NON_EQUITY_TYPES = ("DEBT", "NCD", "BOND", "INVIT", "REIT", "RIGHTS", "MF", "ETF", "GSEC", "SGB")
+_NON_EQUITY_SYMBOL_RE = re.compile(r"^\d|NCD|ZCB")
+
+
+def security_type(flat: dict[str, Any]) -> str | None:
+    """NSE's securityType on the past-issues list: 'Equity', 'SME', 'DEBT', 'InvIT', 'REIT'."""
+    v = _pick(flat, "security_type")
+    return str(v).strip() if v is not None else None
+
+
+def is_non_equity(flat: dict[str, Any]) -> bool:
+    st = (security_type(flat) or "").upper()
+    if st and any(st.startswith(x) for x in NON_EQUITY_TYPES):
+        return True
+    sym = str(_pick(flat, "symbol") or "").strip().upper()
+    return bool(sym and _NON_EQUITY_SYMBOL_RE.search(sym))
+
+
 def _is_sme(flat: dict[str, Any]) -> bool:
+    st = (security_type(flat) or "").upper()
+    if st == "SME":
+        return True
+    if st == "EQUITY":
+        return False
     series = _pick(flat, "series")
     if series is not None and str(series).strip().upper() in ("SM", "ST", "SME"):
         return True
@@ -131,15 +156,29 @@ def _is_sme(flat: dict[str, Any]) -> bool:
 def parse_categories(obj: Any) -> dict[str, float | None]:
     """Category-wise bid table -> {qib, nii, bnii, snii, retail, employee, total} (times subscribed)."""
     out: dict[str, float | None] = {}
-    rows = _category_rows(obj)
+    # the detail payload carries two books: bidDetails (NSE's own bids) and activeCat
+    # (consolidated across exchanges, what the press reports); prefer the consolidated one
+    active = obj.get("activeCat") if isinstance(obj, dict) else None
+    rows = _category_rows(active) if active else []
+    rows = rows or _category_rows(obj)
     for r in rows:
         flat = _flatten(r)
+        sr = flat.get("srno")
+        if sr is not None and "(" in str(sr):
+            continue                      # a sub-row (FIIs, Corporates, Cut Off...) of a category above
         key = category_key(_pick(flat, "category"))
         if not key:
             continue
         v = num(_pick(flat, "times"))
+        if v is None or v == 0:
+            offered = num(flat.get("noofshareoffered") or flat.get("noofsharesoffered"))
+            bid = num(flat.get("noofsharesbid") or flat.get("noofsharebid"))
+            if offered and offered > 0 and bid is not None:
+                v = bid / offered
+            elif v == 0 and bid:
+                v = None        # SME books on NSE carry no 'offered' figure and print 0.00x: unknown, not zero
         if v is not None and out.get(key) is None:
-            out[key] = v
+            out[key] = round(v, 2)
     return out
 
 
@@ -165,7 +204,7 @@ def row_from(raw: dict, url: str, today: date | None = None) -> dict | None:
     """One NSE issue dict (list row or detail payload) -> canonical partial row."""
     flat = _flatten(raw)
     name = _pick(flat, "name")
-    if not name:
+    if not name or is_non_equity(flat):
         return None
     sme = _is_sme(flat)
     row: dict[str, Any] = {"name": clean_name(pretty_case(str(name))), "board": "sme" if sme else "mainboard"}
@@ -205,8 +244,59 @@ def row_from(raw: dict, url: str, today: date | None = None) -> dict | None:
         if upd:
             sub["as_of"] = upd
         row["subscription"] = sub
+    st = security_type(flat)
+    if st:
+        row["security_type"] = st
+    row.update(issue_info_facts(raw, row.get("price_band_high")))
     row["sources"] = {k: url for k in row if k not in ("symbol", "series", "flags", "sources")}
     return row
+
+
+def _info_pairs(raw: Any) -> dict[str, str]:
+    """The detail payload's issueInfo.dataList [{title, value}] as {lowercase title: value}."""
+    out: dict[str, str] = {}
+    info = raw.get("issueInfo") if isinstance(raw, dict) else None
+    items = info.get("dataList") if isinstance(info, dict) else None
+    for it in items or []:
+        if isinstance(it, dict) and it.get("title") and it.get("value") not in (None, ""):
+            out[" ".join(str(it["title"]).lower().split())] = str(it["value"]).strip().strip('"').strip()
+    return out
+
+
+def issue_info_facts(raw: Any, band_high: float | None = None) -> dict[str, Any]:
+    """Registrar, face value, lot, lead managers, sector and the fresh-issue amount from
+    the detail payload's title/value list (Nov 2026 shape). Missing -> absent."""
+    out: dict[str, Any] = {}
+    kv = _info_pairs(raw)
+    if kv.get("name of the registrar"):
+        out["registrar"] = {"name": kv["name of the registrar"]}
+    fv = first_number(kv.get("face value"))
+    if fv:
+        out["face_value"] = fv
+    for k in ("lot size", "bid lot", "minimum order quantity"):
+        m = re.search(r"([\d,]+)", kv.get(k, ""))
+        if m:
+            out["lot_size"] = int(m.group(1).replace(",", ""))
+            break
+    if kv.get("book running lead managers"):
+        out["lead_managers"] = [x.strip() for x in re.split(r",| and ", kv["book running lead managers"]) if x.strip()]
+    period = kv.get("issue period")
+    if period and " to " in period:
+        a, b = period.split(" to ", 1)
+        if parse_date(a):
+            out["open_date"] = parse_date(a)
+        if parse_date(b):
+            out["close_date"] = parse_date(b)
+    size = kv.get("issue size", "")
+    m = re.search(r"fresh issue[^.]*?(?:rs\.?|₹)\s*([\d,]+(?:\.\d+)?)\s*(million|crore|cr|lakh)", size, re.I)
+    if m:
+        v = float(m.group(1).replace(",", ""))
+        unit = m.group(2).lower()
+        out["fresh_issue_cr"] = round(v / 10 if unit == "million" else (v / 100 if unit == "lakh" else v), 2)
+    meta = raw.get("metaInfo") if isinstance(raw, dict) else None
+    if isinstance(meta, dict) and meta.get("industry"):
+        out["sector"] = str(meta["industry"])
+    return out
 
 
 def parse_issue_list(obj: Any, url: str, today: date | None = None, board: str | None = None) -> list[dict]:
@@ -251,19 +341,21 @@ def fetch(http: Http, today: date, with_detail: bool = True) -> list[dict]:
                 by_key[key] = r
                 order.append(key)
     rows = [by_key[k] for k in order]
+    rows = [r for r in rows if _recent(r, today)]
     if not with_detail:
         return rows
     for r in rows:
         if not r.get("symbol"):
             continue
         status = derive_status(r, today)
-        if status == "listed":
+        ld = to_date(r.get("listing_date"))
+        if status == "listed" and (r.get("subscription") or not ld or ld < today - timedelta(days=10)):
             continue
         detail_url = URL_DETAIL.format(symbol=r["symbol"], series=r.get("series", "EQ"))
         d = parse_detail(http.get_json(detail_url, headers=HEADERS), detail_url, today)
         if d:
             _merge_partial(r, d)
-        if status in ("open", "closed"):
+        if status in ("open", "closed") or (status == "listed" and not r.get("subscription")):
             cat_url = URL_CATEGORY.format(symbol=r["symbol"])
             obj = http.get_json(cat_url, headers=HEADERS)
             cats = parse_categories(obj) if obj is not None else {}
@@ -276,6 +368,17 @@ def fetch(http: Http, today: date, with_detail: bool = True) -> list[dict]:
                 r["subscription"] = sub
                 r.setdefault("sources", {})["subscription"] = cat_url
     return rows
+
+
+def _recent(r: dict, today: date, days: int = 120) -> bool:
+    """The past-issues feed reaches back to 2000; only the last few months matter here.
+    A row whose listing date is far after its close date is a migration or a debt
+    series relisting, which `normalize.is_junk` drops later anyway."""
+    ds = [to_date(r.get(k)) for k in ("open_date", "close_date", "listing_date")]
+    ds = [d for d in ds if d]
+    if not ds:
+        return False
+    return max(ds) >= today - timedelta(days=days)
 
 
 def _merge_partial(base: dict, new: dict) -> dict:
@@ -293,6 +396,25 @@ def _merge_partial(base: dict, new: dict) -> dict:
                    "issue_price", "lot_size") or base.get(k) in (None, ""):
             base[k] = v
     return base
+
+
+URL_HOLIDAYS = API + "holiday-master?type=trading"
+
+
+def fetch_holidays(http: Http) -> set[str]:
+    """Equity-segment trading holidays as ISO dates ({"CM": [{"tradingDate": "26-Jan-2026"}, ...]});
+    empty on any failure (the caller falls back to normalize.NSE_HOLIDAYS)."""
+    try:
+        obj = http.get_json(URL_HOLIDAYS, headers=HEADERS)
+    except Exception:  # noqa: BLE001
+        return set()
+    out: set[str] = set()
+    if isinstance(obj, dict):
+        for r in obj.get("CM") or []:
+            d = parse_date((r or {}).get("tradingDate")) if isinstance(r, dict) else None
+            if d:
+                out.add(d)
+    return out
 
 
 def symbols(rows: Iterable[dict]) -> list[str]:

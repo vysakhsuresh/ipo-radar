@@ -9,6 +9,8 @@ on:
   schedule:
     # every hour from 09:00 to 18:00 IST (03:30 to 12:30 UTC), Mon-Sat: bidding windows
     - cron: "30 3-12 * * 1-6"
+    # weekly (Monday 07:45 IST): re-read this year's performance trackers, IPO pages and GMP series into history.json
+    - cron: "15 2 * * 1"
   workflow_dispatch:
   push:
     branches: [main]
@@ -47,6 +49,11 @@ jobs:
         run: python -m fetch.run --out data
         continue-on-error: true
 
+      - name: Rebuild this year's listing history (weekly, or on demand)
+        if: github.event.schedule == '15 2 * * 1' || github.event_name == 'workflow_dispatch'
+        run: python -m fetch.history --years $(date -u +%Y) --limit 400
+        continue-on-error: true
+
       - name: Diagnose the Chittorgarh pages (printed to the log for parser fixes)
         run: python -m fetch.debug
         continue-on-error: true
@@ -56,6 +63,11 @@ jobs:
 
       - name: Score the pipeline and build the site
         run: python -m model.score --ipos data/ipos.json --params model/params.json --out data/scored.json
+      - name: Lock predictions for closed issues and rebuild the public track record
+        # data/predictions.json is append-only: a locked row is never rewritten
+        run: python -m model.track --scored data/scored.json --history data/history.json --params model/params.json --predictions data/predictions.json --out data/track_record.json
+        continue-on-error: true
+
       - run: python tools/build_site.py --out dist
 
       - name: Run tests
@@ -66,10 +78,43 @@ jobs:
         run: |
           git config user.name "ipo-radar-bot"
           git config user.email "ipo-radar-bot@users.noreply.github.com"
-          git add data model/params.json
+          git add data model/params.json   # includes predictions.json and track_record.json
           git diff --cached --quiet || git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
           # someone may have pushed while this ran: rebase our data commit on top and retry
           for i in 1 2 3; do
             git pull --rebase --autostash origin main && git push && break
             sleep 5
           done
+
+  # Publish dist/ (the page plus data/*.json: scored, ipos, history, params, track_record,
+  # predictions) to GitHub Pages as a public read-only data API. Harmless when Pages is
+  # not enabled for the repository: the job is allowed to fail without failing the run.
+  pages:
+    needs: refresh
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main            # the data commit the refresh job just pushed
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tools/build_site.py --out dist
+      - uses: actions/configure-pages@v5
+        continue-on-error: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

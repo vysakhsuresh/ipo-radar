@@ -27,6 +27,7 @@ Assumptions baked in:
 """
 from __future__ import annotations
 
+import functools
 import os
 import re
 import sys
@@ -39,7 +40,9 @@ from model.rules import min_lots_for  # noqa: E402
 
 FIELDS_DIRECT = ["name", "board", "exchange", "open_date", "close_date", "allotment_date", "listing_date",
                  "price_band_low", "price_band_high", "issue_price", "lot_size", "issue_size_cr",
-                 "fresh_issue_cr", "ofs_cr", "sector", "pe_post_issue", "lead_managers", "anchor_cr", "notes"]
+                 "fresh_issue_cr", "ofs_cr", "sector", "pe_post_issue", "lead_managers", "anchor_cr", "notes",
+                 "symbol", "security_type", "refund_date", "demat_date", "face_value", "about", "registrar", "anchor",
+                 "ipo_url", "gmp_url"]
 SUB_KEYS = ("qib", "nii", "bnii", "snii", "retail", "employee", "total")
 NA_TOKENS = {"", "-", "--", "—", "na", "n/a", "nil", "none", "null", "tbd", "tba", "not announced", "to be announced"}
 
@@ -84,7 +87,8 @@ def parse_date(s: Any, ref: date | None = None) -> str | None:
     m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", t)
     if m:
         return _iso(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?[-/ ,]+([A-Za-z]{3,9})\.?[-/ ,]+(\d{4}|\d{2})\b", t)
+    # a two-digit year must not be the hour of a time ('26-Nov 14:02' is 26 Nov, not 2014)
+    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?[-/ ,]+([A-Za-z]{3,9})\.?[-/ ,]+(\d{4}|\d{2}(?![:.]\d))\b", t)
     if m and m.group(2)[:3].lower() in _MONTHS:
         y = int(m.group(3))
         return _iso(y + 2000 if y < 100 else y, _MONTHS[m.group(2)[:3].lower()], int(m.group(1)))
@@ -247,8 +251,17 @@ def exchange_label(s: Any, sme: bool | None = None) -> str | None:
 
 # ----------------------------------------------------- subscription labels ---
 
+_SNII_RE = re.compile(r"snii|s-nii|shni|s-hni|small|below|less than|(two|2)\s*lakh.*(up\s*to|upto|to)\s*(ten|10)\s*lakh|up\s*to\s*(rs\.?\s*|₹\s*)?(ten|10)\s*(lakh|l\b)|upto\s*(rs\.?\s*|₹\s*)?(ten|10)\s*(lakh|l\b)")
+_BNII_RE = re.compile(r"bnii|b-nii|bhni|b-hni|big|above|more than\s*(rs\.?\s*|₹\s*)?(ten|10)\s*(lakh|l\b)|>\s*(rs\.?\s*|₹\s*)?10|more than")
+
+
 def category_key(label: Any) -> str | None:
-    """Map a category label to qib / nii / bnii / snii / retail / employee / total."""
+    """Map a category label to qib / nii / bnii / snii / retail / employee / total.
+
+    Handles the exchange wording ("Non Institutional Investors(Bid amount of more than
+    Two Lakh Rupees upto Ten Lakh Rupees)" is sNII, "...more than Ten Lakh Rupees" bNII)
+    and the SME books, where the retail category is called "Individual Investors",
+    "Individual Investors (IND category bidding for 2 Lots)" or "Retail Individual"."""
     low = " ".join(str(label or "").lower().split())
     if not low:
         return None
@@ -258,14 +271,19 @@ def category_key(label: Any) -> str | None:
         return "total"
     if "qualified" in low or "qib" in low:
         return "qib"
-    if "bnii" in low or "b-nii" in low or "big" in low or "above" in low or "more than" in low or "> 10" in low:
-        return "bnii"
-    if "snii" in low or "s-nii" in low or "small" in low or "below" in low or "less than" in low or "up to" in low or "upto" in low:
-        return "snii"
-    if "retail" in low or "rii" in low or ("individual" in low and "non" not in low):
-        return "retail"
-    if ("non" in low and "institutional" in low) or "nii" in low or "hni" in low:
+    if "anchor" in low or "market maker" in low:
+        return None
+    nii_like = ("nii" in low or "hni" in low or ("non" in low and "institutional" in low)
+                or "other than rii" in low or "more than 2 lots" in low or "more than two lots" in low)
+    if nii_like or not ("retail" in low or "rii" in low or "individual" in low):
+        if _SNII_RE.search(low):
+            return "snii"
+        if _BNII_RE.search(low) and "lots" not in low:
+            return "bnii"
+    if nii_like:
         return "nii"
+    if "retail" in low or "rii" in low or "individual" in low:
+        return "retail"
     return None
 
 
@@ -387,6 +405,35 @@ def canonical_row(parts: dict, today: date, as_of: str | None, default_board: st
     return out
 
 
+def repair_history_years(hist: list[dict], row: dict) -> list[dict]:
+    """GMP pages print 'DD-Mon HH:MM' with no year; an older parser read the hour as a
+    two-digit year ('26-Nov 14:02' -> 2014-11-26). Put such a quote back in the year
+    that lands it nearest the issue's own dates (day and month are the source's);
+    drop a quote that is nowhere near them."""
+    ref = next((to_date(row.get(k)) for k in ("close_date", "open_date", "listing_date") if to_date(row.get(k))), None)
+    if not ref:
+        return hist
+    out: dict[str, dict] = {}
+    for h in hist:
+        d = to_date(h["date"])
+        if d is None:
+            continue
+        if abs((d - ref).days) > 120:
+            best = None
+            for y in (ref.year - 1, ref.year, ref.year + 1):
+                try:
+                    c = date(y, d.month, d.day)
+                except ValueError:
+                    continue
+                if abs((c - ref).days) <= 60 and (best is None or abs((c - ref).days) < abs((best - ref).days)):
+                    best = c
+            if best is None:
+                continue
+            d = best
+        out[d.isoformat()] = {"date": d.isoformat(), "rs": h["rs"]}
+    return list(out.values())
+
+
 def finalise_row(row: dict, today: date) -> dict:
     """Re-derive every computed field in place; safe to call after a merge.
 
@@ -398,7 +445,9 @@ def finalise_row(row: dict, today: date) -> dict:
     _fill_issue_price(row)
     price = row.get("issue_price")
     gmp = dict(row.get("gmp") or {})
-    hist = sorted(_history_entries(gmp.get("history")), key=lambda h: h["date"])
+    hist = sorted(repair_history_years(_history_entries(gmp.get("history")), row), key=lambda h: h["date"])
+    if gmp.get("as_of") and hist and to_date(gmp["as_of"]) and abs((to_date(gmp["as_of"]) - to_date(hist[-1]["date"])).days) > 200:
+        gmp["as_of"] = hist[-1]["date"]
     gmp["history"] = hist
     gmp.setdefault("rs", None)
     gmp.setdefault("pct", None)
@@ -411,6 +460,8 @@ def finalise_row(row: dict, today: date) -> dict:
     sub = dict(row.get("subscription") or {})
     for k in SUB_KEYS:
         sub.setdefault(k, None)
+        if isinstance(sub[k], (int, float)) and not isinstance(sub[k], bool):
+            sub[k] = round(float(sub[k]), 2)       # 128.3581512605042x reads as 128.36x
     sub.setdefault("as_of", None)
     sub.setdefault("day", None)
     row["subscription"] = sub
@@ -537,14 +588,334 @@ def within_days(iso: str | None, today: date, days: int) -> bool:
 
 
 _JUNK_NAME_RE = re.compile(r"(^\s*(name|company|issuer)\s*$|withdraw|cancell)", re.I)
+# Debt, units of a trust, rights and partly-paid lines from the exchanges' past-issue feeds.
+_NON_EQUITY_NAME_RE = re.compile(
+    r"\b(ncds?|debentures?|bonds?|invit|reit|infrastructure investment trust|real estate investment trust"
+    r"|rights issue|partly paid|commercial paper|municipal corporation)\b|\btrust\s*$", re.I)
+_NON_EQUITY_SYMBOL_RE = re.compile(r"^\d|NCD|ZCB|\d{2}[A-Z]?$")
+NON_EQUITY_TYPES = ("DEBT", "NCD", "BOND", "INVIT", "REIT", "RIGHTS")
+EQUITY_MAX_PRICE = 10_000          # no Indian equity IPO has been priced near ₹10,000; debt is ₹1,000-₹1,00,000
+RELISTING_GAP_DAYS = 60            # an IPO lists ~3 trading days after close; months later is a migration or relisting
+
+
+def junk_reason(row: dict) -> str | None:
+    """Why a row is not an equity IPO anyone can act on (None if it is one).
+
+    Drops: a header parsed as a row; a withdrawn issue; a dateless entry; NSE
+    debt / InvIT / REIT lines (by securityType, name or symbol pattern); a
+    'price' of ₹10,000+ (a debenture's face value); an exchange row whose
+    listing date is months after its bidding closed (an SME migrating to the
+    main board, a partly-paid line or a debt series relisting — the source of
+    'Ola Electric ₹11' and 'Baheti Recycling ₹774'); and a listed row with no
+    lot, no listing outcome, no GMP and no subscription (nothing to show)."""
+    name = str(row.get("name") or "")
+    if not name.strip() or _JUNK_NAME_RE.search(name):
+        return "not an issue"
+    st = str(row.get("security_type") or "").upper()
+    if st and any(st.startswith(x) for x in NON_EQUITY_TYPES):
+        return "non-equity security type"
+    if _NON_EQUITY_NAME_RE.search(name):
+        return "non-equity name"
+    sym = str(row.get("symbol") or "").strip().upper()
+    if sym and re.search(r"^\d|NCD|ZCB", sym):
+        return "non-equity symbol"
+    if not any(row.get(k) for k in ("open_date", "close_date", "listing_date")):
+        return "no dates"
+    price = row.get("issue_price")
+    if isinstance(price, (int, float)) and price >= EQUITY_MAX_PRICE:
+        return "price is a debt face value"
+    cd, ld = to_date(row.get("close_date")), to_date(row.get("listing_date"))
+    if cd and ld and (ld - cd).days > RELISTING_GAP_DAYS:
+        return "listing long after close (migration or relisting)"
+    if ld and not cd and not row.get("open_date") and not row.get("lot_size"):
+        lst = row.get("listing") or {}
+        if lst.get("gain_pct") is None:
+            return "listing date only"
+    if row.get("status") == "listed" or (ld and not cd):
+        lst = row.get("listing") or {}
+        g, s = row.get("gmp") or {}, row.get("subscription") or {}
+        if (not row.get("lot_size") and lst.get("gain_pct") is None and g.get("rs") is None
+                and not any(s.get(k) is not None for k in SUB_KEYS)):
+            return "listed with no usable data"
+    return None
 
 
 def is_junk(row: dict) -> bool:
-    """Rows that are not an IPO anyone can act on: a header parsed as a row, a
-    withdrawn issue, or a dateless entry from an exchange's past/debt feed."""
-    name = str(row.get("name") or "")
-    if not name.strip() or _JUNK_NAME_RE.search(name):
+    """Rows that are not an IPO anyone can act on (see `junk_reason`)."""
+    return junk_reason(row) is not None
+
+
+# ------------------------------------------------------ duplicate merging ---
+
+_CORP_WORDS = {"ltd", "limited", "pvt", "private", "india", "the", "co", "company", "corp", "corporation", "and", "of", "inc"}
+
+
+def name_key(name: Any) -> str:
+    return _name_key(str(name or ""))
+
+
+@functools.lru_cache(maxsize=8192)
+def _name_key(name: str) -> str:
+    """A loose matching key: 'Zetwerk Manufacturing Businesses Limited', 'Zetwerk
+    Manufacturing Business Ltd.' -> 'zetwerk manufacturing busines'. Lower-case,
+    punctuation and '(India)' / Ltd / Limited / Private dropped, a trailing plural
+    's' cut from every word."""
+    t = clean_name(name).lower().replace("&", " and ")
+    t = re.sub(r"[^a-z0-9 ]+", " ", t)
+    words = []
+    for w in t.split():
+        if w in _CORP_WORDS:
+            continue
+        if len(w) > 4 and w.endswith("ses"):
+            w = w[:-2]
+        if len(w) > 3 and w.endswith("s"):
+            w = w[:-1]
+        words.append(w)
+    return " ".join(words)
+
+
+def _completeness(row: dict) -> int:
+    n = sum(1 for k in FIELDS_DIRECT if row.get(k) not in (None, "", [], {}))
+    n += sum(1 for k in SUB_KEYS if (row.get("subscription") or {}).get(k) is not None)
+    n += 2 if (row.get("gmp") or {}).get("rs") is not None else 0
+    n += 2 if (row.get("listing") or {}).get("gain_pct") is not None else 0
+    return n
+
+
+def same_issue(a: dict, b: dict) -> bool:
+    """Two rows describe one IPO: same loose name key, or one key is a word-prefix of the
+    other and the bidding dates or prices agree, or the open date and issue price match."""
+    ka, kb = name_key(a.get("name")), name_key(b.get("name"))
+    if not ka or not kb:
+        return False
+
+    def agree(f: str) -> bool | None:
+        va, vb = a.get(f), b.get(f)
+        if va in (None, "") or vb in (None, ""):
+            return None
+        return va == vb
+
+    dates = [agree(f) for f in ("open_date", "close_date", "listing_date")]
+    if any(d is False for d in dates):
+        return False
+    years = {str(r.get(f))[:4] for r in (a, b) for f in ("open_date", "close_date", "listing_date") if r.get(f)}
+    if ka == kb:
+        return len(years) <= 1 or any(d is True for d in dates)
+    shorter, longer = sorted((ka, kb), key=len)
+    prefix = longer.split()[: len(shorter.split())] == shorter.split()
+    if prefix and (any(d is True for d in dates) or agree("issue_price") is True or agree("price_band_high") is True):
         return True
-    if not any(row.get(k) for k in ("open_date", "close_date", "listing_date")):
-        return True
-    return False
+    return (agree("open_date") is True and (agree("issue_price") is True or agree("price_band_high") is True)
+            and shorter.split()[0] == longer.split()[0])
+
+
+def preferred_id(rows: list[dict]) -> str:
+    """Deterministic id for a merged group: a row carrying an exchange symbol, then the
+    longest (legal) name, then the alphabetically first id."""
+    return sorted(rows, key=lambda r: (0 if r.get("symbol") else 1, -len(name_key(r.get("name")).split()),
+                                       -len(str(r.get("name") or "")), r["id"]))[0]["id"]
+
+
+def dedupe(rows: list[dict]) -> tuple[list[dict], dict[str, str]]:
+    """Merge rows that are the same IPO (see `same_issue`). The most complete row is the
+    base and the others fill its gaps. Returns (rows, {dropped id: kept id}) and records
+    the dropped ids under `aliases` on the kept row."""
+    groups: list[list[dict]] = []
+    for r in rows:
+        for g in groups:
+            if any(same_issue(r, x) for x in g):
+                g.append(r)
+                break
+        else:
+            groups.append([r])
+    out, alias = [], {}
+    for g in groups:
+        if len(g) == 1:
+            out.append(g[0])
+            continue
+        keep = preferred_id(g)
+        ordered = sorted(g, key=_completeness)              # least complete first, most complete last wins
+        merged: dict = {}
+        for r in ordered:
+            merged = merge(merged, r)
+        best = max(g, key=lambda r: (1 if r.get("symbol") else 0, len(str(r.get("name") or ""))))
+        merged["id"], merged["name"] = keep, best.get("name")
+        aliases = set(merged.get("aliases") or [])
+        for r in g:
+            aliases |= set(r.get("aliases") or [])
+            if r["id"] != keep:
+                aliases.add(r["id"])
+                alias[r["id"]] = keep
+        aliases.discard(keep)
+        merged["aliases"] = sorted(aliases)
+        out.append(merged)
+    return out, alias
+
+
+# ---------------------------------------------------------------- board ---
+
+AUTHORITATIVE_BOARD_SOURCES = ("nse", "chittorgarh", "chittorgarh_tracker")
+
+
+def resolve_board(partials: list[tuple[str, dict]], prev_board: str | None = None) -> tuple[str | None, str | None]:
+    """(board, basis). Authoritative: NSE's securityType / series, Chittorgarh's SME list
+    and tracker, an exchange label naming SME. Then any other source's SME badge.
+    None when nothing says (the caller then applies `infer_board`)."""
+    sme_auth = main_auth = sme_any = False
+    for src, p in partials:
+        b, ex = p.get("board"), str(p.get("exchange") or "")
+        if "SME" in ex.upper():
+            sme_auth = True
+        if src in AUTHORITATIVE_BOARD_SOURCES:
+            if b == "sme":
+                sme_auth = True
+            elif b == "mainboard" and (src != "nse" or p.get("security_type") or p.get("series")):
+                main_auth = True
+        elif b == "sme":
+            sme_any = True
+    if sme_auth:
+        return "sme", "source"
+    if main_auth:
+        return "mainboard", "source"
+    if sme_any:
+        return "sme", "source"
+    return None, None
+
+
+def infer_board(row: dict) -> str | None:
+    """Heuristic for a row no source classified: an SME application is ₹1 lakh+ at the
+    minimum lot with lots of 400+ shares and a small issue; a mainboard lot is ₹15,000ish."""
+    lot, price, size = row.get("lot_size"), row.get("issue_price") or row.get("price_band_high"), row.get("issue_size_cr")
+    if not lot or not price:
+        return None
+    if lot >= 400 and lot * price >= 100_000 and (size is None or size < 150):
+        return "sme"
+    return "mainboard"
+
+
+# ------------------------------------------------------------- GMP sources ---
+
+GMP_FRESH_DAYS = 3
+
+
+def gmp_consensus(row: dict, quotes: list[dict], today: date) -> dict:
+    """Combine every source's latest quote into the row's gmp: `sources` keeps one entry
+    per source ({source, rs, as_of, url}), `rs` is the median of the fresh quotes (no
+    older than 3 days), `spread_rs` their max-min, `disagree` true when the spread is
+    more than max(₹5, 25% of the median). With no fresh quote the precedence pick stays."""
+    gmp = dict(row.get("gmp") or {})
+    by_src = {q["source"]: q for q in (gmp.get("sources") or []) if isinstance(q, dict) and q.get("source")}
+    for q in quotes:
+        if q.get("rs") is None:
+            continue
+        old = by_src.get(q["source"])
+        if old and str(old.get("as_of") or "") > str(q.get("as_of") or ""):
+            continue
+        by_src[q["source"]] = {"source": q["source"], "rs": float(q["rs"]), "as_of": q.get("as_of"), "url": q.get("url")}
+    srcs = sorted(by_src.values(), key=lambda q: q["source"])
+    gmp["sources"] = srcs
+    fresh = []
+    for q in srcs:
+        d = to_date(q.get("as_of"))
+        if d and 0 <= (today - d).days <= GMP_FRESH_DAYS:
+            fresh.append(q)
+    if fresh:
+        vals = sorted(q["rs"] for q in fresh)
+        n = len(vals)
+        med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2.0
+        gmp["rs"] = round(med, 2)
+        gmp["as_of"] = max(str(q["as_of"]) for q in fresh)[:10]
+        price = row.get("issue_price")
+        gmp["pct"] = round(100.0 * gmp["rs"] / price, 2) if price else None
+        spread = vals[-1] - vals[0]
+        gmp["spread_rs"] = round(spread, 2)
+        gmp["n_fresh"] = n
+        gmp["disagree"] = bool(n >= 2 and spread > max(5.0, 0.25 * abs(med)))
+    else:
+        gmp.setdefault("spread_rs", None)
+        gmp["n_fresh"] = 0
+        gmp["disagree"] = False
+    row["gmp"] = gmp
+    return row
+
+
+# ------------------------------------------------------- timeline & facts ---
+
+# NSE trading holidays (weekday closures), from NSE's published lists. Used to
+# derive the T+1 / T+2 / T+3 timeline when no source gives it; a missing holiday
+# makes an estimate a day early, which is why such dates carry timeline_estimated.
+NSE_HOLIDAYS = {
+    "2025-02-26", "2025-03-14", "2025-03-31", "2025-04-10", "2025-04-14", "2025-04-18", "2025-05-01",
+    "2025-08-15", "2025-08-27", "2025-10-02", "2025-10-21", "2025-10-22", "2025-11-05", "2025-12-25",
+    # 2026: NSE /api/holiday-master?type=trading (CM segment), read 2026-11-15
+    "2026-01-15", "2026-01-26", "2026-02-15", "2026-03-03", "2026-03-21", "2026-03-26", "2026-03-31",
+    "2026-04-03", "2026-04-14", "2026-05-01", "2026-05-28", "2026-06-26", "2026-08-15", "2026-09-14",
+    "2026-10-02", "2026-10-20", "2026-11-08", "2026-11-10", "2026-11-24", "2026-12-25",
+}
+
+
+def is_trading_day(d: date, holidays: set[str] | None = None) -> bool:
+    return d.weekday() < 5 and d.isoformat() not in (holidays if holidays is not None else NSE_HOLIDAYS)
+
+
+def add_trading_days(d: date, n: int, holidays: set[str] | None = None) -> date:
+    cur = d
+    while n > 0:
+        cur += timedelta(days=1)
+        if is_trading_day(cur, holidays):
+            n -= 1
+    return cur
+
+
+def fill_timeline(row: dict, holidays: set[str] | None = None) -> dict:
+    """SEBI's T+3 timetable from the close date T: basis of allotment T+1, refunds and
+    demat credit T+2, listing T+3 (trading days). Only gaps are filled, and
+    `timeline_estimated` says so; a source's dates always win."""
+    cd = to_date(row.get("close_date"))
+    if not cd:
+        return row
+    est = False
+    for key, n in (("allotment_date", 1), ("refund_date", 2), ("demat_date", 2)):
+        if not row.get(key):
+            row[key] = add_trading_days(cd, n, holidays).isoformat()
+            est = True
+    if est:
+        row["timeline_estimated"] = True
+    elif "timeline_estimated" in row and row["timeline_estimated"]:
+        row["timeline_estimated"] = False
+    anchor = row.get("anchor")
+    ad = to_date(row.get("allotment_date"))
+    if isinstance(anchor, dict) and ad:
+        if not anchor.get("lockin_50pct_date"):
+            anchor["lockin_50pct_date"] = (ad + timedelta(days=30)).isoformat()
+        if not anchor.get("lockin_rest_date"):
+            anchor["lockin_rest_date"] = (ad + timedelta(days=90)).isoformat()
+    return row
+
+
+REGISTRARS = (
+    (r"kfin|karvy", "KFin Technologies", "https://ipostatus.kfintech.com/"),
+    (r"link\s*intime|mufg|in\.mpms", "MUFG Intime India (Link Intime)", "https://in.mpms.mufg.com/Initial_Offer/public-issues.html"),
+    (r"bigshare", "Bigshare Services", "https://ipo.bigshareonline.com/IPO_Status.html"),
+    (r"skyline", "Skyline Financial Services", "https://www.skylinerta.com/ipo.php"),
+    (r"cameo", "Cameo Corporate Services", "https://ipo.cameoindia.com/"),
+    (r"maashitla", "Maashitla Securities", "https://maashitla.com/allotment-status/public-issues"),
+    (r"purva", "Purva Sharegistry", "https://www.purvashare.com/investor-service/ipo-query"),
+    (r"integrated registry", "Integrated Registry Management Services", "https://www.integratedregistry.in/RegistrarsToSTA.aspx"),
+    (r"kosmic", "Kosmic RTA", "https://www.kosmic.co.in/ipo-allotment-status"),
+    (r"beetal", "Beetal Financial & Computer Services", "https://www.beetalfinancial.com/ipo-allotment-status"),
+)
+
+
+def registrar_info(name: Any) -> dict | None:
+    """{name, status_url} for a registrar named by a source, with the registrar's own
+    public allotment-status page when it is one we know; status_url None otherwise."""
+    if isinstance(name, dict):
+        name = name.get("name")
+    if not name or not str(name).strip():
+        return None
+    raw = re.sub(r"\s+", " ", str(name)).strip()
+    for pat, _canon, url in REGISTRARS:
+        if re.search(pat, raw, re.I):
+            return {"name": raw, "status_url": url}
+    return {"name": raw, "status_url": None}
