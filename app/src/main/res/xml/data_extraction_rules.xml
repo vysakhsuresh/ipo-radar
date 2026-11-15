@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ (android:dataExtractionRules). Settings go to cloud backup and
+     device-to-device transfer; the cached IPO data does not (it is re-downloaded). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="ipo-radar.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="ipo-radar.xml" />
+    </device-transfer>
+</data-extraction-rules>
