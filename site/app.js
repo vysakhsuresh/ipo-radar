@@ -1,1188 +1,1478 @@
-/* IPO Radar page logic. Reads the inlined data, scores every IPO in the browser
- * with the same code the refresh job uses (score.js), and renders the ledger,
- * the planner and the calibration evidence. No framework, no external calls. */
+/* IPO Radar page logic.
+ * Reads the inlined data (or fresher data handed in by the Android shell through
+ * window.ipoRadarLoad), scores every IPO with score.js (the same model the refresh
+ * job runs) and renders five screens: Today, IPOs (+ a detail page per IPO),
+ * Planner, Track record and More. No framework, no external calls.
+ *
+ * UI state (screen, filters, open IPO, scroll) lives OUTSIDE the data, so a
+ * refresh swaps the numbers without throwing the person back to the start. */
 (function () {
   'use strict';
-  // Some Android WebViews report vh as 0, which collapses anything sized in vh
-  // (the dropdown sheet's option list). CSS sizes use --vh, set from the real height.
   const setVh = () => { if (window.innerHeight) document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 'px'); };
   setVh(); window.addEventListener('resize', setVh);
   const S = window.IpoScore;
-  const INLINE = JSON.parse(document.getElementById('data').textContent || '{}');
-  // The Android shell (and any host) can hand in fresher data: window.ipoRadarLoad({live, params, history})
-  function slimHistory(rows) {
-    if (!Array.isArray(rows)) return rows || [];
-    return rows.map(r => {
-      if (r && r.listing === undefined && r.gain_pct !== undefined) return r;   // already slim
-      const lst = (r && r.listing) || {}; if (lst.gain_pct === null || lst.gain_pct === undefined) return null;
-      const g = r.gmp || {}; let pct = g.pct; if ((pct === null || pct === undefined) && g.rs !== null && g.rs !== undefined && r.issue_price) pct = 100 * Number(g.rs) / Number(r.issue_price);
-      return { name: r.name, board: r.board, listing_date: r.listing_date, gmp_pct: pct === null || pct === undefined ? null : Math.round(pct * 100) / 100, gain_pct: Math.round(Number(lst.gain_pct) * 100) / 100, basis: lst.gain_basis || 'close' };
-    }).filter(Boolean);
-  }
-  function boot(DATA) {
-  // a re-boot replaces the static controls so the old boot's listeners fall away
-  for (const sel of ['nav.screens', '#f-board', '#f-status-wrap', '#f-nodata', '#f-sort', '#plan-inputs', 'footer.foot', '#settings', '#status', '#help', '#explain', '#intro', '#glossary', '#picker', '#cardsheet']) {
-    const n = document.querySelector(sel); if (n) n.replaceWith(n.cloneNode(true));
-  }
-  for (const b of document.querySelectorAll('.pick-btn')) b.remove();
-  for (const sel of document.querySelectorAll('select.enhanced')) { sel.classList.remove('enhanced'); sel.removeAttribute('aria-hidden'); sel.tabIndex = 0; }
-  applyTheme(load('theme', 'system'));
-  const LIVE = DATA.live || { ipos: [], market: {}, sources: [] };
-  const PARAMS = DATA.params || null;
-  const HIST = slimHistory(DATA.history instanceof Object && DATA.history.rows ? DATA.history.rows : DATA.history);
-  const TODAY = (LIVE.generated_at || new Date().toISOString()).slice(0, 10);
+  const N = (typeof window.IpoNative === 'object' && window.IpoNative) ? window.IpoNative : null;
+  const has = (fn) => !!(N && typeof N[fn] === 'function');
+  const call = (fn, ...a) => { if (!has(fn)) return undefined; try { return N[fn](...a); } catch (e) { return undefined; } };
+
+  // ------------------------------------------------------------ storage ---
+  function store(k, v) { try { localStorage.setItem('ipo-radar:' + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
+  function load(k, d) { try { const v = localStorage.getItem('ipo-radar:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 
   // ------------------------------------------------------------ helpers ---
-  const $ = (sel, el) => (el || document).querySelector(sel);
-  const el = (tag, attrs, ...kids) => {
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  function el(tag, attrs, ...kids) {
     const n = document.createElement(tag);
     if (attrs) for (const k in attrs) {
-      if (k === 'class') n.className = attrs[k];
-      else if (k === 'text') n.textContent = attrs[k];
-      else if (k.startsWith('on')) n.addEventListener(k.slice(2), attrs[k]);
-      else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+      const v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = v;
+      else if (k === 'html') n.innerHTML = v;
+      else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? '' : v);
     }
-    for (const kid of kids) if (kid !== null && kid !== undefined) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
     return n;
-  };
-  const svgEl = (tag, attrs, ...kids) => {
+  }
+  function svgEl(tag, attrs, ...kids) {
     const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
     if (attrs) for (const k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
-    for (const kid of kids) if (kid !== null && kid !== undefined) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    for (const kid of kids.flat()) if (kid !== null && kid !== undefined) n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
     return n;
+  }
+  const ICONS = {
+    sun: 'M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+    list: 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01',
+    calc: 'M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01',
+    shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3zM8.5 12l2.5 2.5 4.5-5',
+    menu: 'M4 6h16M4 12h16M4 18h16',
+    clock: 'M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
+    bell: 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0',
+    star: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z',
+    share: 'M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M7 8l5-5 5 5',
+    check: 'M5 12l5 5 9-10', x: 'M6 6l12 12M18 6L6 18', minus: 'M6 12h12',
+    alert: 'M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+    info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
+    chev: 'M9 6l6 6-6 6', search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
+    rupee: 'M6 4h12M6 9h12M9 4c6 0 6 10 0 10H6l9 7',
+    flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
+    book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 1 2-2h13',
+    help: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01',
+    gear: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+    download: 'M12 3v12M7 10l5 5 5-5M5 21h14', mail: 'M3 6h18v12H3zM3 7l9 6 9-6', chat: 'M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z',
+    coffee: 'M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3',
+    lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4', globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18',
+    text: 'M4 7V5h16v2M9 19h6M12 5v14', moon: 'M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z', db: 'M12 3c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+    wallet: 'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-4v4M17 13h.01',
+    plus: 'M12 5v14M5 12h14', trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+    up: 'M7 14l5-5 5 5', ext: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
   };
+  function icon(name, cls) { return svgEl('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true', class: cls || null }, svgEl('path', { d: ICONS[name] || ICONS.info })); }
+
+  // ------------------------------------------------------------- prefs ---
+  const PREF = { theme: load('theme', 'system'), lang: load('lang', 'en'), scale: Number(load('scale', 1)) || 1 };
+  const WATCH = new Set((() => { const s = nativeStatus(); if (s && Array.isArray(s.watchlist) && s.watchlist.length) return s.watchlist; return load('watch', []); })());
+  let JOURNAL = load('journal', []); if (!Array.isArray(JOURNAL)) JOURNAL = [];
+  const PLAN = Object.assign({ capital: 200000, accounts: 1, target: 25000, broker: 'zerodha', picked: null, snapshot: null }, load('plan', {}));
+  for (const k of ['capital', 'accounts', 'target']) if (!Number.isFinite(Number(PLAN[k]))) PLAN[k] = { capital: 200000, accounts: 1, target: 25000 }[k];
+  PLAN.accounts = Math.min(10, Math.max(1, Math.round(Number(PLAN.accounts) || 1)));
+  const ALERT_KEYS = ['opening', 'closing', 'allotment', 'listing', 'verdict'];
+  let ALERTS = Object.assign({ opening: true, closing: true, allotment: true, listing: true, verdict: true }, load('alerts', {}));
+  // UI state: survives data reloads (the refresh bug was that a reload reset the filters but not the buttons)
+  const UI = { tab: 'home', ipo: null, status: 'active', board: 'all', q: '', sort: 'smart', ledger: 'locked', edits: {}, scroll: {} };
+  function nativeStatus() { if (!has('status')) return null; try { return JSON.parse(N.status()); } catch (e) { return null; } }
+  let STATUS = nativeStatus();
+  if (STATUS && STATUS.alerts && typeof STATUS.alerts === 'object') ALERTS = Object.assign(ALERTS, STATUS.alerts);
+
+  // --------------------------------------------------------------- i18n ---
+  // English text is the key; HI (at the bottom of this file) maps it to Hindi.
+  // Anything without a translation shows in English rather than breaking.
+  function t(s, vars) {
+    let r = (PREF.lang === 'hi' && HI[s]) || s;
+    if (vars) for (const k in vars) r = r.split('{' + k + '}').join(vars[k]);
+    return r;
+  }
+  function applyPrefs() {
+    const r = document.documentElement;
+    if (PREF.theme === 'light' || PREF.theme === 'dark') r.setAttribute('data-theme', PREF.theme); else r.removeAttribute('data-theme');
+    r.style.setProperty('--scale', String(PREF.scale));
+    r.setAttribute('lang', PREF.lang === 'hi' ? 'hi' : 'en');
+    call('setTheme', PREF.theme);
+  }
+
+  // ---------------------------------------------------------- formatting ---
   function inr(n, opts) {
     if (n === null || n === undefined || !isFinite(n)) return '–';
     const sign = n < 0 ? '−' : (opts && opts.plus && n > 0 ? '+' : '');
-    let v = Math.round(Math.abs(n));
-    let s = String(v);
-    if (s.length > 3) {
-      const last3 = s.slice(-3); let rest = s.slice(0, -3);
-      rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-      s = rest + ',' + last3;
-    }
+    let s = String(Math.round(Math.abs(n)));
+    if (s.length > 3) { const last3 = s.slice(-3); s = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3; }
     return sign + '₹' + s;
   }
   function inrShort(n) {
     if (n === null || n === undefined || !isFinite(n)) return '–';
     const a = Math.abs(n), sign = n < 0 ? '−' : '';
-    if (a >= 1e7) return sign + '₹' + (a / 1e7).toFixed(a >= 1e8 ? 0 : 1) + ' cr';
-    if (a >= 1e5) return sign + '₹' + (a / 1e5).toFixed(a >= 1e6 ? 0 : 1) + ' L';
+    if (a >= 1e7) return sign + '₹' + (a / 1e7).toFixed(a >= 1e9 ? 0 : 1).replace(/\.0$/, '') + ' ' + t('cr');
+    if (a >= 1e5) return sign + '₹' + (a / 1e5).toFixed(a >= 1e6 ? 0 : 1).replace(/\.0$/, '') + ' ' + t('lakh');
     return inr(n);
   }
-  const pct = (v, d) => (v === null || v === undefined || !isFinite(v)) ? '–' : (v > 0 ? '+' : '') + v.toFixed(d === undefined ? 1 : d) + '%';
-  const pct0 = (v) => (v === null || v === undefined || !isFinite(v)) ? '–' : Math.round(v * 100) + '%';
-  const x = (v) => (v === null || v === undefined || !isFinite(v)) ? '–' : (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + 'x';
-  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  function dshort(iso) { if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '–'; return +iso.slice(8, 10) + ' ' + MON[+iso.slice(5, 7) - 1]; }
-  function dlong(iso) { if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '–'; return dshort(iso) + ' ' + iso.slice(0, 4); }
-  function daysFrom(iso) { if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null; return S.gmpTrendOf ? Math.round((Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) - Date.UTC(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 1, +TODAY.slice(8, 10))) / 86400000) : null; }
-  // ------------------------------------------------- plain-language layer ---
-  // Every term a newcomer may not know, in the order the glossary shows them.
-  const TERMS = {
-    howto: { t: 'How to read this app', d: ['Each IPO gets one verdict: Apply, Lean apply, Coin flip, Avoid, or Too early. Start there.', 'Next look at “chance of a listing gain”. 70% means that, out of ten IPOs that looked like this one, about seven ended their first day above the issue price and three below.', 'Then “chance of getting shares”. In a popular IPO most applicants get nothing; the money is simply returned after a week. “1 in 7” means one applicant in seven gets a lot.', '“Worth per application” puts those together: the average profit you can expect for one application, after broker charges and tax, counting the times you get no shares.', 'Tap any IPO to see why it got its verdict and what can go wrong. Tap any underlined word for its meaning.'] },
-    verdicts: { t: 'The verdicts', d: ['Apply: the odds are clearly on your side and nothing is flashing red.', 'Lean apply: good odds with one caveat, or a strong early read before demand figures exist.', 'Coin flip: about as likely to list down as up. Treat it as a possible gamble.', 'Avoid: the odds are against you before you start. A sure gamble.', 'Too early: bidding has not produced demand figures yet; wait for the last bidding day.', 'Not enough data: no premium quote and no demand figures, so no call.'] },
-    gain: { t: 'Listing gain', d: ['The difference between the price you paid in the IPO and the price at the end of the first day of trading. A 10% listing gain on ₹15,000 of shares is ₹1,500 before charges and tax.'] },
-    chance: { t: 'Chance of a listing gain', d: ['How likely the IPO is to close its first trading day above the issue price. It comes from a model that learned from past listings, using the unofficial premium, the demand figures and the market mood.', '70% does not mean you will make 70%. It means that about 7 out of 10 IPOs that looked like this one listed up, and 3 listed down.'] },
-    gmp: { t: 'Unofficial premium (GMP)', d: ['GMP stands for grey market premium. Before an IPO lists, some dealers informally buy and sell its shares among themselves. The extra they pay over the issue price is the premium.', 'It is a useful hint of demand and nothing more: it is unofficial, unregulated, can be thin or stale, and for small issues can be steered. This app treats it as one input among several, never as the answer.'] },
-    sub: { t: 'Demand (subscription)', d: ['How many times over the IPO has been bid for. “5x” means investors asked for five times the shares on offer.', 'It is reported for three groups: institutions (banks, mutual funds, insurers, called QIB), wealthy individuals bidding over ₹2 lakh (called NII or HNI), and retail, which is everyone applying up to ₹2 lakh. Strong institutional demand is the better sign; retail demand mostly decides your odds of getting shares.'] },
-    qib: { t: 'Institutions (QIB)', d: ['Qualified institutional buyers: mutual funds, banks, insurers and foreign funds. They do their own research, so their demand is the strongest signal in the demand figures. They usually bid on the last day.'] },
-    nii: { t: 'Wealthy individuals (NII, also called HNI)', d: ['Non-institutional investors: individuals and firms bidding more than ₹2 lakh. Often leveraged, so their demand swings with the premium.'] },
-    retail: { t: 'Retail', d: ['Individual investors applying for up to ₹2 lakh. This is the category a normal applicant is in. When it is oversubscribed, shares are given out by lottery, so the retail figure sets your odds of getting any.'] },
-    allot: { t: 'Chance of getting shares (allotment)', d: ['You do not get shares just because you applied. If retail demand is 7 times the shares on offer, roughly 1 applicant in 7 gets one lot, chosen by a computerised lottery that SEBI prescribes; the rest get their money back after about a week.', 'Bidding for more lots does not improve your chance in an oversubscribed IPO. More demat accounts in the family do.'] },
-    lot: { t: 'Lot', d: ['IPO shares are sold in fixed bundles called lots. The price per share times the lot size is the smallest amount you can apply for. SME IPOs require two lots at minimum.'] },
-    range: { t: 'Likely gain, worst to best', d: ['The model’s view of where the listing gain could land. The left end is a bad outcome (only 1 in 10 did worse), the right end a good one (only 1 in 10 did better), and the mark in between is the middle case.', 'Wide bands mean the model is unsure, usually on small SME issues.'] },
-    worth: { t: 'Worth per application', d: ['The average profit one application is worth, after broker charges and tax, counting the chance that you get no shares at all.', 'Example: a 1 in 5 chance of getting shares that would earn ₹2,000 is worth about ₹400 per application. Over many applications that is what you can expect; any single one gives either ₹2,000 or nothing.'] },
-    charges: { t: 'Broker and exchange charges', d: ['What it costs to sell on listing day: brokerage (your broker’s fee), securities transaction tax (STT, 0.1% of the sale), exchange and SEBI fees, GST on those, and a depository (DP) charge per sale. Change the broker preset in the Planner to match yours.'] },
-    tax: { t: 'Tax on the profit', d: ['Selling within a year of buying counts as a short-term capital gain. The tax is 20% of the profit plus 4% cess on that tax. The app deducts it before showing any “in hand” figure.'] },
-    sme: { t: 'Mainboard and SME', d: ['Mainboard IPOs list on the main NSE and BSE exchanges. SME IPOs are small companies listing on the NSE Emerge or BSE SME platforms: bigger minimum tickets (₹2 lakh or more), thin trading, a 5% daily price limit on listing day and wilder outcomes, both ways.'] },
-    gamble: { t: 'Gamble warnings', d: ['“Possible gamble” marks a coin flip; “Sure gamble” marks an issue where the odds are against you. The app shows them before the money is blocked so you can walk away.'] },
-    model: { t: 'The model and how it is checked', d: ['The chance figures come from a statistical model fitted on past Indian listings. Until it has enough history it runs on documented starting weights, and the app says so.', 'The Evidence screen shows the model’s own report card: the past listings table needs no model at all, so you can check the chances against it yourself.'] },
-  };
-  const TERM_ORDER = ['howto', 'verdicts', 'chance', 'gain', 'gmp', 'sub', 'qib', 'nii', 'retail', 'allot', 'lot', 'range', 'worth', 'charges', 'tax', 'sme', 'gamble', 'model'];
-  // "7 in 10" phrasing for a probability, for people who do not think in percentages
-  function oddsText(p) {
-    if (p === null || p === undefined || !isFinite(p)) return '';
-    if (p >= 0.95) return 'almost all such IPOs listed up';
-    if (p <= 0.05) return 'almost none of such IPOs listed up';
-    return 'about ' + Math.max(1, Math.round(p * 10)) + ' in 10 such IPOs list up';
+  const fin = (v) => v !== null && v !== undefined && v !== '' && isFinite(Number(v));
+  const pct = (v, d) => !fin(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d === undefined ? 1 : d) + '%';
+  const pct0 = (p) => !fin(p) ? '–' : Math.round(p * 100) + '%';
+  const xm = (v) => !fin(v) ? '–' : (v >= 100 ? Number(v).toFixed(0) : v >= 10 ? Number(v).toFixed(1) : Number(v).toFixed(2)) + 'x';
+  const MON = { en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], hi: ['जन', 'फ़र', 'मार्च', 'अप्रै', 'मई', 'जून', 'जुला', 'अग', 'सित', 'अक्टू', 'नव', 'दिस'] };
+  const DOW = { en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], hi: ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'] };
+  const DOWL = { en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], hi: ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'] };
+  const isIso = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s);
+  const utc = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+  const L = () => (PREF.lang === 'hi' ? 'hi' : 'en');
+  function dshort(iso) { return isIso(iso) ? +iso.slice(8, 10) + ' ' + MON[L()][+iso.slice(5, 7) - 1] : '–'; }
+  function dday(iso) { return isIso(iso) ? DOW[L()][new Date(utc(iso)).getUTCDay()] + ' ' + dshort(iso) : '–'; }
+  function dlong(iso) { return isIso(iso) ? dshort(iso) + ' ' + iso.slice(0, 4) : '–'; }
+  // "today" is the real date in India, not the snapshot's date: a stale snapshot must not say "closes today" a week later
+  function istDate(ms) { return new Date((ms || Date.now()) + 5.5 * 3600e3).toISOString().slice(0, 10); }
+  let TODAY = istDate();
+  const daysTo = (iso) => (isIso(iso) ? Math.round((utc(iso) - utc(TODAY)) / 864e5) : null);
+  const addDays = (iso, n) => new Date(utc(iso) + n * 864e5).toISOString().slice(0, 10);
+  function relTime(ms) {
+    if (!ms) return t('unknown');
+    const m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 2) return t('just now'); if (m < 60) return t('{n} min ago', { n: m });
+    const h = Math.round(m / 60); if (h < 36) return t('{n} h ago', { n: h });
+    return t('{n} days ago', { n: Math.round(h / 24) });
   }
-  // an underlined, tappable word that opens its explanation
-  function term(key, label, cls) { return el('button', { type: 'button', class: 'term' + (cls ? ' ' + cls : ''), 'data-term': key, 'aria-label': 'What does ' + (label || TERMS[key].t) + ' mean?' }, label || TERMS[key].t); }
-  function openExplain(key) {
-    const t = TERMS[key]; if (!t) return;
-    const sheet = $('#explain'); $('#explain-title').textContent = t.t;
-    const body = $('#explain-body'); body.replaceChildren();
-    for (const line of t.d) body.append(el('p', { text: line }));
-    sheet.hidden = false; const c = $('#explain-close'); if (c) c.focus();
+  function relDay(iso) {
+    const d = daysTo(iso); if (d === null) return '–';
+    if (d === 0) return t('today'); if (d === 1) return t('tomorrow'); if (d === -1) return t('yesterday');
+    return dday(iso);
   }
-  function applyTheme(v) { const r = document.documentElement; if (v === 'light' || v === 'dark') r.setAttribute('data-theme', v); else r.removeAttribute('data-theme'); }
-  function store(k, v) { try { localStorage.setItem('ipo-radar:' + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
-  function load(k, d) { try { const v = localStorage.getItem('ipo-radar:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 
-  // -------------------------------------------------------------- state ---
-  // Delivery-sell schedules as published in Oct 2026 (zerodha.com/charges, groww.in/pricing/stocks,
-  // upstox.com/brokerage-charges, angelone.in/support/charges-and-cashbacks). DP charge incl. GST.
+  // ------------------------------------------------------------- verdicts ---
+  const VERDICT = {
+    apply: { label: 'Apply', line: 'The odds are clearly on your side and nothing is flashing red.' },
+    lean: { label: 'Leaning yes', line: 'Good odds, with one thing to keep in mind.' },
+    coinflip: { label: '50-50 gamble', line: 'Could go either way. Apply only if a small loss is fine with you.' },
+    avoid: { label: 'Avoid', line: 'The odds are against a listing-day gain.' },
+    watch: { label: 'Too early', line: 'Wait for the demand figures on the last bidding day.' },
+    nodata: { label: 'Not enough info', line: 'There is not enough information to judge this one yet.' },
+  };
+  const TIER_ORDER = { apply: 0, lean: 1, coinflip: 2, watch: 3, avoid: 4, nodata: 5 };
+  const vlabel = (tier) => t((VERDICT[tier] || VERDICT.nodata).label);
+  const vline = (tier) => t((VERDICT[tier] || VERDICT.nodata).line);
+  function verdictPill(tier, big) { return el('span', { class: 'verdict ' + (tier || 'nodata') + (big ? ' lg' : '') }, el('span', { class: 'dot' }), vlabel(tier)); }
+  function oddsWords(p) { if (!fin(p)) return ''; if (p >= 0.95) return t('almost every'); if (p <= 0.05) return t('almost no'); return t('about {n} in 10', { n: Math.max(1, Math.round(p * 10)) }); }
+  function allotText(p) { if (!fin(p)) return '–'; if (p >= 0.999) return t('Everyone'); const n = 1 / p; return t('1 in {n}', { n: n >= 10 ? Math.round(n) : n.toFixed(1).replace(/\.0$/, '') }); }
+
+  // ---------------------------------------------------------------- data ---
+  let D = { live: { ipos: [], market: {}, sources: [] }, params: null, hist: [], track: null };
+  let SCORED = [], BYID = new Map();
+  function slimHistory(rows) {
+    if (!Array.isArray(rows)) return [];
+    return rows.map(r => {
+      if (r && r.listing === undefined && r.gain_pct !== undefined) return r;
+      const lst = (r && r.listing) || {}; if (!fin(lst.gain_pct)) return null;
+      const g = r.gmp || {}; let p = g.pct; if (!fin(p) && fin(g.rs) && r.issue_price) p = 100 * Number(g.rs) / Number(r.issue_price);
+      return { name: r.name, board: r.board, listing_date: r.listing_date, gmp_pct: fin(p) ? Math.round(p * 100) / 100 : null, gain_pct: Math.round(Number(lst.gain_pct) * 100) / 100, basis: lst.gain_basis || 'close' };
+    }).filter(Boolean);
+  }
+  function setData(payload) {
+    const live = payload.live || { ipos: [], market: {}, sources: [] };
+    D = {
+      live: Object.assign({ ipos: [], market: {}, sources: [] }, live),
+      params: payload.params || null,
+      hist: slimHistory(payload.history && payload.history.rows ? payload.history.rows : payload.history),
+      track: payload.track && typeof payload.track === 'object' ? payload.track : null,
+    };
+    if (!Array.isArray(D.live.ipos)) D.live.ipos = [];
+    if (!Array.isArray(PLAN.picked) || PLAN.snapshot !== (D.live.generated_at || null)) { PLAN.picked = null; PLAN.snapshot = D.live.generated_at || null; }
+  }
+
+  // Brokers' delivery-sell charges as published in Oct 2026; DP charge incl. GST.
   const BROKERS = {
-    zerodha: { brokerage_pct: 0, brokerage_min: 0, brokerage_cap: 0, dp_charge: 15.34 },
-    groww:   { brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
-    upstox:  { brokerage_pct: 0, brokerage_min: 20, brokerage_cap: 20, dp_charge: 23.6 },
-    angel:   { brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
-    custom:  {},
+    zerodha: { name: 'Zerodha', brokerage_pct: 0, brokerage_min: 0, brokerage_cap: 0, dp_charge: 15.34 },
+    groww: { name: 'Groww', brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
+    upstox: { name: 'Upstox', brokerage_pct: 0, brokerage_min: 20, brokerage_cap: 20, dp_charge: 23.6 },
+    angel: { name: 'Angel One', brokerage_pct: 0.1, brokerage_min: 5, brokerage_cap: 20, dp_charge: 23.6 },
+    dhan: { name: 'Dhan', brokerage_pct: 0, brokerage_min: 0, brokerage_cap: 0, dp_charge: 15.93 },
+    custom: { name: 'Custom' },
   };
-  const state = {
-    board: 'all', status: 'active', hideNodata: false, sort: 'verdict', open: null,
-    edits: {},                                   // id → {gmp_rs, qib, nii, retail}
-    plan: Object.assign({ capital: 200000, accounts: 1, target: 25000, broker: 'zerodha', picked: null, snapshot: null }, load('plan', {})),
-    costs: null,
-  };
-  function costsFor(brokerKey) {
-    const c = S.defaultCosts();
-    Object.assign(c, BROKERS[brokerKey] || {});
-    if (brokerKey === 'custom') Object.assign(c, load('customCosts', {}));
+  function costsFor(key) {
+    const c = S.defaultCosts(); const b = Object.assign({}, BROKERS[key] || {}); delete b.name;
+    Object.assign(c, b); if (key === 'custom') Object.assign(c, load('customCosts', {}));
     return c;
   }
-  state.costs = costsFor(state.plan.broker);
-  // ticks belong to the snapshot they were made on; a refreshed pipeline starts from the defaults again
-  if (!Array.isArray(state.plan.picked) || state.plan.snapshot !== (LIVE.generated_at || null)) { state.plan.picked = null; state.plan.snapshot = LIVE.generated_at || null; }
-  for (const k of ['capital', 'accounts', 'target']) if (!Number.isFinite(Number(state.plan[k]))) state.plan[k] = { capital: 200000, accounts: 1, target: 25000 }[k];
-  state.plan.accounts = Math.min(10, Math.max(1, Math.round(Number(state.plan.accounts) || 1)));
+  let COSTS = costsFor(PLAN.broker);
 
-  function effectiveIpo(ipo) {
-    const e = state.edits[ipo.id];
-    if (!e) return ipo;
-    const c = JSON.parse(JSON.stringify(ipo));
-    c.gmp = c.gmp || {}; c.subscription = c.subscription || {};
+  // The status shown is derived from the dates against today's date in India,
+  // so a snapshot that is a few hours old never says "open" after bids closed.
+  function liveStatus(ipo) {
+    const st = ipo.status, o = ipo.open_date, c = ipo.close_date, l = ipo.listing_date;
+    if (st === 'listed' || (ipo.listing && fin(ipo.listing.gain_pct))) return 'listed';
+    if (isIso(l) && TODAY >= l.slice(0, 10)) return 'listed';
+    if (isIso(c) && TODAY > c.slice(0, 10)) return 'closed';
+    if (isIso(o) && TODAY >= o.slice(0, 10) && (!isIso(c) || TODAY <= c.slice(0, 10))) return 'open';
+    if (isIso(o) && TODAY < o.slice(0, 10)) return 'upcoming';
+    return st || 'upcoming';
+  }
+  function effective(ipo) {
+    const e = UI.edits[ipo.id];
+    const c = Object.assign({}, ipo, { status: liveStatus(ipo) });
+    if (!e) return c;
+    c.gmp = Object.assign({}, ipo.gmp || {}); c.subscription = Object.assign({}, ipo.subscription || {});
     if (e.gmp_rs !== undefined) { c.gmp.rs = e.gmp_rs; c.gmp.pct = null; c.gmp.as_of = TODAY; }
     for (const k of ['qib', 'nii', 'retail']) if (e[k] !== undefined) c.subscription[k] = e[k];
     return c;
   }
-  let SCORED = [];
-  const WATCH = new Set((() => { try { if (N && STATUS && Array.isArray(STATUS.watchlist)) return STATUS.watchlist; } catch (e) { /* ignore */ } return load('watch', []); })());
-  function saveWatch() { const ids = [...WATCH]; store('watch', ids); if (N) { try { N.setWatchlist(JSON.stringify(ids)); } catch (e) { /* ignore */ } } }
-  function toggleWatch(id) { if (WATCH.has(id)) WATCH.delete(id); else WATCH.add(id); saveWatch(); keepFocus(renderAll); }
-  function starButton(ipo) {
-    const on = WATCH.has(ipo.id);
-    return el('button', { class: 'star', type: 'button', id: 'star-' + ipo.id, 'aria-pressed': on ? 'true' : 'false', 'aria-label': (on ? 'Stop watching ' : 'Watch ') + ipo.name, onclick: (ev) => { ev.stopPropagation(); toggleWatch(ipo.id); } }, on ? '★ Watching' : '☆ Watch');
-  }
-  function dueText(ipo) {
-    const dc = daysFrom(ipo.close_date), dl = daysFrom(ipo.listing_date), dopen = daysFrom(ipo.open_date);
-    if (ipo.status === 'listed') return { t: 'Listed ' + dshort(ipo.listing_date), cls: '' };
-    if (ipo.status === 'upcoming') return { t: dopen === 0 ? 'Bidding opens today' : dopen !== null && dopen > 0 ? 'Opens ' + dshort(ipo.open_date) + ' (in ' + dopen + ' day' + (dopen > 1 ? 's' : '') + ')' : 'Opens ' + dshort(ipo.open_date), cls: '' };
-    if (ipo.status === 'open') { if (dc === 0) return { t: 'Last bidding day: closes today', cls: 'today' }; if (dc === 1) return { t: 'Bids close tomorrow', cls: 'today' }; if (dc !== null) return { t: 'Bids close ' + dshort(ipo.close_date) + ' (in ' + dc + ' days)', cls: '' }; return { t: 'Bidding open', cls: '' }; }
-    if (dl === 0) return { t: 'Lists today', cls: 'today' }; if (dl === 1) return { t: 'Lists tomorrow', cls: 'today' };
-    return { t: 'Bids closed; lists ' + dshort(ipo.listing_date), cls: '' };
-  }
-  function renderWatchlist() {
-    const host = $('#watchlist'); if (!host) return; host.replaceChildren();
-    const rows = SCORED.filter(r => WATCH.has(r.ipo.id)).sort((a, b) => ((a.ipo.close_date || a.ipo.listing_date || '9999') < (b.ipo.close_date || b.ipo.listing_date || '9999') ? -1 : 1));
-    if (!rows.length) { host.append(el('p', { class: 'muted small', text: 'Nothing starred yet. Tap ☆ Watch on any IPO in the pipeline.' })); return; }
-    for (const r of rows) {
-      const ipo = r.eff, s = r.score, due = dueText(ipo);
-      const row = el('div', { class: 'watch-row' });
-      row.append(el('span', { class: 'n', text: ipo.name }));
-      if (s && s.p_up !== null && ipo.status !== 'listed') row.append(el('span', { class: 'verdict ' + s.verdict.tier, text: s.verdict.label }), el('span', { class: 'small num ink2', text: pct0(s.p_up) + ' chance of a gain' }));
-      row.append(el('span', { class: 'due ' + due.cls, text: due.t }));
-      row.append(el('span', { class: 'spacer' }));
-      row.append(el('button', { class: 'btn small', type: 'button', id: 'wgo-' + ipo.id, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } }, 'Open'));
-      row.append(starButton(ipo));
-      host.append(row);
-    }
-  }
   function computeAll() {
-    SCORED = LIVE.ipos.map(ipo => {
-      const eff = effectiveIpo(ipo);
-      const score = PARAMS ? S.scoreIpo(eff, PARAMS, LIVE.market, state.costs, TODAY) : null;
-      return { ipo, eff, score, edited: !!state.edits[ipo.id] };
+    TODAY = istDate();
+    SCORED = D.live.ipos.filter(i => i && i.id && i.name).map(ipo => {
+      const eff = effective(ipo);
+      let score = null;
+      if (D.params) { try { score = S.scoreIpo(eff, D.params, D.live.market || {}, COSTS, TODAY); } catch (e) { score = null; } }
+      return { ipo, eff, score, st: eff.status, edited: !!UI.edits[ipo.id] };
     });
+    BYID = new Map(SCORED.map(r => [r.ipo.id, r]));
+  }
+  const tierOf = (r) => (r.score && r.score.verdict ? r.score.verdict.tier : 'nodata');
+  const isLive = (r) => r.st === 'open' || r.st === 'upcoming';
+  const minInvest = (r) => { const i = r.eff; if (!i.issue_price && !i.price_band_high) return null; const p = i.issue_price || i.price_band_high; const ml = Number(i.min_lots) || (i.board === 'sme' ? 2 : 1); return i.lot_size ? p * i.lot_size * ml : null; };
+  const gmpPct = (r) => (r.score && r.score.flags && r.score.flags.includes('gmp_unquoted')) ? null : S.gmpPctOf(r.eff);
+  const trackRow = (id) => (D.track && Array.isArray(D.track.rows) ? D.track.rows.find(x => x.id === id) : null);
+  const boardName = (b) => (b === 'sme' ? t('SME') : t('Mainboard'));
+  const statusName = (st) => t(({ open: 'Open now', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[st] || 'Upcoming');
+  function rankLive(a, b) {
+    const sa = a.st === 'open' ? 0 : 1, sb = b.st === 'open' ? 0 : 1;
+    return (sa - sb) || (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || ((b.score && b.score.p_up || 0) - (a.score && a.score.p_up || 0));
   }
 
-  // ---------------------------------------------------------- focus keep ---
-  // Re-rendering replaces the DOM; put keyboard focus back on the element with the same id.
-  function keepFocus(render) {
-    const id = document.activeElement && document.activeElement.id;
-    render();
-    if (id) { const n = document.getElementById(id); if (n && typeof n.focus === 'function') n.focus({ preventScroll: true }); }
+  // ----------------------------------------------------- dates & steps ---
+  function nextWorkday(iso, n) { let d = iso, k = 0; while (k < n) { d = addDays(d, 1); const w = new Date(utc(d)).getUTCDay(); if (w !== 0 && w !== 6) k++; } return d; }
+  function timeline(i) {
+    const c = isIso(i.close_date) ? i.close_date.slice(0, 10) : null;
+    const est = !!i.timeline_estimated;
+    const allot = isIso(i.allotment_date) ? i.allotment_date.slice(0, 10) : (c ? nextWorkday(c, 1) : null);
+    const refund = isIso(i.refund_date) ? i.refund_date.slice(0, 10) : (isIso(i.demat_date) ? i.demat_date.slice(0, 10) : (c ? nextWorkday(c, 2) : null));
+    return [
+      { k: 'open', t: t('Bidding opens'), s: t('Apply through your broker or bank (UPI)'), d: isIso(i.open_date) ? i.open_date.slice(0, 10) : null },
+      { k: 'close', t: t('Last day to apply'), s: t('UPI mandates must be approved by 5 pm'), d: c },
+      { k: 'allot', t: t('Allotment result'), s: t('Find out if you got shares'), d: allot, est: est || !isIso(i.allotment_date) },
+      { k: 'refund', t: t('Money back or shares in demat'), s: t('Blocked money is released if you got nothing'), d: refund, est: est || !(isIso(i.refund_date) || isIso(i.demat_date)) },
+      { k: 'list', t: t('Listing day'), s: t('Shares start trading; most sell the same day'), d: isIso(i.listing_date) ? i.listing_date.slice(0, 10) : null },
+    ];
   }
-
-  // -------------------------------------------------------------- header ---
-  function renderHead() {
-    const a = $('#asof'); a.replaceChildren();
-    const gen = LIVE.generated_at ? new Date(LIVE.generated_at) : null;
-    const ageH = gen ? (Date.now() - gen.getTime()) / 36e5 : null;
-    a.append(el('span', null, 'Data as of ', el('b', null, gen ? gen.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'unknown')));
-    if (ageH !== null && ageH > 30) a.append(el('span', { class: 'stale' }, 'This data is ' + Math.round(ageH / 24) + ' days old; premium and demand figures move daily. Refresh before deciding.'));
-    if (PARAMS && PARAMS.status === 'calibrated') a.append(el('span', null, 'Model fitted on ', el('b', null, PARAMS.n_rows + ' listings'), ' from ' + dlong(PARAMS.date_range[0]) + ' to ' + dlong(PARAMS.date_range[1])));
-    else if (PARAMS) a.append(el('span', { class: 'stale' }, 'The model is still on its starting weights: it needs ' + (PARAMS.min_rows_to_calibrate || 120) + ' past listings with full figures and has ' + (PARAMS.n_rows_gating || 0) + '. Treat every chance as a first estimate.'));
-    const m = LIVE.market || {};
-    if (m.nifty) a.append(el('span', null, 'Nifty 50 ', el('b', { class: 'num' }, Number(m.nifty).toLocaleString('en-IN')), ' (' + pct(m.nifty_1m_pct) + ' in a month)' + (m.vix ? ', India VIX ' + m.vix : '')));
-  }
-
-  // --------------------------------------------------------------- tiles ---
-  function tile(label, value, sub) { return el('div', { class: 'tile', style: '--i:' + document.querySelectorAll('#tiles .tile').length }, el('div', { class: 'label', text: label }), el('div', { class: 'value', text: value }), sub ? el('div', { class: 'sub', text: sub }) : null); }
-  function renderTiles() {
-    const t = $('#tiles'); t.replaceChildren();
-    const open = SCORED.filter(r => r.ipo.status === 'open');
-    const closing = open.filter(r => { const d = daysFrom(r.ipo.close_date); return d !== null && d <= 1; });
-    const listing = SCORED.filter(r => r.ipo.status === 'closed' && (() => { const d = daysFrom(r.ipo.listing_date); return d !== null && d >= 0 && d <= 7; })());
-    const grade = SCORED.filter(r => r.score && ['apply', 'lean'].includes(r.score.verdict.tier) && ['open', 'upcoming'].includes(r.ipo.status));
-    const gamble = SCORED.filter(r => r.score && r.score.verdict.gamble && ['open', 'upcoming'].includes(r.ipo.status));
-    t.append(tile('Open for bidding now', String(open.length), closing.length ? closing.length + ' close by tomorrow' : (open.length ? open.map(r => r.ipo.name).slice(0, 2).join(', ') : 'nothing open today')));
-    t.append(tile('Listing within a week', String(listing.length), listing.length ? listing.map(r => r.ipo.name).slice(0, 2).join(', ') : 'none scheduled'));
-    t.append(tile('Worth applying, open or upcoming', String(grade.length), gamble.length + ' flagged as a gamble'));
-    if (PARAMS) {
-      const m = PARAMS.metrics;
-      if (m) t.append(tile('How often the model gets the order right', Math.round(m.auc * 100) + '%', 'Given one IPO that listed up and one that listed down, it put the right one first this often. 50% would be a coin toss.'));
-      else t.append(tile('Model report card', 'not yet', 'The model runs on documented starting weights until ' + (PARAMS.min_rows_to_calibrate || 120) + ' past listings with full figures are in the history (' + (PARAMS.n_rows_gating || 0) + ' so far). The Evidence screen explains.'));
-      const br = PARAMS.base_rate;
-      const mb = br.mainboard, sm = br.sme;
-      const rate = b => (b && b.p_up !== null && b.n >= 20) ? Math.round(b.p_up * 100) + '%' : '–';
-      t.append(tile('Past IPOs that listed up', rate(mb) + ' / ' + rate(sm),
-        'mainboard / SME, out of ' + (mb ? mb.n : 0) + ' and ' + (sm ? sm.n : 0) + ' recent listings (a dash means fewer than 20). Typical gain ' + (mb && mb.median_gain !== null && mb.n >= 20 ? pct(mb.median_gain, 0) : '–') + ' / ' + (sm && sm.median_gain !== null && sm.n >= 20 ? pct(sm.median_gain, 0) : '–') + '.'));
+  function dueInfo(r) {
+    const i = r.eff, st = r.st;
+    if (st === 'open') { const d = daysTo(i.close_date); if (d === 0) return { t: t('Last day to apply: today, till 5 pm'), hot: true }; if (d === 1) return { t: t('Last day to apply: tomorrow'), hot: true }; return { t: t('Apply by {d}', { d: dday(i.close_date) }), hot: false }; }
+    if (st === 'upcoming') { const d = daysTo(i.open_date); if (d === null) return { t: t('Dates not announced yet'), hot: false }; return { t: d === 0 ? t('Opens today') : d === 1 ? t('Opens tomorrow') : t('Opens {d}', { d: dday(i.open_date) }), hot: d <= 1 }; }
+    if (st === 'closed') {
+      const tl = timeline(i), al = tl[2].d, ls = tl[4].d;
+      if (al && daysTo(al) === 0) return { t: t('Allotment result today'), hot: true };
+      if (ls) return { t: t('Lists {d}', { d: relDay(ls) }), hot: daysTo(ls) <= 1 };
+      return { t: t('Bidding closed'), hot: false };
     }
+    return { t: t('Listed {d}', { d: dshort(i.listing_date) }), hot: false };
   }
 
-  // --------------------------------------------------------------- table ---
-  const ORDER = { apply: 0, lean: 1, coinflip: 2, watch: 3, avoid: 4, nodata: 5 };
-  const STATUS_ORDER = { open: 0, closed: 1, upcoming: 2, listed: 3 };
-  function inStatus(r, st) { return st === 'all' || (st === 'active' ? r.ipo.status !== 'listed' : st === 'watch' ? WATCH.has(r.ipo.id) : r.ipo.status === st); }
-  function renderChipCounts() {
-    const onBoard = SCORED.filter(r => state.board === 'all' || r.ipo.board === state.board);
-    for (const b of document.querySelectorAll('#f-status .stile')) { const n = b.querySelector('.n'); if (n) n.textContent = String(onBoard.filter(r => inStatus(r, b.dataset.v)).length); }
-  }
-  function visible() {
-    let rows = SCORED.filter(r => (state.board === 'all' || r.ipo.board === state.board) && inStatus(r, state.status));
-    if (state.hideNodata) rows = rows.filter(r => !(r.score && r.score.verdict.tier === 'nodata') || r.ipo.status === 'listed');
-    const key = {
-      verdict: r => [STATUS_ORDER[r.ipo.status] ?? 9, r.score ? ORDER[r.score.verdict.tier] : 9, -(r.score && r.score.ev.ev !== null ? r.score.ev.ev : -1e9)],
-      tier: r => [r.score ? ORDER[r.score.verdict.tier] : 9, -(r.score && r.score.p_up !== null ? r.score.p_up : -1)],
-      ev: r => [-(r.score && r.score.ev.ev !== null ? r.score.ev.ev : -1e9)],
-      p: r => [-(r.score && r.score.p_up !== null ? r.score.p_up : -1)],
-      date: r => [r.ipo.listing_date || r.ipo.close_date || '9999'],
-    }[state.sort];
-    rows.sort((a, b) => { const ka = key(a), kb = key(b); for (let i = 0; i < ka.length; i++) { if (ka[i] < kb[i]) return -1; if (ka[i] > kb[i]) return 1; } return 0; });
-    return rows;
-  }
-  function sparkline(hist, price) {
-    const pts = (hist || []).filter(h => h.rs !== null && h.rs !== undefined).sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1).slice(-10);
-    if (pts.length < 2) return null;
-    const w = 72, h = 20, vals = pts.map(p => Number(p.rs));
-    const lo = Math.min(0, ...vals), hi = Math.max(...vals, 1);
-    const sx = i => 2 + i * (w - 4) / (pts.length - 1), sy = v => h - 2 - (v - lo) * (h - 4) / (hi - lo || 1);
-    const d = vals.map((v, i) => (i ? 'L' : 'M') + sx(i).toFixed(1) + ' ' + sy(v).toFixed(1)).join(' ');
-    const svg = svgEl('svg', { class: 'spark', viewBox: '0 0 ' + w + ' ' + h, 'aria-hidden': 'true' },
-      svgEl('path', { d, fill: 'none', stroke: 'var(--muted)', 'stroke-width': 1.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }),
-      svgEl('circle', { cx: sx(pts.length - 1), cy: sy(vals[vals.length - 1]), r: 2.5, fill: 'var(--accent)' }));
-    return svg;
-  }
-  function meterClass(p) { return p >= 0.7 ? 'g' : p >= 0.5 ? 'w' : 'c'; }
-  function ringEl(p, size) {
-    const r = 23, circ = 2 * Math.PI * r, off = circ * (1 - Math.max(0, Math.min(1, p)));
-    const w = el('div', { class: 'ring ' + meterClass(p), style: size ? 'width:' + size + 'px;height:' + size + 'px' : null, role: 'img', 'aria-label': pct0(p) + ' chance of a listing gain' });
+  // ------------------------------------------------------------- visuals ---
+  function ringEl(p, big) {
+    const known = fin(p);
+    const r = 23, circ = 2 * Math.PI * r, off = circ * (1 - (known ? Math.max(0, Math.min(1, p)) : 0));
+    const cls = !known ? 'n' : p >= 0.7 ? 'g' : p >= 0.5 ? 'w' : 'c';
+    const w = el('div', { class: 'ring ' + cls + (big ? ' lg' : ''), role: 'img', 'aria-label': known ? t('{p} chance of a listing gain', { p: pct0(p) }) : t('No estimate yet') });
     w.append(svgEl('svg', { viewBox: '0 0 56 56', 'aria-hidden': 'true' },
       svgEl('circle', { class: 't', cx: 28, cy: 28, r }),
-      svgEl('circle', { class: 'v', cx: 28, cy: 28, r, 'stroke-dasharray': circ.toFixed(1), 'stroke-dashoffset': off.toFixed(1), style: '--circ:' + circ.toFixed(1) })));
-    w.append(el('div', { class: 'pv', text: pct0(p) }));
+      known ? svgEl('circle', { class: 'v', cx: 28, cy: 28, r, 'stroke-dasharray': circ.toFixed(1), 'stroke-dashoffset': off.toFixed(1), style: '--circ:' + circ.toFixed(1) }) : null));
+    w.append(el('div', { class: 'pv', text: known ? pct0(p) : '?' }));
     return w;
   }
-  function rangeBar(g) {
-    const lo = -30, hi = 90; // fixed scale so rows compare
+  function rangeEl(g) {
+    const lo = Math.min(-20, Math.floor((g.p10 - 5) / 10) * 10), hi = Math.max(40, Math.ceil((g.p90 + 5) / 10) * 10);
     const cx = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
-    const r = el('div', { class: 'range', role: 'img', 'aria-label': 'Likely gain from ' + pct(g.p10, 0) + ' to ' + pct(g.p90, 0) + ', middle ' + pct(g.p50, 0) });
-    r.append(el('div', { class: 'track' }), el('div', { class: 'zero', style: 'left:' + cx(0) + '%' }));
-    const l = cx(g.p10), rr = cx(g.p90);
-    r.append(el('div', { class: 'band', style: 'left:' + l + '%;width:' + Math.max(1, rr - l) + '%' }), el('div', { class: 'mid', style: 'left:' + cx(g.p50) + '%' }));
-    return r;
+    const wrap = el('div', null);
+    const r = el('div', { class: 'range', role: 'img', 'aria-label': t('Likely gain from {a} to {b}, most likely {m}', { a: pct(g.p10, 0), b: pct(g.p90, 0), m: pct(g.p50, 0) }) });
+    r.append(el('div', { class: 'track' }), el('div', { class: 'neg', style: 'width:' + cx(0) + '%' }), el('div', { class: 'band', style: 'left:' + cx(g.p10) + '%;width:' + Math.max(1.5, cx(g.p90) - cx(g.p10)) + '%' }), el('div', { class: 'zero', style: 'left:' + cx(0) + '%' }), el('div', { class: 'mid', style: 'left:' + cx(g.p50) + '%' }));
+    wrap.append(r, el('div', { class: 'range-l' }, el('span', null, t('Bad case') + ' ' + pct(g.p10, 0)), el('span', null, t('Good case') + ' ' + pct(g.p90, 0))));
+    return wrap;
   }
-  function subsBlock(sub, status) {
-    const b = el('div', { class: 'subs' });
-    const max = Math.max(1, ...['qib', 'nii', 'retail'].map(k => Number(sub[k]) || 0));
-    const scale = v => Math.min(100, 100 * Math.log1p(v) / Math.log1p(Math.max(max, 10)));
-    for (const [k, lab, tk] of [['qib', 'Institutions', 'qib'], ['nii', 'Wealthy', 'nii'], ['retail', 'Retail', 'retail']]) {
-      const v = sub[k];
-      b.append(term(tk, lab, 'k'),
-        el('div', { class: 'bar' }, el('i', { style: 'width:' + (v === null || v === undefined ? 0 : scale(Number(v))) + '%' })),
-        el('span', { class: 'num', text: x(v === null || v === undefined ? null : Number(v)) }));
+  function note(kind, ...kids) { return el('div', { class: 'note ' + kind }, icon(kind === 'good' ? 'check' : kind === 'info' ? 'info' : 'alert'), el('div', null, ...kids)); }
+  function termBtn(key, label) { return el('button', { type: 'button', class: 'term', 'data-term': key }, label); }
+  function qmark(key) { return el('button', { type: 'button', class: 'qmark', 'data-term': key, 'aria-label': t('What does this mean?') }, '?'); }
+
+  // -------------------------------------------------- plain-language summary ---
+  function netAt(inv, gainPct) { return S.netProfitOnSale(inv, inv * (1 + gainPct / 100), COSTS); }
+  function plainSummary(r) {
+    const i = r.eff, s = r.score, st = r.st, p = el('p', { class: 'plain' });
+    const add = (...parts) => { if (p.childNodes.length) p.append(' '); p.append(...parts); };
+    if (st === 'listed') {
+      const lg = i.listing && fin(i.listing.gain_pct) ? Number(i.listing.gain_pct) : null;
+      if (lg !== null) add(t('It listed on {d}', { d: dshort(i.listing_date) }), el('b', { class: lg > 0 ? 'good' : 'bad', text: ' ' + pct(lg, 1) + ' ' }), t('versus its issue price on day one.'));
+      else add(t('It has listed. The first-day result has not been recorded yet.'));
+      const tr = trackRow(i.id);
+      if (tr && fin(tr.p_up)) add(t('Before listing we gave it a {p} chance of a gain and called it “{v}”.', { p: pct0(tr.p_up), v: vlabel(tr.verdict_tier) }));
+      const pl = i.post_listing; if (pl && fin(pl.last_price) && i.issue_price) { const now = 100 * (pl.last_price / i.issue_price - 1); add(t('Today it trades at'), el('b', { class: now > 0 ? 'good' : 'bad', text: ' ₹' + pl.last_price + ' (' + pct(now, 1) + ')' }), t('against the issue price.')); }
+      return p;
     }
-    return b;
+    if (!s || !fin(s.p_up)) { add(vline('nodata')); if (st === 'upcoming') add(t('We will have a first read once a grey-market price or demand figures appear.')); return p; }
+    add(t('Of 10 IPOs that looked like this one,'), el('b', null, ' ' + t('about {n}', { n: Math.max(0, Math.min(10, Math.round(s.p_up * 10))) }) + ' '), t('ended their first day above the issue price.'));
+    const inv = minInvest(r);
+    if (s.gain && inv) {
+      const net = netAt(inv, s.gain.p50).net;
+      add(t('If you get shares, the most likely result is'), el('b', { class: net >= 0 ? 'good' : 'bad', text: ' ' + inr(net, { plus: true }) + ' ' }), t('on {inv} after charges and tax.', { inv: inr(inv) }));
+    }
+    const al = s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+    if (al !== null) add(al >= 0.999 ? t('Everyone who applies gets shares right now.') : t('Shares go by lottery: roughly {a} applicants gets them.', { a: allotText(al) }));
+    else if (st === 'upcoming' || st === 'open') add(t('Your chance of getting shares will show once retail demand is known.'));
+    add(el('b', null, vline(tierOf(r))));
+    return p;
   }
-  function renderTable() {
-    renderChipCounts();
-    const body = $('#pipe-body'); body.replaceChildren();
-    const rows = visible();
-    if (!rows.length) { body.append(el('tr', null, el('td', { colspan: 9, class: 'empty' }, LIVE.ipos.length ? 'Nothing matches these filters.' : 'No IPO data in this snapshot yet.'))); return; }
-    for (const r of rows) {
-      const ipo = r.eff, s = r.score;
-      const tr = el('tr', { class: 'row', id: 'row-' + ipo.id, tabindex: 0, 'aria-expanded': state.open === ipo.id ? 'true' : 'false', 'data-id': ipo.id, style: '--i:' + Math.min(12, body.children.length / 2) });
-      // name
-      const name = el('td', { class: 'name', 'data-l': 'IPO' }, el('div', { class: 'n', text: ipo.name }));
-      const chips = el('div', { class: 'chips' },
-        el('span', { class: 'chip board-' + ipo.board, text: ipo.board === 'sme' ? 'SME' : 'Mainboard' }),
-        el('span', { class: 'chip st-' + ipo.status, text: ({ open: 'Open', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[ipo.status] || ipo.status }),
-        r.edited ? el('span', { class: 'chip', text: 'what-if' }) : null,
-        ipo.status !== 'listed' ? starButton(ipo) : null,
-        cardButton(r));
-      name.append(chips);
-      const dl = [];
-      if (ipo.open_date || ipo.close_date) dl.push('Bids ' + dshort(ipo.open_date) + '–' + dshort(ipo.close_date));
-      if (ipo.listing_date) dl.push('Lists ' + dshort(ipo.listing_date));
-      if (ipo.issue_size_cr) dl.push('₹' + Number(ipo.issue_size_cr).toLocaleString('en-IN', { maximumFractionDigits: 0 }) + ' cr');
-      name.append(el('div', { class: 'dates', text: dl.join(' · ') }));
-      tr.append(name);
-      // price
-      const minLots = Number(ipo.min_lots) || (ipo.board === 'sme' ? 2 : 1);
-      const inv = ipo.issue_price && ipo.lot_size ? ipo.issue_price * ipo.lot_size * minLots : null;
-      tr.append(el('td', { 'data-l': 'Price × lot size' }, el('div', { class: 'num' }, ipo.issue_price ? '₹' + ipo.issue_price : (ipo.price_band_high ? '₹' + ipo.price_band_low + '–' + ipo.price_band_high : '–'), ipo.lot_size ? ' × ' + ipo.lot_size + (minLots > 1 ? ' × ' + minLots + ' lots' : '') : ''),
-        el('div', { class: 'num ink2', text: inv ? inr(inv) + (minLots > 1 ? ' minimum' : ' a lot') : '' })));
-      // gmp
-      const unq = s && s.flags.includes('gmp_unquoted');
-      const g = unq ? null : S.gmpPctOf(ipo), gm = ipo.gmp || {};
-      const gtd = el('td', { 'data-l': 'Unofficial premium (GMP)' });
-      gtd.append(el('div', { class: 'big num ' + (g === null ? 'muted' : g > 0 ? 'pos' : 'neg'), text: g === null ? (unq ? 'no quote' : '–') : pct(g, 1) }));
-      if (!unq && gm.rs !== null && gm.rs !== undefined) gtd.append(el('div', { class: 'small muted num', text: '₹' + gm.rs + ' a share' + (gm.as_of ? ' · ' + dshort(gm.as_of) : '') }));
-      const sp = sparkline(S.gmpHistoryOf(ipo), ipo.issue_price); if (sp) gtd.append(sp);
-      if (s && s.flags.includes('gmp_stale')) gtd.append(el('div', { class: 'small stale', text: 'quote is 3+ days old' }));
-      tr.append(gtd);
-      // subscription
-      const sub = ipo.subscription || {};
-      const std = el('td', { 'data-l': 'Demand (times subscribed)' });
-      if (['qib', 'nii', 'retail'].some(k => sub[k] !== null && sub[k] !== undefined)) {
-        std.append(subsBlock(sub, ipo.status));
-        std.append(el('div', { class: 'small muted', text: 'overall ' + x(sub.total) + (ipo.status === 'closed' || ipo.status === 'listed' ? ' final' : (sub.day ? ' on day ' + sub.day : ' so far')) }));
-      } else if (sub.total !== null && sub.total !== undefined) {
-        std.append(el('div', { class: 'num', text: x(sub.total) + ' total' }));
-      } else std.append(el('span', { class: 'muted', text: ipo.status === 'upcoming' ? 'not open yet' : '–' }));
-      tr.append(std);
-      // probability
-      const ptd = el('td', { 'data-l': 'Chance of listing gain', class: 'pcell' });
-      if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined) {
-        ptd.append(el('div', { class: 'big num ' + (ipo.listing.gain_pct > 0 ? 'pos' : 'neg'), text: 'Listed ' + pct(ipo.listing.gain_pct, 1) }));
-        if (s && s.p_up !== null) ptd.append(el('div', { class: 'small muted', text: 'model said ' + pct0(s.p_up) + ' chance of a gain' }));
-      } else if (s && s.p_up !== null) {
-        const txt = el('div', { class: 'txt' });
-        txt.append(el('div', { class: 'ink2', text: oddsText(s.p_up) }));
-        if (s.similar && s.similar.n >= 8 && s.similar.lo !== null && s.similar.lo !== undefined) txt.append(el('div', { class: 'muted', text: 'past IPOs with premium ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' listed up' }));
-        const cap = s.confidence === 'high' ? 'based on final demand figures' : s.confidence === 'low' ? 'based on the premium only'
-          : s.confidence === 'medium' ? (ipo.status === 'open' ? 'bidding still on; will firm up' : 'final demand figures, no premium quote') : '';
-        if (cap) txt.append(el('div', { class: 'muted', text: cap }));
-        ptd.append(el('div', { class: 'chance' }, ringEl(s.p_up), txt));
-      } else ptd.append(el('span', { class: 'muted', text: 'not enough data' }));
-      tr.append(ptd);
-      // gain range
-      const gtd2 = el('td', { 'data-l': 'Likely gain, worst to best' });
-      if (s && s.gain && ipo.status !== 'listed') {
-        gtd2.append(el('div', { class: 'num' }, el('b', null, pct(s.gain.p50, 0)), el('span', { class: 'muted', text: ' middle case' })));
-        gtd2.append(rangeBar(s.gain));
-        gtd2.append(el('div', { class: 'range-labels num' }, el('span', null, pct(s.gain.p10, 0)), el('span', null, pct(s.gain.p90, 0))));
-      } else if (ipo.status === 'listed' && ipo.listing) {
-        gtd2.append(el('div', { class: 'small num ink2', text: 'open ' + (ipo.listing.open ? '₹' + ipo.listing.open : '–') + ' · close ' + (ipo.listing.close ? '₹' + ipo.listing.close : '–') }));
-        if (s && s.gain) gtd2.append(el('div', { class: 'small muted num', text: 'model range ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0) }));
-      } else gtd2.append(el('span', { class: 'muted', text: '–' }));
-      tr.append(gtd2);
-      // allotment
-      const atd = el('td', { 'data-l': 'Chance of getting shares' });
-      const al = s && s.allotment;
-      if (al && al.p_min_lot !== null && al.p_min_lot !== undefined) {
-        atd.append(el('div', { class: 'big num', text: al.p_min_lot >= 0.999 ? 'Full' : '1 in ' + (1 / al.p_min_lot).toFixed(1 / al.p_min_lot >= 10 ? 0 : 1) }));
-        atd.append(el('div', { class: 'small muted', text: al.p_min_lot >= 0.999 ? 'everyone who applies gets shares' : 'retail bid ' + x(sub.retail) + ' the shares on offer' + (ipo.status === 'open' ? '; odds will worsen' : '') }));
-      } else atd.append(el('span', { class: 'muted', text: ipo.status === 'upcoming' ? 'known once bidding starts' : '–' }));
-      tr.append(atd);
-      // EV
-      const etd = el('td', { class: 'ev', 'data-l': 'Worth per application, on average' });
-      if (s && s.ev.ev !== null && s.ev.ev !== undefined && ipo.status !== 'listed') {
-        etd.append(el('div', { class: 'big num ' + (s.ev.ev > 0 ? 'pos' : 'neg'), text: inr(s.ev.ev, { plus: true }) }));
-        etd.append(el('div', { class: 'small muted num', text: 'if you get shares ' + inr(s.ev.ev_if_allotted, { plus: true }) + ' · on a bad day ' + inr(s.ev.downside_if_allotted, { plus: true }) }));
-        const invA = s.ev.invested_if_allotted, resA = invA && s.gain ? S.netProfitOnSale(invA, invA * (1 + s.gain.mean / 100), state.costs) : null;
-        if (resA) etd.append(el('div', { class: 'small muted', text: 'after ' + inr(resA.charges + resA.tax) + ' charges & tax' }));
-      } else if (s && s.gain && inv && ipo.status !== 'listed') {
-        const res = S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs);
-        etd.append(el('div', { class: 'big num ' + (res.net > 0 ? 'pos' : 'neg'), text: inr(res.net, { plus: true }) }));
-        etd.append(el('div', { class: 'small muted', text: 'if you get shares; odds unknown until bidding starts' }));
-        etd.append(el('div', { class: 'small muted', text: 'after ' + inr(res.charges + res.tax) + ' charges & tax' }));
-      } else etd.append(el('span', { class: 'muted', text: '–' }));
-      tr.append(etd);
-      // verdict
-      const vtd = el('td', { 'data-l': 'Verdict' });
-      if (ipo.status === 'listed') vtd.append(el('span', { class: 'muted small', text: 'done' }));
-      else if (s) {
-        vtd.append(el('span', { class: 'verdict ' + s.verdict.tier, 'data-term': 'verdicts', text: s.verdict.label }));
-        if (s.verdict.gamble) vtd.append(el('span', { class: 'gamble ' + s.verdict.gamble, 'data-term': 'gamble', text: s.verdict.gamble === 'sure' ? 'Sure gamble' : 'Possible gamble' }));
-        if (ipo.status === 'closed') vtd.append(el('span', { class: 'small muted', style: 'display:block;margin-top:4px', text: 'bids closed; applies to those who got shares' }));
+
+  // -------------------------------------------------------------- IPO card ---
+  function kpi(label, value, cls) { return el('div', { class: 'kpi' }, el('div', { class: 'l', text: label }), el('div', { class: 'v num ' + (cls || ''), text: value })); }
+  function ipoCard(r) {
+    const i = r.eff, s = r.score, st = r.st, tier = tierOf(r);
+    const card = el('button', { type: 'button', class: 'card tap ipo' + (st === 'listed' ? ' listed' : ''), 'data-id': i.id, onclick: () => openIpo(i.id) });
+    const tags = el('div', { class: 'meta' }, el('span', { class: 'tag ' + (i.board === 'sme' ? 'sme' : 'main'), text: boardName(i.board) }), el('span', { class: 'tag' + (st === 'open' ? ' open' : ''), text: statusName(st) }), WATCH.has(i.id) ? el('span', { class: 'tag gold' }, '★ ' + t('Watching')) : null, r.edited ? el('span', { class: 'tag', text: t('your numbers') }) : null);
+    const lg = st === 'listed' && i.listing && fin(i.listing.gain_pct) ? Number(i.listing.gain_pct) : null;
+    card.append(el('div', { class: 'top' }, el('div', { class: 'grow' }, el('div', { class: 'nm', text: i.name }), tags), st === 'listed' ? null : ringEl(s && s.p_up)));
+    if (st !== 'listed') {
+      card.append(el('div', { class: 'row wrapf' }, verdictPill(tier)));
+      card.append(el('div', { class: 'say', text: s && fin(s.p_up) ? t('{o} similar IPOs listed above their price.', { o: cap(oddsWords(s.p_up)) }) + ' ' + vline(tier) : vline(tier) }));
+      const inv = minInvest(r), al = s && s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+      card.append(el('div', { class: 'kpis' },
+        kpi(t('You need'), inv ? inrShort(inv) : '–'),
+        kpi(t('Likely gain'), s && s.gain ? pct(s.gain.p50, 0) : '–', s && s.gain ? (s.gain.p50 > 0 ? 'good' : 'bad') : ''),
+        kpi(t('Get shares'), al !== null ? allotText(al) : (st === 'upcoming' ? t('later') : '–'))));
+    } else {
+      const tr = trackRow(i.id), pl = i.post_listing, now = pl && fin(pl.last_price) && i.issue_price ? 100 * (pl.last_price / i.issue_price - 1) : null;
+      card.append(el('div', { class: 'kpis' },
+        kpi(t('Day one'), lg !== null ? pct(lg, 1) : '–', lg === null ? '' : lg > 0 ? 'good' : 'bad'),
+        kpi(t('Now'), now !== null ? pct(now, 1) : '–', now === null ? '' : now > 0 ? 'good' : 'bad'),
+        kpi(t('We said'), tr ? vlabel(tr.verdict_tier) : (s ? pct0(s.p_up) : '–'))));
+    }
+    const due = dueInfo(r);
+    card.append(el('div', { class: 'due' + (due.hot ? ' hot' : '') }, icon('clock'), due.t));
+    return card;
+  }
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+  // --------------------------------------------------------------- shell ---
+  const TABS = [
+    { k: 'home', label: 'Today', icon: 'sun' },
+    { k: 'ipos', label: 'IPOs', icon: 'list' },
+    { k: 'plan', label: 'Planner', icon: 'calc' },
+    { k: 'proof', label: 'Track record', icon: 'shield' },
+    { k: 'more', label: 'More', icon: 'menu' },
+  ];
+  const SCREENS = ['home', 'ipos', 'ipo', 'plan', 'proof', 'more'];
+  function renderTabbar() {
+    const nav = $('#tabbar'); nav.replaceChildren();
+    for (const tb of TABS) {
+      const cur = UI.tab === tb.k || (UI.tab === 'ipo' && tb.k === (UI.prevTab || 'ipos'));
+      nav.append(el('button', { type: 'button', class: 'tab', 'aria-current': cur ? 'page' : null, onclick: () => go(tb.k) }, el('span', { class: 'ic' }, icon(tb.icon)), el('span', { class: 'lab', text: t(tb.label) })));
+    }
+  }
+  let pushedDetail = false;
+  function parseHash() {
+    const h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+    if (h.startsWith('ipo/')) return { tab: 'ipo', id: h.slice(4) };
+    return { tab: SCREENS.includes(h) && h !== 'ipo' ? h : null };
+  }
+  function setHash(h, push) { try { if (push) history.pushState(null, '', '#' + h); else history.replaceState(null, '', '#' + h); } catch (e) { /* sandboxed */ } }
+  function go(tab, opts) {
+    if (!SCREENS.includes(tab) || tab === 'ipo') tab = 'home';
+    if (UI.tab === 'ipo' && pushedDetail) { pushedDetail = false; try { history.replaceState(null, '', '#' + tab); } catch (e) { /* ignore */ } }
+    UI.scroll[UI.tab] = window.scrollY;
+    UI.tab = tab; store('tab', tab);
+    if (!(opts && opts.noHash)) setHash(tab, false);
+    show({ top: !(opts && opts.keepScroll) });
+  }
+  function openIpo(id) {
+    if (!BYID.has(id)) return;
+    if (UI.tab !== 'ipo') { UI.prevTab = UI.tab; UI.scroll[UI.tab] = window.scrollY; }
+    UI.ipo = id; UI.tab = 'ipo';
+    setHash('ipo/' + encodeURIComponent(id), !pushedDetail); pushedDetail = true;
+    show({ top: true });
+  }
+  function leaveDetail() {
+    const back = UI.prevTab || 'ipos';
+    if (pushedDetail) { pushedDetail = false; try { history.back(); return; } catch (e) { /* fall through */ } }
+    UI.tab = back; setHash(back, false); show({ restore: true });
+  }
+  window.addEventListener('popstate', () => {
+    const r = parseHash();
+    if (r.tab === 'ipo' && BYID.has(r.id)) { UI.ipo = r.id; UI.tab = 'ipo'; pushedDetail = true; show({ top: true }); return; }
+    pushedDetail = false;
+    const tab = r.tab || UI.prevTab || 'home';
+    UI.tab = tab; show({ restore: true });
+  });
+  function show(opts) {
+    for (const s of SCREENS) { const n = document.getElementById('screen-' + s); if (n) n.hidden = s !== UI.tab; }
+    $('#topbar').classList.toggle('detail', UI.tab === 'ipo');
+    renderTabbar();
+    renderScreen(UI.tab);
+    if (opts && opts.top) window.scrollTo(0, 0);
+    else if (opts && opts.restore) window.scrollTo(0, UI.scroll[UI.tab] || 0);
+  }
+  function renderScreen(tab) {
+    try {
+      ({ home: renderHome, ipos: renderIpos, ipo: renderIpo, plan: renderPlan, proof: renderProof, more: renderMore })[tab]();
+    } catch (e) {
+      console.error('render ' + tab, e);
+      const n = document.getElementById('screen-' + tab);
+      if (n) n.replaceChildren(note('crit', t('Something went wrong drawing this screen. Pull down to refresh; if it keeps happening, tell us from More → Get help.')));
+    }
+  }
+  function rerender() { const y = window.scrollY; computeAll(); renderTop(); renderTabbar(); renderScreen(UI.tab); window.scrollTo(0, y); }
+
+  // --------------------------------------------------------------- sheet ---
+  let sheetClose = null;
+  function openSheet(title, nodes, onClose) {
+    const back = $('#sheet');
+    $('#sheet-title').textContent = title;
+    $('#sheet-body').replaceChildren(...[].concat(nodes).filter(Boolean));
+    back.hidden = false; sheetClose = onClose || null;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => { const f = $('#sheet-body [autofocus]') || $('#sheet-close'); if (f) f.focus({ preventScroll: true }); }, 30);
+  }
+  function closeSheet() {
+    const back = $('#sheet'); if (back.hidden) return false;
+    back.hidden = true; document.body.style.overflow = '';
+    const f = sheetClose; sheetClose = null; if (f) f();
+    return true;
+  }
+  let toastT = null;
+  function toast(msg) { const n = $('#toast'); n.textContent = msg; n.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { n.hidden = true; }, 2600); }
+  // Android back: a sheet closes first, then the IPO page, then back to Today; false lets the app exit.
+  window.ipoRadarBack = function () {
+    if (closeSheet()) return true;
+    if (UI.tab === 'ipo') { leaveDetail(); return true; }
+    if (UI.tab !== 'home') { go('home'); return true; }
+    return false;
+  };
+
+  // ---------------------------------------------------- top bar & refresh ---
+  let manual = false;
+  function dataAgeMs() { const g = D.live.generated_at ? Date.parse(D.live.generated_at) : NaN; return isFinite(g) ? g : null; }
+  function renderTop() {
+    const pill = $('#fresh'), btn = $('#refresh'), gen = dataAgeMs();
+    const busy = !!(STATUS && STATUS.refreshing);
+    let cls = 'fresh', txt;
+    const ageH = gen ? (Date.now() - gen) / 36e5 : null;
+    if (busy) { cls += ' busy'; txt = t('Updating…'); }
+    else if (STATUS && STATUS.online === false) { cls += ' off'; txt = t('Offline') + ' · ' + relTime(gen); }
+    else if (STATUS && STATUS.error && manual) { cls += ' err'; txt = t('Update failed'); }
+    else { txt = t('Updated {r}', { r: relTime(gen) }); if (ageH !== null && ageH > 30) cls += ' stale'; }
+    if (D.live.health && D.live.health.ok === false && !busy) cls += ' stale';
+    pill.className = cls; pill.lastChild.textContent = txt;
+    pill.setAttribute('aria-label', t('Data status: {s}. Tap for details.', { s: txt }));
+    btn.classList.toggle('spinning', busy); btn.disabled = busy;
+  }
+  function doRefresh() {
+    if (has('refresh')) { manual = true; STATUS = Object.assign({}, STATUS || {}, { refreshing: true, error: null }); renderTop(); call('refresh'); return; }
+    toast(t('Live refresh works in the Android app. This page shows the data it was built with.'));
+  }
+  window.ipoRadarStatus = function (st) {
+    const was = STATUS && STATUS.refreshing;
+    STATUS = st || null; renderTop();
+    if (STATUS && STATUS.alerts && typeof STATUS.alerts === 'object') ALERTS = Object.assign(ALERTS, STATUS.alerts);
+    if (was && STATUS && !STATUS.refreshing && manual) {
+      if (STATUS.error) toast(t('Could not update. Showing the last saved data.'));
+      else if (STATUS.changed === false) toast(t('Already up to date'));
+      manual = STATUS.changed === true ? manual : false;
+    }
+    if (UI.tab === 'more') { const y = window.scrollY; renderMore(); window.scrollTo(0, y); }
+  };
+  function dataSheet() {
+    const gen = dataAgeMs(), h = D.live.health, nodes = [];
+    nodes.push(el('div', { class: 'money' },
+      line(t('Prices and demand as of'), gen ? new Date(gen).toLocaleString(PREF.lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–'),
+      STATUS ? line(t('Last downloaded'), STATUS.downloaded_at ? relTime(STATUS.downloaded_at) : t('bundled with the app')) : null,
+      STATUS && STATUS.schedule_hours > 0 ? line(t('Background refresh'), t('every {n} h', { n: STATUS.schedule_hours })) : null,
+      line(t('Model'), D.params ? (D.params.status === 'calibrated' ? t('fitted on {n} past listings', { n: D.params.n_rows }) : t('starting weights (not yet fitted)')) : '–')));
+    if (h && Array.isArray(h.issues) && h.issues.length) nodes.push(note(h.ok === false ? 'warn' : 'info', t('Data checks found {n} thing(s) to be careful about. See More → Data quality.', { n: h.issues.length })));
+    else if (h) nodes.push(note('good', t('All automatic data checks passed.')));
+    nodes.push(el('p', { class: 'small muted', text: t('The data is refreshed from public sources several times on every trading day. Pull down on any screen, or tap the refresh button, to fetch the latest.') }));
+    nodes.push(el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn primary', onclick: () => { closeSheet(); doRefresh(); } }, icon('up'), t('Refresh now'))));
+    openSheet(t('About this data'), nodes);
+  }
+  function line(k, v, cls) { return el('div', { class: 'ln' + (cls ? ' ' + cls : '') }, el('span', { class: 'k' }, k), el('span', { class: 'v' }, v)); }
+
+  // ---------------------------------------------------------------- home ---
+  function introCard() {
+    return el('div', { class: 'card intro' },
+      el('h2', { text: t('New here? Three things to know') }),
+      el('ol', null,
+        el('li', null, el('div', null, el('b', null, t('Start with the coloured label.')), ' ', t('Apply, Leaning yes, 50-50 gamble, Avoid or Too early. It already weighs everything else.'))),
+        el('li', null, el('div', null, el('b', null, t('“70%” means 7 in 10.')), ' ', t('Of ten IPOs that looked like this one, about seven ended their first day above the issue price. It is not the profit you will make.'))),
+        el('li', null, el('div', null, el('b', null, t('Most people get no shares.')), ' ', t('Popular IPOs are given out by lottery. Your money is simply returned in a few days if you are not picked.')))),
+      el('div', { class: 'btn-row' },
+        el('button', { type: 'button', class: 'btn primary', onclick: () => { store('intro_seen', true); renderHome(); } }, t('Got it')),
+        el('button', { type: 'button', class: 'btn ghost', 'data-term': 'howto' }, t('Read the 1-minute guide'))));
+  }
+  function actionRow(ic, kind, title, sub, onclick) {
+    return el('button', { type: 'button', class: 'card tap action', onclick }, el('span', { class: 'ico ' + (kind || '') }, icon(ic)), el('div', { class: 'grow' }, el('div', { class: 't', text: title }), sub ? el('div', { class: 's', text: sub }) : null), icon('chev', 'chev'));
+  }
+  function attention() {
+    const out = [];
+    for (const r of SCORED) {
+      const i = r.eff, w = WATCH.has(i.id), tier = tierOf(r), good = tier === 'apply' || tier === 'lean';
+      if (r.st === 'open' && daysTo(i.close_date) === 0 && (w || good)) out.push([0, actionRow('clock', 'urgent', t('Last day to apply: {n}', { n: i.name }), vlabel(tier) + ' · ' + t('UPI approval needed by 5 pm'), () => openIpo(i.id))]);
+      if (r.st === 'closed') {
+        const tl = timeline(i);
+        if (tl[2].d === TODAY) out.push([1, actionRow('bell', 'gold', t('Allotment result today: {n}', { n: i.name }), i.registrar && i.registrar.name ? t('Check on the {r} website', { r: i.registrar.name }) : t('Tap to see how to check'), () => openIpo(i.id))]);
+        if (tl[4].d === TODAY) out.push([2, actionRow('flag', '', t('{n} lists today', { n: i.name }), t('Trading starts at 10 am. Most people sell the same day.'), () => openIpo(i.id))]);
       }
-      tr.append(vtd);
-      tr.addEventListener('click', (ev) => { if (ev.target.closest('a')) return; toggle(ipo.id); });
-      tr.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(ipo.id); } });
-      body.append(tr);
-      const dtr = el('tr', { class: 'drow', hidden: state.open === ipo.id ? null : '' }, el('td', { colspan: 9 }));
-      if (state.open === ipo.id) dtr.firstChild.append(detail(r));
-      body.append(dtr);
+      if (r.st === 'upcoming' && w && daysTo(i.open_date) !== null && daysTo(i.open_date) <= 1) out.push([3, actionRow('star', 'gold', t('{n} opens {d}', { n: i.name, d: relDay(i.open_date) }), vlabel(tier), () => openIpo(i.id))]);
     }
+    return out.sort((a, b) => a[0] - b[0]).slice(0, 4).map(x => x[1]);
   }
-  function toggle(id) { state.open = state.open === id ? null : id; keepFocus(renderTable); }
-  function detail(r) {
-    const ipo = r.eff, s = r.score, sub = ipo.subscription || {};
-    const d = el('div', { class: 'detail' });
-    // reasons & warnings
-    const c1 = el('div');
-    c1.append(el('h3', { text: 'Why this verdict' }));
-    const ul = el('ul');
-    if (s) { for (const w of s.verdict.warnings) ul.append(el('li', { class: 'w', text: w })); for (const w of s.verdict.reasons) ul.append(el('li', { text: w })); }
-    if (!ul.children.length) ul.append(el('li', { class: 'muted', text: 'Nothing to say yet.' }));
-    c1.append(ul);
-    if (s && s.similar && s.similar.n >= 5 && s.similar.lo !== null && s.similar.lo !== undefined) c1.append(el('p', { class: 'small ink2' }, 'Past ' + (ipo.board === 'sme' ? 'SME' : 'mainboard') + ' IPOs with a premium of ' + s.similar.bucket + ': ' + s.similar.n_up + ' of ' + s.similar.n + ' ended day one above the issue price; typical gain ' + pct(s.similar.median_gain, 0) + ', bad case ' + pct(s.similar.p10_gain, 0) + '.'));
-    const srcs = ipo.sources || {};
-    const links = [];
-    for (const k of Object.keys(srcs)) { try { const u = new URL(String(srcs[k])); if ((u.protocol === 'https:' || u.protocol === 'http:') && u.hostname) links.push(u); } catch (e) { /* not a URL */ } }
-    if (links.length) { const sd = el('div', { class: 'srcs' }, el('span', { class: 'muted', text: 'Sources:' })); const seen = new Set(); for (const u of links) { const hn = u.hostname.replace(/^www\./, ''); if (seen.has(hn)) continue; seen.add(hn); sd.append(el('a', { href: u.href, target: '_blank', rel: 'noopener', text: u.hostname.replace(/^www\./, '') })); } c1.append(sd); }
-    d.append(c1);
+  function calendar() {
+    const days = new Map();
+    const addEv = (iso, kind, r) => { if (!isIso(iso)) return; const d = iso.slice(0, 10), k = daysTo(d); if (k === null || k < 0 || k > 14) return; if (!days.has(d)) days.set(d, []); days.get(d).push([kind, r]); };
+    for (const r of SCORED) {
+      if (r.st === 'listed') continue;
+      const tl = timeline(r.eff);
+      addEv(tl[0].d, t('Opens'), r); addEv(tl[1].d, t('Last day'), r); if (r.st !== 'upcoming') addEv(tl[2].d, t('Allotment'), r); addEv(tl[4].d, t('Lists'), r);
+    }
+    const keys = [...days.keys()].sort().slice(0, 10);
+    if (!keys.length) return null;
+    const strip = el('div', { class: 'cal-strip', role: 'list' });
+    for (const d of keys) {
+      const box = el('div', { class: 'cal-day' + (d === TODAY ? ' today' : ''), role: 'listitem' }, el('div', { class: 'd', text: relDay(d) }));
+      for (const [kind, r] of days.get(d).slice(0, 4)) box.append(el('button', { type: 'button', class: 'ev', onclick: () => openIpo(r.ipo.id) }, el('b', null, kind), r.eff.name));
+      strip.append(box);
+    }
+    return strip;
+  }
+  function trustCard() {
+    const tk = D.track;
+    let big = '—', txt;
+    if (tk && tk.by_verdict) {
+      const a = tk.by_verdict.apply || {}, l = tk.by_verdict.lean || {};
+      const n = (a.n || 0) + (l.n || 0), up = (a.n_up || 0) + (l.n_up || 0);
+      if (n >= 3) { big = Math.round(100 * up / n) + '%'; txt = el('p', null, t('When we said'), ' ', el('b', null, t('Apply')), ' ', t('or'), ' ', el('b', null, t('Leaning yes')), ', ', t('{u} of {n} IPOs listed above their price.', { u: up, n })); }
+    }
+    if (!txt) txt = el('p', null, t('Every call is saved before listing and checked against what actually happened. Nothing is edited afterwards.'));
+    return el('div', { class: 'card trust' }, el('div', { class: 'big num', text: big }), el('div', { class: 'stack', style: 'gap:8px' }, el('b', null, t('Our track record')), txt, el('div', null, el('button', { type: 'button', class: 'btn sm', onclick: () => go('proof') }, t('See every call')))));
+  }
+  function renderHome() {
+    const host = $('#screen-home'); host.replaceChildren();
+    if (!load('intro_seen', false)) host.append(introCard());
+    const open = SCORED.filter(r => r.st === 'open'), up = SCORED.filter(r => r.st === 'upcoming');
+    const listingSoon = SCORED.filter(r => r.st === 'closed' && (() => { const d = daysTo(r.eff.listing_date); return d !== null && d >= 0 && d <= 7; })());
+    const goodOpen = open.filter(r => ['apply', 'lean'].includes(tierOf(r)));
+    const dow = DOWL[L()][new Date(utc(TODAY)).getUTCDay()];
+    const head = open.length === 0 ? t('No IPO is open for bidding today') : open.length === 1 ? t('1 IPO is open for bidding') : t('{n} IPOs are open for bidding', { n: open.length });
+    const lede = [];
+    if (open.length) lede.push(goodOpen.length === 0 ? t('None of them looks like a clear yes.') : goodOpen.length === 1 ? t('1 of them looks worth applying.') : t('{n} of them look worth applying.', { n: goodOpen.length }));
+    const nextUp = up.filter(r => isIso(r.eff.open_date)).sort((a, b) => a.eff.open_date < b.eff.open_date ? -1 : 1)[0];
+    if (nextUp) lede.push(t('Next to open: {n}, {d}.', { n: nextUp.eff.name, d: relDay(nextUp.eff.open_date) }));
+    host.append(el('div', { class: 'hello' }, el('div', { class: 'date', text: dow + ', ' + dshort(TODAY) }), el('h1', { text: head }), lede.length ? el('p', { class: 'lede', text: lede.join(' ') }) : null));
+    const stat = (n, label, st) => el('button', { type: 'button', class: 'stat', onclick: () => { UI.status = st; go('ipos'); } }, el('div', { class: 'v num', text: String(n) }), el('div', { class: 'l', text: label }));
+    host.append(el('div', { class: 'stats' }, stat(open.length, t('Open now'), 'open'), stat(up.length, t('Opening soon'), 'upcoming'), stat(listingSoon.length, t('Listing this week'), 'closed')));
+    const acts = attention();
+    if (acts.length) host.append(el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Needs your attention') })), ...acts));
+    const best = SCORED.filter(r => isLive(r) && tierOf(r) !== 'nodata').sort(rankLive).slice(0, 3);
+    const bestSec = el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Best right now') }), el('button', { type: 'button', class: 'link', onclick: () => { UI.status = 'active'; go('ipos'); } }, t('See all'))));
+    if (best.length) bestSec.append(el('div', { class: 'grid2' }, ...best.map(ipoCard)));
+    else bestSec.append(el('div', { class: 'card empty' }, icon('search'), el('div', { text: t('Nothing open or upcoming has enough information for a call yet.') })));
+    host.append(bestSec);
+    const cal = calendar();
+    if (cal) host.append(el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Coming up') })), cal));
+    host.append(trustCard());
+    const watched = SCORED.filter(r => WATCH.has(r.ipo.id) && r.st !== 'listed');
+    if (watched.length) host.append(el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Your watchlist') }), el('button', { type: 'button', class: 'link', onclick: () => { UI.status = 'watch'; go('ipos'); } }, t('See all'))), el('div', { class: 'grid2' }, ...watched.sort(rankLive).slice(0, 4).map(ipoCard))));
+    host.append(footer());
+  }
+  function footer() {
+    return el('footer', { class: 'foot' }, el('div', { text: t('Not investment advice. A 75% chance of a gain is a 25% chance of a loss.') }), el('div', { text: 'IPO Radar · ' + t('a Layerbit tool') }));
+  }
+
+  // ---------------------------------------------------------------- list ---
+  const STATUS_FILTERS = [['active', 'Active'], ['open', 'Open now'], ['upcoming', 'Upcoming'], ['closed', 'Awaiting listing'], ['listed', 'Listed'], ['watch', 'Watchlist'], ['all', 'All']];
+  const SORTS = [['smart', 'Best first'], ['chance', 'Highest chance of gain'], ['worth', 'Most worth per application'], ['date', 'By date']];
+  function inStatus(r, f) { return f === 'all' || (f === 'active' ? r.st !== 'listed' : f === 'watch' ? WATCH.has(r.ipo.id) : r.st === f); }
+  function matchQ(r) { const q = UI.q.trim().toLowerCase(); return !q || r.eff.name.toLowerCase().includes(q); }
+  function listRows() {
+    let rows = SCORED.filter(r => (UI.board === 'all' || r.eff.board === UI.board) && inStatus(r, UI.status) && matchQ(r));
+    const ev = r => (r.score && fin(r.score.ev.ev) ? r.score.ev.ev : -1e9), pu = r => (r.score && fin(r.score.p_up) ? r.score.p_up : -1);
+    const SO = { open: 0, closed: 1, upcoming: 2, listed: 3 };
+    const key = {
+      smart: r => [SO[r.st] ?? 9, TIER_ORDER[tierOf(r)], -pu(r)],
+      chance: r => [r.st === 'listed' ? 1 : 0, -pu(r)],
+      worth: r => [r.st === 'listed' ? 1 : 0, -ev(r)],
+      date: r => [r.st === 'listed' ? 1 : 0, r.st === 'listed' ? -(utc(r.eff.listing_date || '2000-01-01')) : utc(r.eff.close_date || r.eff.open_date || '2099-01-01')],
+    }[UI.sort] || (r => [0]);
+    rows.sort((a, b) => { const ka = key(a), kb = key(b); for (let i = 0; i < ka.length; i++) { if (ka[i] < kb[i]) return -1; if (ka[i] > kb[i]) return 1; } return 0; });
+    if (UI.status === 'listed' || UI.status === 'all') rows = rows.slice(0, 120);
+    return rows;
+  }
+  function renderIpoList() {
+    const host = $('#ipo-list'); if (!host) return;
+    const rows = listRows(); host.replaceChildren();
+    if (!rows.length) {
+      host.append(el('div', { class: 'card empty' }, icon('search'), el('div', { text: UI.q ? t('No IPO matches “{q}”.', { q: UI.q }) : UI.status === 'watch' ? t('Your watchlist is empty. Open any IPO and tap Watch.') : t('Nothing here right now.') }),
+        (UI.status !== 'all' || UI.board !== 'all' || UI.q) ? el('button', { type: 'button', class: 'btn sm', onclick: () => { UI.status = 'all'; UI.board = 'all'; UI.q = ''; renderIpos(); } }, t('Show all IPOs')) : null));
+      return;
+    }
+    host.append(el('div', { class: 'grid2' }, ...rows.map(ipoCard)));
+  }
+  function renderIpos() {
+    const host = $('#screen-ipos'); host.replaceChildren();
+    host.append(el('div', { class: 'hello' }, el('h1', { text: t('IPOs') }), el('p', { class: 'lede', text: t('Every mainboard and SME IPO in India. Tap one for the full picture.') })));
+    const search = el('input', { type: 'search', placeholder: t('Search by company name'), value: UI.q, 'aria-label': t('Search by company name'), enterkeyhint: 'search' });
+    search.addEventListener('input', () => { UI.q = search.value; renderIpoList(); });
+    host.append(el('label', { class: 'search' }, icon('search'), search));
+    const onBoard = SCORED.filter(r => UI.board === 'all' || r.eff.board === UI.board);
+    const chips = el('div', { class: 'chips', role: 'group', 'aria-label': t('Filter by status') });
+    for (const [k, lab] of STATUS_FILTERS) {
+      const n = onBoard.filter(r => inStatus(r, k)).length;
+      chips.append(el('button', { type: 'button', class: 'chip-btn', 'aria-pressed': UI.status === k ? 'true' : 'false', onclick: () => { UI.status = k; renderIpos(); } }, t(lab), el('span', { class: 'n', text: String(n) })));
+    }
+    host.append(chips);
+    const seg = el('div', { class: 'seg', role: 'group', 'aria-label': t('Board') });
+    for (const [k, lab] of [['all', 'All'], ['mainboard', 'Mainboard'], ['sme', 'SME']]) seg.append(el('button', { type: 'button', 'aria-pressed': UI.board === k ? 'true' : 'false', onclick: () => { UI.board = k; renderIpos(); } }, t(lab)));
+    const sortBtn = el('button', { type: 'button', class: 'btn sm', onclick: () => pickSheet(t('Sort'), SORTS.map(([k, l]) => [k, t(l)]), UI.sort, (v) => { UI.sort = v; renderIpos(); }) }, icon('list'), t((SORTS.find(s => s[0] === UI.sort) || SORTS[0])[1]));
+    host.append(el('div', { class: 'row wrapf', style: 'justify-content:space-between' }, seg, el('div', { class: 'row', style: 'gap:6px' }, qmark('sme'), sortBtn)));
+    host.append(el('div', { id: 'ipo-list' }));
+    renderIpoList();
+    const act = chips.querySelector('[aria-pressed="true"]'); if (act && act.scrollIntoView) setTimeout(() => act.scrollIntoView({ block: 'nearest', inline: 'center' }), 0);
+  }
+  function pickSheet(title, options, cur, onPick) {
+    const nodes = options.map(([k, lab]) => el('button', { type: 'button', class: 'opt-row', role: 'option', 'aria-selected': String(k) === String(cur) ? 'true' : 'false', onclick: () => { closeSheet(); onPick(k); } }, el('span', { text: lab }), icon('check')));
+    openSheet(title, el('div', { class: 'stack', style: 'gap:8px', role: 'listbox' }, ...nodes));
+  }
+
+  // -------------------------------------------------------------- detail ---
+  function fact(label, value, sub, cls, term) {
+    return el('div', { class: 'fact' }, el('div', { class: 'l' }, label, term ? qmark(term) : null), el('div', { class: 'v num ' + (cls || ''), text: value }), sub ? el('div', { class: 's', text: sub }) : null);
+  }
+  function section(title, ...kids) { return el('div', { class: 'card stack' }, el('h3', { text: title }), ...kids); }
+  function renderIpo() {
+    const host = $('#screen-ipo'); host.replaceChildren();
+    const r = BYID.get(UI.ipo);
+    if (!r) { host.append(el('div', { class: 'card empty' }, el('div', { text: t('This IPO is no longer in the data.') }), el('button', { type: 'button', class: 'btn', onclick: () => go('ipos') }, t('Back to IPOs')))); return; }
+    const i = r.eff, s = r.score, st = r.st, tier = tierOf(r);
+    // hero
+    const hero = el('div', { class: 'card hero' });
+    hero.append(el('div', { class: 'meta row wrapf', style: 'gap:6px' }, el('span', { class: 'tag ' + (i.board === 'sme' ? 'sme' : 'main'), text: boardName(i.board) }), el('span', { class: 'tag' + (st === 'open' ? ' open' : ''), text: statusName(st) }), i.exchange ? el('span', { class: 'tag', text: i.exchange }) : null, r.edited ? el('span', { class: 'tag gold', text: t('your numbers') }) : null));
+    hero.append(el('h1', { class: 'nm', text: i.name }));
+    if (i.about) hero.append(el('p', { class: 'about', text: i.about }));
+    if (st !== 'listed') hero.append(el('div', { class: 'verdict-box' }, ringEl(s && s.p_up, true), el('div', { class: 'stack', style: 'gap:6px' }, el('div', null, verdictPill(tier, true)), el('div', { class: 'small ink2', text: s && fin(s.p_up) ? t('Chance of ending day one above the issue price') : '' }), s && s.verdict.gamble ? el('button', { type: 'button', class: 'tag ' + (s.verdict.gamble === 'sure' ? 'crit' : 'gold'), 'data-term': 'gamble', style: 'justify-self:start;border:0' }, s.verdict.gamble === 'sure' ? t('Sure gamble') : t('Possible gamble')) : null)));
+    hero.append(plainSummary(r));
+    const due = dueInfo(r); hero.append(el('div', { class: 'ipo' }, el('div', { class: 'due' + (due.hot ? ' hot' : '') }, icon('clock'), due.t)));
+    const on = WATCH.has(i.id);
+    hero.append(el('div', { class: 'btn-row' },
+      st !== 'listed' ? el('button', { type: 'button', class: 'btn star', 'aria-pressed': on ? 'true' : 'false', onclick: () => { toggleWatch(i.id); renderIpo(); } }, icon('star'), on ? t('Watching') : t('Watch')) : null,
+      el('button', { type: 'button', class: 'btn', onclick: () => shareIpoCard(r) }, icon('share'), t('Share')),
+      el('button', { type: 'button', class: 'btn', onclick: () => journalSheet(i.id) }, icon('wallet'), journalFor(i.id) ? t('My application') : t('I applied'))));
+    host.append(hero);
+    // cautions
+    const cautions = [];
+    if (D.params && D.params.status !== 'calibrated' && st !== 'listed' && s && fin(s.p_up)) cautions.push(note('info', t('The chance figures are first estimates: the model is still on its starting weights until it has enough past listings to check itself against.'), ' ', el('button', { type: 'button', class: 'linkish', onclick: () => go('proof') }, t('Why?'))));
+    if (i.gmp && i.gmp.disagree) cautions.push(note('warn', t('Grey-market quotes from different sources disagree a lot for this IPO. Treat the premium with extra caution.')));
+    const hf = (i.health_flags || []).length; if (hf) cautions.push(note('warn', t('Our automatic checks flagged something odd in this IPO’s data. Double-check the numbers before deciding.')));
+    if (s && s.flags && s.flags.includes('gmp_stale') && st !== 'listed') cautions.push(note('warn', t('The grey-market quote is 3 or more days old.')));
+    if (cautions.length) host.append(el('div', { class: 'stack' }, ...cautions));
+    const colA = el('div', { class: 'stack-lg' }), colB = el('div', { class: 'stack-lg' });
+    // numbers
+    const inv = minInvest(r), ml = Number(i.min_lots) || (i.board === 'sme' ? 2 : 1);
+    const al = s && s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+    const g = gmpPct(r);
+    if (st !== 'listed') {
+      const facts = el('div', { class: 'facts' },
+        fact(t('Minimum to apply'), inv ? inr(inv) : '–', i.lot_size ? (ml > 1 ? t('{m} lots of {l} shares at ₹{p}', { m: ml, l: i.lot_size, p: i.issue_price || i.price_band_high }) : t('1 lot of {l} shares at ₹{p}', { l: i.lot_size, p: i.issue_price || i.price_band_high })) : t('lot size not announced'), '', 'lot'),
+        fact(t('Chance of getting shares'), al !== null ? allotText(al) : '–', al !== null ? (al >= 0.999 ? t('everyone who applies') : t('retail asked for {x} the shares on offer', { x: xm(i.subscription && (i.subscription.retail || i.subscription.total)) })) : (st === 'upcoming' ? t('known once bidding starts') : t('no demand figures yet')), '', 'allot'),
+        fact(t('Likely gain'), s && s.gain ? pct(s.gain.p50, 0) : '–', s && s.gain ? t('most likely; range {a} to {b}', { a: pct(s.gain.p10, 0), b: pct(s.gain.p90, 0) }) : '', s && s.gain ? (s.gain.p50 > 0 ? 'good' : 'bad') : '', 'range'),
+        fact(t('Worth per application'), s && fin(s.ev.ev) ? inr(s.ev.ev, { plus: true }) : '–', s && fin(s.ev.ev) ? t('average, counting the lottery, after charges and tax') : t('needs demand figures'), s && fin(s.ev.ev) ? (s.ev.ev > 0 ? 'good' : 'bad') : '', 'worth'));
+      const sec = section(t('The numbers'), facts);
+      if (s && s.gain) sec.append(el('div', null, el('div', { class: 'small ink2', style: 'margin-bottom:4px' }, t('Where the listing-day gain could land')), rangeEl(s.gain)));
+      colA.append(sec);
+    } else colA.append(listedSection(r));
+    // timeline
+    const tl = timeline(i), ol = el('ol', { class: 'timeline' });
+    let nowSet = false;
+    for (const step of tl) {
+      const passed = step.d && step.d < TODAY, isNow = !nowSet && step.d && step.d >= TODAY;
+      if (isNow) nowSet = true;
+      ol.append(el('li', { class: passed ? 'done' : isNow ? 'now' : '' }, el('span', { class: 'dot' }, passed ? icon('check') : null), el('div', null, el('div', { class: 't', text: step.t }), el('div', { class: 's', text: step.s })), el('span', { class: 'd', text: step.d ? (step.est ? '~' : '') + dday(step.d) : t('not announced') })));
+    }
+    const tsec = section(t('Key dates'), ol);
+    if (tl.some(x => x.est && x.d)) tsec.append(el('p', { class: 'tiny muted', text: t('~ marks a date estimated from SEBI’s T+3 timetable; the company’s own dates replace it when announced.') }));
+    colB.append(tsec);
+    // allotment check
+    if (st === 'closed' || st === 'listed') colB.append(allotSection(i));
     // money
-    const c2 = el('div');
-    c2.append(el('h3', { text: (s && s.ev && s.ev.min_lots > 1 ? 'The money, for the minimum application (' + s.ev.min_lots + ' lots) sold on listing day' : 'The money, for one lot sold on listing day') }));
-    const inv = s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : (ipo.issue_price && ipo.lot_size ? ipo.issue_price * ipo.lot_size : null);
-    if (inv && s && s.gain) {
-      const mid = S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs);
-      const dl = el('dl', { class: 'kv' });
-      const kv = (k, v, extra) => dl.append(el('dt', null, k, extra ? el('span', { class: 'muted', text: extra }) : null), el('dd', { class: 'num', text: v }));
-      kv('Money blocked when you apply', inr(inv));
-      kv('What it sells for at the expected gain (' + pct(s.gain.mean, 0) + ')', inr(inv * (1 + s.gain.mean / 100)));
-      kv('Profit before charges', inr(mid.gross, { plus: true }));
-      kv(term('charges', 'Broker and exchange charges') , '−' + inr(mid.charges), ' (' + ($('#p-broker option:checked') ? $('#p-broker option:checked').textContent : 'broker') + ')');
-      kv(term('tax', 'Tax on the profit'), '−' + inr(mid.tax), ' (' + state.costs.stcg_tax_pct + '% + ' + state.costs.cess_pct + '% cess)');
-      kv('In hand if you get shares', inr(mid.net, { plus: true }));
-      kv('Same, at the middle-case gain (' + pct(s.gain.p50, 0) + ')', inr(S.netProfitOnSale(inv, inv * (1 + s.gain.p50 / 100), state.costs).net, { plus: true }));
-      if (s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined) {
-        kv(term('allot', 'Chance of getting shares'), pct0(s.allotment.p_min_lot));
-        kv(term('worth', 'Worth per application, on average'), inr(s.ev.ev, { plus: true }));
-      }
-      if (s.ev.lots_affordable > (s.ev.min_lots || 1)) kv('Lots within the ₹2 lakh retail cap', String(s.ev.lots_affordable));
-      c2.append(dl);
-      c2.append(el('p', { class: 'small muted', text: s.allotment && s.allotment.basis ? s.allotment.basis + '.' : '' }));
-    } else c2.append(el('p', { class: 'muted small', text: 'Needs an issue price, a lot size and either a premium quote or demand figures.' }));
-    d.append(c2);
-    // what-if
-    const c3 = el('div');
-    c3.append(el('h3', { text: 'Try your own numbers' }));
-    const wi = el('div', { class: 'whatif' });
-    const e = state.edits[ipo.id] || {};
-    const inp = (k, lab, v, step) => { const i = el('input', { type: 'number', step: step || 'any', id: 'wi-' + ipo.id + '-' + k, value: v === null || v === undefined ? '' : (Number.isInteger(Number(v)) ? v : Number(v).toFixed(2)), placeholder: '–' }); wi.append(el('label', null, lab, i)); return i; };
-    const iG = inp('gmp', 'Premium ₹ (GMP)', e.gmp_rs !== undefined ? e.gmp_rs : (ipo.gmp && ipo.gmp.rs), 1);
-    const iQ = inp('qib', 'Institutions x', e.qib !== undefined ? e.qib : sub.qib, 0.1);
-    const iN = inp('nii', 'Wealthy x', e.nii !== undefined ? e.nii : sub.nii, 0.1);
-    const iR = inp('retail', 'Retail x', e.retail !== undefined ? e.retail : sub.retail, 0.1);
-    c3.append(wi);
-    const btns = el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap' });
-    btns.append(el('button', { class: 'btn primary small', type: 'button', id: 'wi-go-' + ipo.id, onclick: () => {
-      const ed = {};
-      const src = r.ipo, ssub = src.subscription || {}, sg = src.gmp || {};
-      const num = i => i.value === '' ? undefined : Number(i.value);
-      const differs = (v, orig) => v !== undefined && !(orig !== null && orig !== undefined && Number(orig) === v);
-      if (differs(num(iG), sg.rs)) ed.gmp_rs = num(iG);
-      if (differs(num(iQ), ssub.qib)) ed.qib = num(iQ);
-      if (differs(num(iN), ssub.nii)) ed.nii = num(iN);
-      if (differs(num(iR), ssub.retail)) ed.retail = num(iR);
-      if (Object.keys(ed).length) state.edits[ipo.id] = ed; else delete state.edits[ipo.id];
-      computeAll(); keepFocus(renderAll);
-    } }, 'Recompute'));
-    btns.append(el('button', { class: 'btn small', type: 'button', id: 'wi-reset-' + ipo.id, onclick: () => { delete state.edits[ipo.id]; computeAll(); keepFocus(renderAll); } }, 'Reset'));
-    btns.append(el('button', { class: 'btn small', type: 'button', id: 'share-' + ipo.id, onclick: () => shareIpoCard(r) }, 'Share as image'));
-    btns.append(el('button', { class: 'btn small', type: 'button', id: 'sharet-' + ipo.id, onclick: () => shareText(readText(r), ipo.name + ' · IPO Radar') }, 'Share as text'));
-    c3.append(btns);
-    c3.append(el('p', { class: 'small muted', text: 'Type today’s premium or the latest demand figures and the row above updates. Edits live only on this device.' }));
-    d.append(c3);
-    return d;
+    if (st !== 'listed' && inv && s && s.gain) colA.append(moneySection(r, inv));
+    // demand
+    colA.append(demandSection(r));
+    // gmp
+    colA.append(gmpSection(r, g));
+    // why
+    const why = el('ul', { class: 'reasons' });
+    if (s) { for (const w of s.verdict.warnings) why.append(el('li', { class: 'w' }, icon('alert'), el('span', { text: w }))); for (const w of s.verdict.reasons) why.append(el('li', { class: 'r' }, icon('info'), el('span', { text: w }))); }
+    if (!why.children.length) why.append(el('li', { class: 'r' }, icon('info'), el('span', { text: t('Nothing to report yet.') })));
+    const wsec = section(t('Why we say this'), why);
+    if (s && s.similar && s.similar.n >= 5 && fin(s.similar.lo)) wsec.append(el('p', { class: 'small ink2', text: t('Past {b} IPOs with a premium of {k}: {u} of {n} listed up; typical gain {m}.', { b: boardName(i.board), k: s.similar.bucket, u: s.similar.n_up, n: s.similar.n, m: pct(s.similar.median_gain, 0) }) }));
+    colB.append(wsec);
+    colB.append(issueSection(r));
+    if (st !== 'listed') colB.append(whatIfSection(r));
+    colB.append(sourcesSection(i));
+    host.append(el('div', { class: 'detail-grid' }, colA, colB));
+    host.append(footer());
+  }
+  function listedSection(r) {
+    const i = r.eff, s = r.score, lst = i.listing || {}, tr = trackRow(i.id), pl = i.post_listing || {};
+    const lg = fin(lst.gain_pct) ? Number(lst.gain_pct) : null;
+    const sec = section(t('How it did'));
+    sec.append(el('div', { class: 'facts' },
+      fact(t('Day one'), lg !== null ? pct(lg, 1) : '–', lst.close ? t('closed at ₹{c} (issue ₹{p})', { c: lst.close, p: i.issue_price }) : '', lg === null ? '' : lg > 0 ? 'good' : 'bad'),
+      fact(t('We said before listing'), tr ? vlabel(tr.verdict_tier) : (s ? pct0(s.p_up) : '–'), tr ? t('{p} chance of a gain · saved {d}', { p: pct0(tr.p_up), d: tr.locked_at ? dshort(String(tr.locked_at).slice(0, 10)) : '–' }) + (tr.lock_stage === 'backfill' ? ' · ' + t('reconstructed') : '') : t('no saved call for this one'))));
+    const hz = [['d1', '1 day'], ['w1', '1 week'], ['m1', '1 month'], ['m3', '3 months'], ['m6', '6 months']].filter(([k]) => fin(pl[k]));
+    if (hz.length) {
+      sec.append(el('div', { class: 'small ink2', text: t('Since listing, versus the issue price') }));
+      sec.append(el('div', { class: 'perf' }, ...hz.map(([k, lab]) => el('div', { class: 'p' }, el('div', { class: 'l', text: t(lab) }), el('div', { class: 'v ' + (pl[k] > 0 ? 'good' : 'bad'), text: pct(pl[k], 0) })))));
+      if (fin(pl.last_price)) sec.append(el('p', { class: 'tiny muted', text: t('Last price ₹{p} on {d}.', { p: pl.last_price, d: dshort(pl.as_of) }) }));
+    }
+    if (i.anchor && (isIso(i.anchor.lockin_50pct_date) || isIso(i.anchor.lockin_rest_date))) sec.append(note('info', t('Big investors who bought before the IPO (anchors) may sell from {a} (half) and {b} (rest). Prices often dip around these dates.', { a: dshort(i.anchor.lockin_50pct_date), b: dshort(i.anchor.lockin_rest_date) })));
+    return sec;
+  }
+  function allotSection(i) {
+    const reg = i.registrar || {};
+    const sec = section(t('Did you get shares?'));
+    sec.append(el('p', { class: 'small ink2', text: t('The allotment result is published by the registrar. Check with your PAN number. You can also see it in your broker app or bank statement.') }));
+    const url = reg.status_url && /^https?:\/\//.test(reg.status_url) ? reg.status_url : null;
+    const btns = el('div', { class: 'btn-row' });
+    if (url) btns.append(el('a', { class: 'btn primary', href: url, target: '_blank', rel: 'noopener', onclick: (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', url); } } }, icon('ext'), t('Check on {r}', { r: reg.name || t('registrar') })));
+    btns.append(el('a', { class: 'btn', href: 'https://www.bseindia.com/investors/appli_check.aspx', target: '_blank', rel: 'noopener', onclick: (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', ev.currentTarget.href); } } }, icon('ext'), t('Check on BSE')));
+    sec.append(btns);
+    if (!reg.name) sec.append(el('p', { class: 'tiny muted', text: t('Registrar not captured for this IPO; the exchange pages work for every issue.') }));
+    return sec;
+  }
+  function moneySection(r, inv) {
+    const s = r.score, i = r.eff, mid = netAt(inv, s.gain.p50), bad = netAt(inv, s.gain.p10);
+    const sec = section(t('Your money, if you get shares'));
+    sec.append(el('div', { class: 'money' },
+      line(t('Money blocked when you apply'), inr(inv)),
+      line(t('Sold on listing day at the likely gain ({g})', { g: pct(s.gain.p50, 0) }), inr(inv * (1 + s.gain.p50 / 100))),
+      line(t('Profit before costs'), inr(mid.gross, { plus: true })),
+      line(el('span', null, termBtn('charges', t('Broker & exchange charges')), ' ', el('span', { class: 'muted', text: '(' + (BROKERS[PLAN.broker] || BROKERS.custom).name + ')' })), '−' + inr(mid.charges)),
+      line(termBtn('tax', t('Tax on the profit')), '−' + inr(mid.tax)),
+      line(t('In your hand'), inr(mid.net, { plus: true }), 'total ' + (mid.net >= 0 ? 'good' : 'bad')),
+      line(t('On a bad day ({g})', { g: pct(s.gain.p10, 0) }), inr(bad.net, { plus: true }))));
+    sec.append(el('p', { class: 'tiny muted', text: t('If you get no shares, the full amount is unblocked within a few days and you lose nothing. Change your broker in the Planner.') }));
+    return sec;
+  }
+  function demandSection(r) {
+    const i = r.eff, sub = i.subscription || {}, sec = section(t('Demand: how many times over people bid'));
+    const rows = [['qib', t('Big institutions'), 'qib'], ['nii', t('Wealthy investors'), 'nii'], ['retail', i.board === 'sme' ? t('Individuals (you)') : t('Retail (you)'), 'retail'], ['total', t('Overall'), 'sub']];
+    const any = rows.some(([k]) => fin(sub[k]));
+    if (!any) { sec.append(el('p', { class: 'muted', text: r.st === 'upcoming' ? t('Bidding has not started. Demand figures appear from the first bidding day.') : t('No demand figures captured yet.') })); return sec; }
+    const max = Math.max(10, ...rows.map(([k]) => Number(sub[k]) || 0));
+    const sc = v => Math.min(100, 100 * Math.log1p(v) / Math.log1p(max));
+    const bars = el('div', { class: 'bars' });
+    for (const [k, lab, term] of rows) {
+      const v = fin(sub[k]) ? Number(sub[k]) : null;
+      bars.append(el('div', { class: 'bar-row' }, termBtn(term, lab), el('div', { class: 'track' }, el('i', { class: v !== null && v < 1 ? 'lo' : '', style: 'width:' + (v === null ? 0 : Math.max(2, sc(v))) + '%' })), el('span', { class: 'v', text: xm(v) })));
+    }
+    sec.append(bars);
+    sec.append(el('p', { class: 'tiny muted', text: (r.st === 'open' ? t('Bidding is still on; big institutions usually bid on the last day.') : t('Final figures after bidding closed.')) + ' ' + t('“10x” means people asked for ten times the shares on offer.') }));
+    return sec;
+  }
+  function gmpSection(r, g) {
+    const i = r.eff, gm = i.gmp || {}, sec = section(t('Grey-market premium (unofficial)'));
+    sec.append(el('p', { class: 'small ink2' }, t('What unofficial dealers pay over the issue price before listing.'), ' ', termBtn('gmp', t('Read the caveats'))));
+    if (g === null) { sec.append(el('p', { class: 'muted', text: r.score && r.score.flags.includes('gmp_unquoted') ? t('Nobody is quoting a premium for this IPO.') : t('No premium quote yet.') })); return sec; }
+    sec.append(el('div', { class: 'facts' }, fact(t('Premium now'), pct(g, 1), fin(gm.rs) ? t('₹{r} a share', { r: gm.rs }) + (gm.as_of ? ' · ' + dshort(gm.as_of) : '') : '', g > 0 ? 'good' : 'bad'), fact(t('Implied listing price'), fin(gm.rs) && i.issue_price ? '₹' + (Number(i.issue_price) + Number(gm.rs)) : '–', t('if the premium holds'))));
+    const hist = S.gmpHistoryOf(i);
+    if (hist.length >= 2) sec.append(el('div', null, el('div', { class: 'small ink2', text: t('Premium over the last {n} quotes', { n: Math.min(12, hist.length) }) }), sparkline(hist.slice(-12))));
+    const srcs = Array.isArray(gm.sources) ? gm.sources.filter(x => x && fin(x.rs)) : [];
+    if (srcs.length > 1) {
+      sec.append(el('div', { class: 'small ink2', text: t('Quotes from {n} sources (we use the middle one)', { n: srcs.length }) }));
+      sec.append(el('div', { class: 'src' }, ...srcs.map(x => el('div', { class: 'ln' }, el('span', { text: String(x.source || '').replace(/^www\./, '') }), el('span', { class: 'num', text: '₹' + x.rs + (x.as_of ? ' · ' + dshort(x.as_of) : '') })))));
+    }
+    return sec;
+  }
+  function sparkline(hist) {
+    const W = 320, H = 56, vals = hist.map(h => h.rs), lo = Math.min(0, ...vals), hi = Math.max(1, ...vals);
+    const sx = k => 4 + k * (W - 8) / Math.max(1, hist.length - 1), sy = v => H - 6 - (v - lo) * (H - 12) / (hi - lo || 1);
+    const d = vals.map((v, k) => (k ? 'L' : 'M') + sx(k).toFixed(1) + ' ' + sy(v).toFixed(1)).join(' ');
+    return svgEl('svg', { class: 'spark', viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: 'none', role: 'img', 'aria-label': t('Premium went from ₹{a} to ₹{b}', { a: vals[0], b: vals[vals.length - 1] }) },
+      lo < 0 ? svgEl('line', { x1: 0, x2: W, y1: sy(0), y2: sy(0), stroke: 'var(--axis)', 'stroke-dasharray': '3 3' }) : null,
+      svgEl('path', { d, fill: 'none', stroke: 'var(--brand)', 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' }),
+      svgEl('circle', { cx: sx(vals.length - 1), cy: sy(vals[vals.length - 1]), r: 4, fill: 'var(--brand)' }));
+  }
+  function issueSection(r) {
+    const i = r.eff, sec = section(t('About the issue')), m = el('div', { class: 'money' });
+    const cr = v => (fin(v) ? '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 }) + ' ' + t('cr') : null);
+    if (i.price_band_low && i.price_band_high && i.price_band_low !== i.price_band_high) m.append(line(t('Price band'), '₹' + i.price_band_low + ' – ₹' + i.price_band_high));
+    if (i.issue_price) m.append(line(t('Issue price'), '₹' + i.issue_price));
+    if (i.lot_size) m.append(line(termBtn('lot', t('Lot size')), i.lot_size + ' ' + t('shares')));
+    if (cr(i.issue_size_cr)) m.append(line(t('Total issue size'), cr(i.issue_size_cr)));
+    if (cr(i.fresh_issue_cr)) m.append(line(termBtn('fresh', t('New money for the company')), cr(i.fresh_issue_cr)));
+    if (cr(i.ofs_cr)) m.append(line(termBtn('ofs', t('Existing owners selling')), cr(i.ofs_cr)));
+    if (i.anchor && cr(i.anchor.amount_cr)) m.append(line(termBtn('anchor', t('Raised from anchor investors')), cr(i.anchor.amount_cr)));
+    if (i.anchor && isIso(i.anchor.lockin_50pct_date)) m.append(line(t('Anchor lock-in ends (half / rest)'), dshort(i.anchor.lockin_50pct_date) + ' / ' + dshort(i.anchor.lockin_rest_date)));
+    if (i.face_value) m.append(line(t('Face value'), '₹' + i.face_value));
+    if (i.registrar && i.registrar.name) m.append(line(t('Registrar'), i.registrar.name));
+    if (!m.children.length) m.append(el('p', { class: 'muted', text: t('Details not captured yet.') }));
+    sec.append(m);
+    return sec;
+  }
+  function whatIfSection(r) {
+    const i = r.ipo, sub = i.subscription || {}, e = UI.edits[i.id] || {};
+    const det = el('details', { class: 'more' }, el('summary', null, t('Try your own numbers')));
+    const box = el('div', { class: 'stack', style: 'margin-top:10px' });
+    box.append(el('p', { class: 'small ink2', text: t('Heard a newer premium, or the latest demand figures? Type them and everything above updates. Only on this phone.') }));
+    const inp = (k, lab, v) => { const n = el('input', { type: 'number', inputmode: 'decimal', step: 'any', value: fin(v) ? String(v) : '', placeholder: '–' }); return [n, el('label', { class: 'field' }, lab, n)]; };
+    const [iG, lG] = inp('gmp', t('Premium ₹ per share'), e.gmp_rs !== undefined ? e.gmp_rs : (i.gmp && i.gmp.rs));
+    const [iQ, lQ] = inp('qib', t('Institutions (x)'), e.qib !== undefined ? e.qib : sub.qib);
+    const [iN, lN] = inp('nii', t('Wealthy (x)'), e.nii !== undefined ? e.nii : sub.nii);
+    const [iR, lR] = inp('retail', t('Retail (x)'), e.retail !== undefined ? e.retail : sub.retail);
+    box.append(el('div', { class: 'whatif' }, lG, lQ, lN, lR));
+    const num = n => (n.value === '' ? undefined : Number(n.value));
+    const differs = (v, o) => v !== undefined && !(fin(o) && Number(o) === v);
+    box.append(el('div', { class: 'btn-row' },
+      el('button', { type: 'button', class: 'btn primary', onclick: () => { const ed = {}; const sg = i.gmp || {}; if (differs(num(iG), sg.rs)) ed.gmp_rs = num(iG); if (differs(num(iQ), sub.qib)) ed.qib = num(iQ); if (differs(num(iN), sub.nii)) ed.nii = num(iN); if (differs(num(iR), sub.retail)) ed.retail = num(iR); if (Object.keys(ed).length) UI.edits[i.id] = ed; else delete UI.edits[i.id]; computeAll(); renderIpo(); toast(t('Updated with your numbers')); } }, t('Recalculate')),
+      UI.edits[i.id] ? el('button', { type: 'button', class: 'btn', onclick: () => { delete UI.edits[i.id]; computeAll(); renderIpo(); } }, t('Reset')) : null));
+    if (UI.edits[i.id]) det.open = true;
+    det.append(box);
+    return el('div', { class: 'card' }, det);
+  }
+  function sourcesSection(i) {
+    const srcs = i.sources || {}, seen = new Map();
+    for (const k of Object.keys(srcs)) { try { const u = new URL(String(srcs[k])); if (/^https?:$/.test(u.protocol)) { const hn = u.hostname.replace(/^www\./, ''); if (!seen.has(hn)) seen.set(hn, u.href); } } catch (e) { /* not a URL */ } }
+    const gm = (i.gmp && Array.isArray(i.gmp.sources)) ? i.gmp.sources : [];
+    for (const x of gm) { try { if (x.url) { const u = new URL(x.url); const hn = u.hostname.replace(/^www\./, ''); if (!seen.has(hn)) seen.set(hn, u.href); } } catch (e) { /* ignore */ } }
+    const sec = section(t('Where these numbers come from'));
+    if (!seen.size) { sec.append(el('p', { class: 'muted small', text: t('Exchange filings and public IPO trackers.') })); return sec; }
+    const row = el('div', { class: 'btn-row' });
+    for (const [hn, href] of seen) row.append(el('a', { class: 'btn sm', href, target: '_blank', rel: 'noopener', onclick: (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', href); } } }, icon('ext'), hn));
+    sec.append(row);
+    sec.append(el('p', { class: 'tiny muted', text: t('Data as of {d}. Something looks wrong? Tell us from More → Get help.', { d: D.live.generated_at ? new Date(D.live.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–' }) }));
+    return sec;
+  }
+  function toggleWatch(id) {
+    if (WATCH.has(id)) { WATCH.delete(id); toast(t('Removed from your watchlist')); }
+    else { WATCH.add(id); toast(has('setWatchlist') ? t('Added. We will remind you before bidding closes.') : t('Added to your watchlist')); }
+    const ids = [...WATCH]; store('watch', ids); call('setWatchlist', JSON.stringify(ids));
   }
 
   // ------------------------------------------------------------- planner ---
-  let plannerInputsSet = false;
-  function writePlannerInputs() {
-    setTimeout(syncSelects, 0);
-    const p = state.plan, c = state.costs;
-    $('#p-capital').value = p.capital; $('#p-accounts').value = p.accounts; $('#p-target').value = p.target; $('#p-broker').value = p.broker;
-    $('#c-brok').value = c.brokerage_pct; $('#c-min').value = c.brokerage_min; $('#c-cap').value = c.brokerage_cap; $('#c-dp').value = c.dp_charge; $('#c-stt').value = c.stt_pct; $('#c-tax').value = c.stcg_tax_pct; $('#c-cess').value = c.cess_pct;
+  function stepper(value, min, max, onChange, label) {
+    const inp = el('input', { type: 'number', inputmode: 'numeric', min, max, value: String(value), 'aria-label': label });
+    const set = (v) => { v = Math.min(max, Math.max(min, Math.round(Number(v) || min))); inp.value = String(v); onChange(v); };
+    inp.addEventListener('change', () => set(inp.value));
+    return el('div', { class: 'stepper' }, el('button', { type: 'button', 'aria-label': t('Fewer'), onclick: () => set(Number(inp.value) - 1) }, '−'), inp, el('button', { type: 'button', 'aria-label': t('More'), onclick: () => set(Number(inp.value) + 1) }, '+'));
   }
-  function renderPlanner() {
-    const p = state.plan;
-    if (!plannerInputsSet) { writePlannerInputs(); plannerInputsSet = true; }
-    const out = $('#plan-result'); out.replaceChildren();
-    const ttl = $('#plan-title'); if (ttl) ttl.textContent = p.target > 0 ? 'Can this make ' + inr(p.target) + ' a month?' : 'What is this batch worth?';
-    const cands = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null && r.ipo.issue_price && r.ipo.lot_size);
-    if (!cands.length) { out.append(el('p', { class: 'muted', text: 'Nothing is open or upcoming with a usable read right now, so there is nothing to plan. Issues whose bidding has closed cannot be applied to.' })); return; }
-    if (p.picked === null) p.picked = cands.filter(r => ['apply', 'lean'].includes(r.score.verdict.tier)).map(r => r.ipo.id);
-    const picked = new Set(p.picked);
-    const accounts = Math.max(1, Math.round(p.accounts || 1));
-    let totalEv = 0, totalBlock = 0, pNone = 1, rows = [], posEv = 0, posBlock = 0;
-    for (const r of cands) {
-      const inv = r.score.ev.invested_if_allotted || r.ipo.issue_price * r.ipo.lot_size;
-      const s = r.score;
-      const pa = s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined ? s.allotment.p_min_lot : null;
-      const evIf = s.ev.ev_if_allotted !== null && s.ev.ev_if_allotted !== undefined ? s.ev.ev_if_allotted : S.netProfitOnSale(inv, inv * (1 + s.gain.mean / 100), state.costs).net;
-      const ev1 = pa === null ? null : pa * evIf;
-      const on = picked.has(r.ipo.id);
-      if (on) { totalBlock += inv * accounts; if (ev1 !== null) { totalEv += ev1 * accounts; pNone *= Math.pow(1 - pa, accounts); if (ev1 > 0) { posEv += ev1 * accounts; posBlock += inv * accounts; } } }
-      rows.push({ r, inv, pa, evIf, ev1, on });
+  function moneyInput(value, onChange, label) {
+    const inp = el('input', { type: 'number', inputmode: 'numeric', min: 0, step: 1000, value: String(value), 'aria-label': label });
+    inp.addEventListener('input', () => { if (inp.value !== '') onChange(Math.max(0, Number(inp.value) || 0)); });
+    return inp;
+  }
+  function savePlan() { store('plan', PLAN); }
+  function renderPlan() {
+    const host = $('#screen-plan'); host.replaceChildren();
+    host.append(el('div', { class: 'hello' }, el('h1', { text: t('Planner') }), el('p', { class: 'lede', text: t('How much can IPOs realistically make you? Tell us your budget and how many demat accounts your family can apply from.') })));
+    const inputs = el('div', { class: 'card stack' });
+    inputs.append(el('div', { class: 'whatif' },
+      el('label', { class: 'field' }, t('Money you can keep blocked (₹)'), moneyInput(PLAN.capital, v => { PLAN.capital = v; savePlan(); renderPlanResult(); }, t('Money you can keep blocked'))),
+      el('label', { class: 'field' }, t('Monthly target (₹)'), moneyInput(PLAN.target, v => { PLAN.target = v; savePlan(); renderPlanResult(); }, t('Monthly target'))),
+      el('div', { class: 'field' }, el('span', null, t('Demat accounts'), ' ', el('span', { class: 'hint', text: t('(yours + family, each with its own PAN)') })), stepper(PLAN.accounts, 1, 10, v => { PLAN.accounts = v; savePlan(); renderPlanResult(); }, t('Demat accounts'))),
+      el('div', { class: 'field' }, t('Your broker'), el('button', { type: 'button', class: 'btn', style: 'justify-content:space-between', onclick: () => pickSheet(t('Your broker'), Object.keys(BROKERS).map(k => [k, BROKERS[k].name === 'Custom' ? t('Custom charges') : BROKERS[k].name]), PLAN.broker, (v) => { PLAN.broker = v; COSTS = costsFor(v); savePlan(); computeAll(); renderPlan(); }) }, (BROKERS[PLAN.broker] || BROKERS.custom).name, icon('chev')))));
+    inputs.append(costsEditor());
+    host.append(inputs);
+    host.append(el('div', { id: 'plan-result', class: 'stack-lg' }));
+    renderPlanResult();
+    host.append(footer());
+  }
+  function costsEditor() {
+    const det = el('details', { class: 'more' }, el('summary', null, t('Charges and tax used (edit if yours differ)')));
+    const grid = el('div', { class: 'whatif', style: 'margin-top:10px' });
+    const fields = [['brokerage_pct', 'Brokerage %'], ['brokerage_min', 'Brokerage min ₹'], ['brokerage_cap', 'Brokerage cap ₹'], ['dp_charge', 'DP charge ₹'], ['stt_pct', 'STT %'], ['stcg_tax_pct', 'Short-term gains tax %'], ['cess_pct', 'Cess on tax %']];
+    for (const [k, lab] of fields) {
+      const n = el('input', { type: 'number', inputmode: 'decimal', step: 'any', min: 0, value: String(COSTS[k]) });
+      n.addEventListener('change', () => { COSTS[k] = Number(n.value) || 0; PLAN.broker = 'custom'; savePlan(); const cc = {}; for (const [kk] of fields) cc[kk] = COSTS[kk]; store('customCosts', cc); computeAll(); renderPlanResult(); });
+      grid.append(el('label', { class: 'field' }, t(lab), n));
     }
-    let grossSum = 0, costSum = 0;
-    for (const q of rows) if (q.on && q.r.score.gain) { const res = S.netProfitOnSale(q.inv, q.inv * (1 + q.r.score.gain.mean / 100), state.costs); grossSum += res.gross * accounts; costSum += (res.charges + res.tax) * accounts; }
-    const overCap = totalBlock > p.capital;
-    const hero = el('div', { class: 'hero num ' + (totalEv > 0 ? 'pos' : 'neg'), text: inr(totalEv, { plus: true }) });
-    out.append(el('div', { class: 'eyebrow', text: 'Average profit in hand, after charges and tax, from the ticked IPOs across ' + accounts + ' account' + (accounts > 1 ? 's' : '') }));
-    out.append(hero);
-    const anyUnknown = rows.some(q => q.on && q.pa === null);
-    const need = posEv > 0 ? p.target / (posEv / Math.max(1, posBlock)) : null;
-    const vs = [];
-    vs.push('Against a ' + inr(p.target) + ' monthly target: ' + (totalEv >= p.target ? 'on paper this batch gets there.' : 'this batch covers ' + Math.round(100 * totalEv / Math.max(1, p.target)) + '% of it.'));
-    if (need !== null && isFinite(need)) vs.push('At these odds you would need about ' + inrShort(need) + ' blocked per round to expect ' + inr(p.target) + ', because the share lottery, not the premium, sets the ceiling.');
-    vs.push('Blocked capital: ' + inr(totalBlock) + (overCap ? ', more than the ' + inr(p.capital) + ' you set.' : ' of your ' + inr(p.capital) + '.'));
-    if (!anyUnknown && totalBlock > 0) vs.push('Chance that none of these applications gets any shares at all: ' + pct0(pNone) + '.');
-    if (anyUnknown) vs.push('Some ticked IPOs have no demand figures yet, so their odds of shares (and their profit) are not counted.');
-    if (costSum > 0) vs.push('If every ticked application got shares, broker and exchange charges plus ' + state.costs.stcg_tax_pct + '% tax would take ' + inr(costSum) + ' out of ' + inr(grossSum, { plus: true }) + ' profit; the figures above are after that.');
-    out.append(el('p', { class: 'vs', text: vs.join(' ') }));
-    const t = el('table', { class: 'plan sticky2' });
-    t.append(el('thead', null, el('tr', null, el('th', { text: '' }), el('th', { text: 'IPO' }), el('th', { class: 'r', text: 'Money blocked' }), el('th', { class: 'r', text: 'Odds of shares' }), el('th', { class: 'r', text: 'If you get shares' }), el('th', { class: 'r', text: 'On average' }), el('th', { text: 'Verdict' }))));
-    const tb = el('tbody');
-    for (const q of rows) {
-      const cb = el('input', { type: 'checkbox', id: 'pk-' + q.r.ipo.id, 'aria-label': 'Include ' + q.r.ipo.name });
-      cb.checked = q.on;
-      cb.addEventListener('change', () => { const set = new Set(state.plan.picked); if (cb.checked) set.add(q.r.ipo.id); else set.delete(q.r.ipo.id); state.plan.picked = [...set]; store('plan', state.plan); keepFocus(renderPlanner); });
-      tb.append(el('tr', null, el('td', null, cb), el('td', null, q.r.ipo.name, ' ', el('span', { class: 'muted small', text: q.r.ipo.board === 'sme' ? 'SME' : '' })),
-        el('td', { class: 'r num', text: inr(q.inv) }), el('td', { class: 'r num', text: q.pa === null ? '?' : pct0(q.pa) }),
-        el('td', { class: 'r num ' + (q.evIf > 0 ? 'pos' : 'neg'), text: inr(q.evIf, { plus: true }) }), el('td', { class: 'r num', text: q.ev1 === null ? '?' : inr(q.ev1 * accounts, { plus: true }) }),
-        el('td', null, el('span', { class: 'verdict ' + q.r.score.verdict.tier, text: q.r.score.verdict.label }))));
-    }
-    t.append(tb);
-    t.append(el('tfoot', null, el('tr', null, el('td', { colspan: 2, text: 'Ticked total' }), el('td', { class: 'r num', text: inr(totalBlock) }), el('td'), el('td'), el('td', { class: 'r num', text: inr(totalEv, { plus: true }) }), el('td'))));
-    out.append(hscroll(t));
-    out.append(el('p', { class: 'small muted', text: '“Worth on average” is what many such applications would earn per application, not a promise for this one. Most months you will get shares in zero or one IPO; the profit arrives in lumps.' }));
+    det.append(grid, el('p', { class: 'tiny muted', style: 'margin-top:8px', text: t('Your inputs stay on this phone.') }));
+    return det;
   }
-  function bindPlanner() {
-    const upd = () => {
-      // an empty box is someone mid-edit: leave the stored value alone until a number arrives
-      const cap = $('#p-capital').value, acc = $('#p-accounts').value, tgt = $('#p-target').value;
-      if (cap !== '') state.plan.capital = Math.max(0, Number(cap) || 0);
-      if (acc !== '') state.plan.accounts = Math.min(10, Math.max(1, Math.round(Number(acc) || 1)));
-      if (tgt !== '') state.plan.target = Math.max(0, Number(tgt) || 0);
-      store('plan', state.plan); renderPlanner();
-    };
-    for (const id of ['#p-capital', '#p-accounts', '#p-target']) $(id).addEventListener('input', upd);
-    $('#p-accounts').addEventListener('change', () => { $('#p-accounts').value = state.plan.accounts; });
-    $('#p-broker').addEventListener('change', () => { state.plan.broker = $('#p-broker').value; state.costs = costsFor(state.plan.broker); store('plan', state.plan); writePlannerInputs(); computeAll(); keepFocus(renderAll); });
-    const costUpd = () => {
-      const c = state.costs;
-      c.brokerage_pct = Number($('#c-brok').value) || 0; c.brokerage_min = Number($('#c-min').value) || 0; c.brokerage_cap = Number($('#c-cap').value) || 0; c.dp_charge = Number($('#c-dp').value) || 0;
-      c.stt_pct = Number($('#c-stt').value) || 0; c.stcg_tax_pct = Number($('#c-tax').value) || 0; c.cess_pct = Number($('#c-cess').value) || 0;
-      state.plan.broker = 'custom'; $('#p-broker').value = 'custom'; syncSelects(); store('plan', state.plan);
-      store('customCosts', { brokerage_pct: c.brokerage_pct, brokerage_min: c.brokerage_min, brokerage_cap: c.brokerage_cap, dp_charge: c.dp_charge, stt_pct: c.stt_pct, stcg_tax_pct: c.stcg_tax_pct, cess_pct: c.cess_pct });
-      computeAll(); keepFocus(renderAll);
-    };
-    for (const id of ['#c-brok', '#c-min', '#c-cap', '#c-dp', '#c-stt', '#c-tax', '#c-cess']) $(id).addEventListener('change', costUpd);
-  }
-
-  // --------------------------------------------------------- calibration ---
-  const tip = $('#tip');
-  function showTip(evt, lines) { tip.replaceChildren(); for (let i = 0; i < lines.length; i++) tip.append(i ? el('div', { text: lines[i] }) : el('b', { text: lines[i] })); tip.hidden = false; const pad = 12; let x0 = evt.clientX + pad, y0 = evt.clientY + pad; tip.style.left = Math.min(x0, window.innerWidth - 250) + 'px'; tip.style.top = Math.min(y0, window.innerHeight - 80) + 'px'; }
-  function hideTip() { tip.hidden = true; }
-
-  function chartGmp() {
-    const host = $('#chart-gmp'); host.replaceChildren();
-    host.append(el('h3', { text: 'What the premium promised vs what listing day delivered' }));
-    host.append(el('p', { class: 'small muted', text: 'Each dot is a past IPO: across, the unofficial premium before listing; up, the actual first-day gain. Dots below the diagonal did worse than the premium promised.' }));
-    const pts = HIST.filter(h => h.gmp_pct !== null && h.gmp_pct !== undefined && h.gain_pct !== null && h.gain_pct !== undefined && (h.basis === 'close' || h.basis === 'reported'));
-    const skipped = HIST.filter(h => h.gmp_pct !== null && h.gmp_pct !== undefined && h.gain_pct !== null && h.gain_pct !== undefined).length - pts.length;
-    if (pts.length < 10) { host.append(el('p', { class: 'muted small', text: 'Not enough past listings with both a recorded premium and a listing-day close to draw this yet' + (skipped ? ' (' + skipped + ' more have only a debut price).' : '.') })); return; }
-    const W = 520, H = 340, m = { t: 12, r: 14, b: 38, l: 46 };
-    const xs = pts.map(p => p.gmp_pct), ys = pts.map(p => p.gain_pct);
-    const xlo = Math.max(-30, Math.min(...xs) - 5), xhi = Math.min(160, Math.max(...xs) + 5);
-    const ylo = Math.max(-60, Math.min(...ys) - 5), yhi = Math.min(200, Math.max(...ys) + 5);
-    const sx = v => m.l + (v - xlo) / (xhi - xlo) * (W - m.l - m.r), sy = v => H - m.b - (v - ylo) / (yhi - ylo) * (H - m.t - m.b);
-    const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Scatter of pre-listing premium percent against actual listing-day gain percent for ' + pts.length + ' past IPOs' });
-    const ticks = (lo, hi) => { const step = (hi - lo) > 150 ? 50 : (hi - lo) > 60 ? 20 : 10; const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) out.push(v); return out; };
-    for (const v of ticks(ylo, yhi)) { svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(v), y2: sy(v), stroke: 'var(--grid)', 'stroke-width': 1 })); svg.append(svgEl('text', { x: m.l - 6, y: sy(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, v + '%')); }
-    for (const v of ticks(xlo, xhi)) { svg.append(svgEl('text', { x: sx(v), y: H - m.b + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, v + '%')); }
-    svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(0), y2: sy(0), stroke: 'var(--axis)', 'stroke-width': 1 }));
-    svg.append(svgEl('line', { x1: sx(0), x2: sx(0), y1: m.t, y2: H - m.b, stroke: 'var(--axis)', 'stroke-width': 1 }));
-    // y = x reference: "GMP exactly right"
-    const dx0 = Math.max(xlo, ylo), dx1 = Math.min(xhi, yhi);
-    svg.append(svgEl('line', { x1: sx(dx0), y1: sy(dx0), x2: sx(dx1), y2: sy(dx1), stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '4 4' }));
-    svg.append(svgEl('text', { x: sx(dx1) - 4, y: sy(dx1) + 12, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)' }, 'premium exactly right'));
-    svg.append(svgEl('text', { x: (m.l + W - m.r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-2)' }, 'Unofficial premium the day before listing, % of issue price'));
-    svg.append(svgEl('text', { x: 12, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-2)', transform: 'rotate(-90 12 ' + ((m.t + H - m.b) / 2) + ')' }, 'listing-day close vs issue price'));
-    const g = svgEl('g');
-    for (const p of pts) {
-      const c = svgEl('circle', { cx: sx(Math.min(xhi, Math.max(xlo, p.gmp_pct))), cy: sy(Math.min(yhi, Math.max(ylo, p.gain_pct))), r: 4, fill: p.board === 'sme' ? 'var(--series-sme)' : 'var(--series-main)', stroke: 'var(--surface)', 'stroke-width': 2, 'fill-opacity': 0.85 });
-      g.append(c);
-    }
-    svg.append(g);
-    // nearest-point hover
-    svg.addEventListener('pointermove', (evt) => {
-      const r = svg.getBoundingClientRect(); const px = (evt.clientX - r.left) * W / r.width, py = (evt.clientY - r.top) * H / r.height;
-      let best = null, bd = 1e9;
-      for (const p of pts) { const d = Math.hypot(sx(Math.min(xhi, Math.max(xlo, p.gmp_pct))) - px, sy(Math.min(yhi, Math.max(ylo, p.gain_pct))) - py); if (d < bd) { bd = d; best = p; } }
-      if (best && bd < 24) showTip(evt, [best.name, (best.board === 'sme' ? 'SME' : 'Mainboard') + ' · listed ' + dlong(best.listing_date), 'premium ' + pct(best.gmp_pct, 1) + ', listed ' + pct(best.gain_pct, 1)]); else hideTip();
-    });
-    svg.addEventListener('pointerleave', hideTip);
-    host.append(svg);
-    host.append(el('div', { class: 'legend' }, el('span', null, el('i', { style: 'background:var(--series-main)' }), 'Mainboard'), el('span', null, el('i', { style: 'background:var(--series-sme)' }), 'SME'), el('span', { class: 'muted', text: pts.length + ' listings with a recorded close' + (skipped ? '; ' + skipped + ' with only a debut price left out' : '') })));
-    const above = pts.filter(p => p.gmp_pct > 0 && p.gain_pct <= 0).length, posG = pts.filter(p => p.gmp_pct > 0).length;
-    host.append(el('p', { class: 'small ink2', text: 'Of the ' + posG + ' IPOs whose premium was positive, ' + above + ' (' + Math.round(100 * above / Math.max(1, posG)) + '%) still closed at or below the issue price on listing day. A positive premium is a hint, not a promise.' }));
-    host.append(tableView('Table: premium vs listing gain', ['IPO', 'Board', 'Listed', 'Premium %', 'Gain %'], pts.slice().sort((a, b) => (b.listing_date || '') < (a.listing_date || '') ? -1 : 1).map(p => [p.name, p.board, p.listing_date || '', p.gmp_pct.toFixed(1), p.gain_pct.toFixed(1)])));
-  }
-  function chartRel() {
-    const host = $('#chart-rel'); host.replaceChildren();
-    host.append(el('h3', { text: 'When the model says 70%, does it happen 70% of the time?' }));
-    host.append(el('p', { class: 'small muted', text: 'The honesty check. Dots on the diagonal mean the chances are trustworthy; above it the model is too modest, below it too confident.' }));
-    if (!PARAMS || !PARAMS.metrics || !PARAMS.metrics.reliability.length) { host.append(el('p', { class: 'muted small', text: PARAMS && PARAMS.status === 'prior' ? 'This chart appears once the model has been fitted to at least ' + (PARAMS.min_rows_to_calibrate || 120) + ' past listings. Until then the chances come from starting weights and have not been checked against outcomes, which is why the app calls them first estimates.' : 'No calibration report in this snapshot.' })); return; }
-    const rel = PARAMS.metrics.reliability;
-    const W = 520, H = 340, m = { t: 12, r: 14, b: 38, l: 46 };
-    const sx = v => m.l + v * (W - m.l - m.r), sy = v => H - m.b - v * (H - m.t - m.b);
-    const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Reliability diagram: predicted probability against observed share of IPOs that listed above issue price' });
-    for (let v = 0; v <= 1.0001; v += 0.2) { svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(v), y2: sy(v), stroke: 'var(--grid)' })); svg.append(svgEl('text', { x: m.l - 6, y: sy(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, Math.round(v * 100) + '%')); svg.append(svgEl('text', { x: sx(v), y: H - m.b + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, Math.round(v * 100) + '%')); }
-    svg.append(svgEl('line', { x1: sx(0), y1: sy(0), x2: sx(1), y2: sy(1), stroke: 'var(--muted)', 'stroke-dasharray': '4 4' }));
-    svg.append(svgEl('text', { x: (m.l + W - m.r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-2)' }, 'predicted chance of a listing gain (out-of-sample)'));
-    svg.append(svgEl('text', { x: 12, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-2)', transform: 'rotate(-90 12 ' + ((m.t + H - m.b) / 2) + ')' }, 'share that actually listed up'));
-    const maxN = Math.max(...rel.map(r => r.n));
-    const path = rel.map((r, i) => (i ? 'L' : 'M') + sx(r.pred).toFixed(1) + ' ' + sy(r.obs).toFixed(1)).join(' ');
-    svg.append(svgEl('path', { d: path, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
-    for (const r of rel) {
-      const c = svgEl('circle', { cx: sx(r.pred), cy: sy(r.obs), r: 4 + 6 * Math.sqrt(r.n / maxN), fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2 });
-      c.addEventListener('pointermove', (evt) => showTip(evt, [Math.round(r.obs * 100) + '% listed up', 'when the model said ' + Math.round(r.pred * 100) + '%', r.n + ' IPOs in this bin']));
-      c.addEventListener('pointerleave', hideTip);
-      svg.append(c);
-    }
-    host.append(svg);
-    const mt = PARAMS.metrics;
-    host.append(el('p', { class: 'small ink2', text: 'Dots on the dashed line mean the probabilities are honest. Dot size is the number of IPOs in the bin. Expected calibration error ' + (mt.ece * 100).toFixed(1) + ' points; every number here is from 5-fold cross-validation, so the model never saw the IPO it was scoring.' }));
-    host.append(tableView('Table: reliability bins', ['Predicted', 'Observed', 'IPOs'], rel.map(r => [Math.round(r.pred * 100) + '%', Math.round(r.obs * 100) + '%', String(r.n)])));
-  }
-  function tableView(title, head, rows) {
-    const d = el('details', { class: 'tv' }, el('summary', { text: title }));
-    const t = el('table', { class: 'data' });
-    t.append(el('thead', null, el('tr', null, ...head.map(h => el('th', { text: h })))));
-    const tb = el('tbody'); for (const r of rows) tb.append(el('tr', null, ...r.map(c => el('td', { class: 'num', text: c })))); t.append(tb);
-    d.append(hscroll(t, 'max-height:260px;overflow-y:auto'));
-    return d;
-  }
-  function bucketTable() {
-    const host = $('#bucket-table'); host.replaceChildren();
-    host.append(el('h3', { text: 'Past listings, grouped by their premium' }));
-    host.append(el('p', { class: 'small muted', text: 'No model here, just counting. Find the row that matches an IPO’s premium and see how many like it listed up.' }));
-    if (!PARAMS) return;
-    const t = el('table', { class: 'data' });
-    t.append(el('thead', null, el('tr', null, el('th', { text: 'Premium before listing' }), el('th', { text: 'Board' }), el('th', { text: 'IPOs' }), el('th', { text: 'Listed up' }), el('th', { text: 'Typical gain' }), el('th', { text: 'Bad case (worst 1 in 10)' }))));
-    const tb = el('tbody');
-    for (const r of PARAMS.empirical) { if (!r.n) continue; tb.append(el('tr', null, el('td', { text: r.bucket }), el('td', { text: r.board === 'sme' ? 'SME' : 'Mainboard' }), el('td', { class: 'num', text: String(r.n) }), el('td', { class: 'num', text: r.n_up + ' (' + Math.round(100 * r.p_up) + '%)' }), el('td', { class: 'num', text: pct(r.median_gain, 0) }), el('td', { class: 'num', text: pct(r.p10_gain, 0) }))); }
-    t.append(tb);
-    host.append(hscroll(t));
-    host.append(el('p', { class: 'small muted', text: 'The “chance of a listing gain” in the pipeline should roughly agree with these counts. If it does not, trust neither until there is more data.' }));
-  }
-  function coefTable() {
-    const host = $('#coef-table'); host.replaceChildren();
-    host.append(el('h3', { text: 'What moves the chance up or down' }));
-    if (!PARAMS) return;
-    const NAMES = { gmp_pct: 'Premium, % of issue price', gmp_missing: 'No premium quote at all', log_sub_qib: 'Institutional demand', log_sub_nii: 'Wealthy-investor demand', log_sub_retail: 'Retail demand', sub_missing: 'No demand figures', is_sme: 'SME issue', log_issue_size: 'Issue size', nifty_1m_pct: 'Nifty, past month', gmp_trend_pct: 'Premium trend, last few quotes' };
-    const rows = PARAMS.coef_table.slice().sort((a, b) => Math.abs(b.coef_std) - Math.abs(a.coef_std));
-    const maxAbs = Math.max(...rows.map(r => Math.abs(r.coef_std)), 0.01);
-    const box = el('div', { class: 'coef' });
-    for (const r of rows) {
-      const w = Math.abs(r.coef_std) / maxAbs * 50;
-      const bar = el('div', { class: 'bar' }, el('div', { class: 'z' }), el('i', { style: r.coef_std >= 0 ? 'left:50%;width:' + w + '%' : 'left:' + (50 - w) + '%;width:' + w + '%' }));
-      box.append(el('div', { class: 'r' }, el('span', { text: NAMES[r.feature] || r.feature }), bar, el('span', { class: 'num', style: 'text-align:right', text: (r.coef_std >= 0 ? '+' : '') + r.coef_std.toFixed(2) })));
-    }
-    host.append(box);
-    host.append(el('p', { class: 'small muted', text: PARAMS.status === 'calibrated'
-      ? 'Bars to the right raise the chance, bars to the left lower it; longer means stronger. (For the technically minded: effect on the log-odds per one standard deviation of the input, others held fixed, ridge-shrunk toward the prior weights.)'
-      : 'Starting weights, not yet fitted to data. They encode the usual order of importance: the premium first, institutional demand second. Bar lengths are not comparable across rows here; they will be once the model is fitted.' }));
-  }
-  function methodText() {
-    const host = $('#method-body'); host.replaceChildren();
-    const srcs = (LIVE.sources || []).filter(s => s.ok).map(s => s.url);
-    const hosts = [...new Set(srcs.map(u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }))];
-    host.append(el('div', { class: 'note' }, el('b', null, 'This is a decision aid, not a tip sheet. '), 'A 75% chance of a gain is a 25% chance of a loss. Apply only with money that can stay stuck if the listing goes wrong, never with borrowed money, and never to an issue you would not hold for a few weeks.'));
-    host.append(el('h3', { text: 'In plain words' }));
-    host.append(el('ul', null,
-      el('li', null, 'The app looks at three things for every IPO: the unofficial premium dealers are paying before listing, how many times over each investor group has bid, and the market mood. From past listings it has learned how those three turned into first-day gains, and it applies that to each new IPO.'),
-      el('li', null, 'It then counts the lottery. In a popular IPO most applicants get no shares, so the app multiplies the profit by your chance of getting shares before calling anything “worth it”.'),
-      el('li', null, 'Broker charges and tax are deducted from every rupee figure shown as “in hand”.'),
-      el('li', null, 'It tells you when it is unsure: “Too early”, “Not enough data”, and the gamble flags are there so you do not block money on a guess.')));
-    host.append(el('h3', { text: 'How the chance of a listing gain is computed (technical)' }));
-    host.append(el('ul', null,
-      el('li', null, 'A ridge-penalised logistic regression predicts whether an IPO closes above its issue price on listing day. Inputs: GMP as a percentage of the issue price, its recent trend, the QIB, NII and retail subscription multiples, the board (mainboard or SME), the issue size and the Nifty 50 one-month move. Missing inputs are signalled to the model rather than filled with guesses.'),
-      el('li', null, 'A second regression predicts the size of the gain; the P10–P90 band is built from that model’s out-of-sample errors, kept separate for SME and mainboard because SME outcomes are far wider.'),
-      el('li', null, 'The “past listings by GMP bucket” table is the model-free cross-check. If the two disagree badly, trust neither until there is more data.'),
-      el('li', null, 'Every quality figure (AUC, Brier, calibration error) is 5-fold cross-validated. The fit is refreshed each time the history grows.')));
-    host.append(el('h3', { text: 'Allotment and what one application is worth' }));
-    host.append(el('ul', null,
-      el('li', null, 'Retail applications are capped at ₹2 lakh. When the retail book is oversubscribed, SEBI’s rule gives every applicant an equal shot at exactly one minimum lot by computerised lottery, so the chance is roughly 1 ÷ (retail times subscribed), whether you bid one lot or ten. Bidding more lots only helps when the book is under-subscribed.'),
-      el('li', null, 'Expected value of an application = chance of allotment × net profit on one lot at the model’s mean gain. Net profit deducts brokerage, STT (0.1% on a delivery sell), exchange and SEBI charges, GST, the depository charge per sell, and short-term capital gains tax at 20% plus cess. Change the broker preset to match yours.'),
-      el('li', null, 'Family members’ demat accounts each count as one application in their own name. Multiple applications from one PAN are rejected.')));
-    host.append(el('h3', { text: 'Verdict rules' }));
-    host.append(el('ul', null,
-      el('li', null, el('b', null, 'Apply'), ': chance of gain 75% or more, middle gain at least 5%, positive expected value, and no warnings. Mainboard only: an SME issue tops out at Lean apply because its outcomes are too wide for a full call.'),
-      el('li', null, el('b', null, 'Lean apply'), ': chance 60% or more with at most one warning, or a strong GMP-only read before subscription data exists.'),
-      el('li', null, el('b', null, 'Coin flip'), ': 40–60%, or a stronger read pulled down by two or more warnings. A possible gamble.'),
-      el('li', null, el('b', null, 'Avoid'), ': under 40% or negative expected value. A sure gamble: the odds are against you before you start.'),
-      el('li', null, el('b', null, 'Too early'), ': bidding has not produced subscription figures yet and the GMP alone does not justify a lean; the chance shown is a first read, not a call. Decide on the last bidding day with the subscription numbers in.'),
-      el('li', null, 'Warnings fire on: GMP at or below zero or under 5%; a GMP that fell sharply in the last few sessions; retail or QIB under-subscription at close; institution-only books (QIB 20x+ with HNI or retail under 2x); any SME issue (and SME under 10x); issues under ₹50 crore; a GMP quote older than three days.')));
-    host.append(el('h3', { text: 'What this cannot know' }));
-    host.append(el('ul', null,
-      el('li', null, 'GMP is an unregulated, unofficial quote from grey-market dealers. It can be thin, stale, or steered, especially for small SME issues. It is an input here, not the answer. The record: in 2025, 56 of 101 mainboard IPOs listed below what their GMP implied; trackers that score it put the direction right roughly 72\u201383% of the time, with a median miss of about 3 percentage points on mainboard and about 20 on SME.'),
-      el('li', null, 'A market shock on listing day (a bad global open, a sector-wide sell-off) is not in any pre-listing number.'),
-      el('li', null, PARAMS && PARAMS.status === 'calibrated' ? 'The model is fitted on ' + PARAMS.n_rows + ' listings. That is enough to rank issues and to flag gambles; it is not enough to promise a specific gain on a specific IPO.' : 'The model is not yet fitted to data: it runs on documented prior weights checked against ' + (PARAMS ? PARAMS.n_rows : 0) + ' recent outcomes. It can rank issues and flag gambles; it cannot promise a specific gain on a specific IPO.'),
-      el('li', null, 'Expected profit is an average over many applications. Hitting a monthly figure depends mostly on how many accounts you apply from and how oversubscribed retail is, not on picking the single best IPO.')));
-    host.append(el('h3', { text: 'Data' }));
-    host.append(el('p', { class: 'small ink2', text: 'Snapshot generated ' + (LIVE.generated_at || 'unknown') + '. ' + (hosts.length ? 'Sources read this refresh: ' + hosts.join(', ') + '.' : 'Source list is in the repository’s data/ipos.json.') + ' Subscription figures are the exchanges’ published multiples; GMP figures are what the grey-market trackers published on the stated date.' }));
-  }
-
-  // -------------------------------------------------------- native bridge ---
-  const N = (typeof window.IpoNative === 'object' && window.IpoNative) ? window.IpoNative : null;
-  let STATUS = null;
-  function fmtTime(ms) { if (!ms) return null; const d = new Date(ms); return d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
-  function renderStatus() {
-    const host = $('#status .in'); host.replaceChildren();
-    const gen = LIVE.generated_at ? new Date(LIVE.generated_at) : null;
-    host.append(el('span', null, 'Data as of ', el('b', null, gen ? gen.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'unknown')));
-    if (STATUS) {
-      if (STATUS.downloaded_at) host.append(el('span', null, 'downloaded ', el('b', null, fmtTime(STATUS.downloaded_at))));
-      else host.append(el('span', { class: 'muted', text: 'bundled with the app' }));
-      if (STATUS.refreshing) host.append(el('span', { class: 'badge ok' }, el('i', { class: 'spin' }), 'refreshing'));
-      else if (STATUS.online === false) host.append(el('span', { class: 'badge off', text: 'offline, showing last data' }));
-      else if (STATUS.error) host.append(el('span', { class: 'badge err', text: 'last refresh failed' }));
-      if (STATUS.schedule_hours > 0) host.append(el('span', { class: 'muted small', text: 'auto every ' + STATUS.schedule_hours + ' h' }));
-    } else {
-      const ageH = gen ? (Date.now() - gen.getTime()) / 36e5 : null;
-      if (ageH !== null && ageH > 30) host.append(el('span', { class: 'badge off', text: Math.round(ageH / 24) + ' days old' }));
-    }
-    host.append(el('span', { class: 'spacer' }));
-    host.append(el('button', { class: 'btn primary small', type: 'button', id: 'st-refresh', onclick: doRefresh }, STATUS && STATUS.refreshing ? 'Refreshing…' : 'Refresh'));
-  }
-  function doRefresh() {
-    if (N) { try { N.refresh(); return; } catch (e) { /* fall through */ } }
-    const b = $('#st-refresh'); if (b) { b.textContent = 'Live refresh works in the app'; setTimeout(() => { b.textContent = 'Refresh'; }, 2200); }
-  }
-  window.ipoRadarStatus = function (st) { STATUS = st || null; renderStatus(); renderSettings(); };
-  if (N) { try { STATUS = JSON.parse(N.status()); } catch (e) { STATUS = null; } }
-
-  function shareText(text, subject) {
-    if (N) { try { N.shareText(text, subject); return; } catch (e) { /* fall through */ } }
-    if (navigator.share) { navigator.share({ title: subject, text }).catch(() => {}); return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => alertNote('Copied to clipboard')).catch(() => alertNote('Copy failed'));
-  }
-  function shareFile(name, mime, content) {
-    if (N) { try { N.shareFile(name, mime, content); return; } catch (e) { /* fall through */ } }
-    if (navigator.share && window.File) { try { const f = new File([content], name, { type: mime }); if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name }).catch(() => {}); return; } } catch (e) { /* fall through */ } }
-    shareText(content, name);
-  }
-  function alertNote(msg) { const n = $('#s-note'); if (n) { n.textContent = msg; setTimeout(() => { if (n.textContent === msg) n.textContent = ''; }, 2500); } }
-  function readText(r) {
-    const ipo = r.eff, s = r.score; const lines = [];
-    lines.push(ipo.name + ' (' + (ipo.board === 'sme' ? 'SME' : 'Mainboard') + ' IPO)');
-    if (ipo.open_date || ipo.close_date) lines.push('Bids ' + dlong(ipo.open_date) + ' to ' + dlong(ipo.close_date) + (ipo.listing_date ? ', lists ' + dlong(ipo.listing_date) : ''));
-    if (ipo.issue_price && ipo.lot_size) lines.push('Price ₹' + ipo.issue_price + ' × ' + ipo.lot_size + (s && s.ev && s.ev.min_lots > 1 ? ' × ' + s.ev.min_lots + ' lots' : '') + ' = ' + inr(s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : ipo.issue_price * ipo.lot_size));
-    const g = s && s.flags.includes('gmp_unquoted') ? null : S.gmpPctOf(ipo);
-    if (g !== null) lines.push('premium ' + pct(g, 1));
-    const sub = ipo.subscription || {};
-    if (sub.qib !== null && sub.qib !== undefined) lines.push('Subscription: QIB ' + x(sub.qib) + ', NII ' + x(sub.nii) + ', retail ' + x(sub.retail) + ', total ' + x(sub.total));
-    if (s && s.p_up !== null) lines.push('Chance of a listing gain: ' + pct0(s.p_up) + (s.gain ? ' · likely gain ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0) + ' (middle ' + pct(s.gain.p50, 0) + ')' : ''));
-    if (s && s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined) lines.push('Allotment odds: ' + (s.allotment.p_min_lot >= 0.999 ? 'full' : '1 in ' + (1 / s.allotment.p_min_lot).toFixed(1)));
-    if (s && s.ev.ev !== null && s.ev.ev !== undefined) lines.push('Worth per application after charges & tax: ' + inr(s.ev.ev, { plus: true }) + ' (if allotted ' + inr(s.ev.ev_if_allotted, { plus: true }) + ')');
-    if (s) { lines.push('Verdict: ' + s.verdict.label + (s.verdict.gamble ? ' (' + s.verdict.gamble + ' gamble)' : '')); for (const w of s.verdict.warnings) lines.push('⚠ ' + w); }
-    lines.push('— IPO Radar, data as of ' + (LIVE.generated_at || '').slice(0, 16).replace('T', ' ') + '. Not investment advice.');
-    return lines.join('\n');
-  }
-  function shortlistText() {
-    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
-      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up));
-    const lines = ['IPO Radar shortlist, ' + (LIVE.generated_at || '').slice(0, 10)];
-    for (const r of rows) lines.push('• ' + r.eff.name + (r.ipo.board === 'sme' ? ' (SME)' : '') + ': ' + r.score.verdict.label + ', ' + pct0(r.score.p_up) + ' chance' + (r.score.ev.ev !== null && r.score.ev.ev !== undefined ? ', worth ' + inr(r.score.ev.ev, { plus: true }) : '') + (r.ipo.status === 'open' ? ', closes ' + dshort(r.ipo.close_date) : ', opens ' + dshort(r.ipo.open_date)));
-    lines.push('Not investment advice. Chances come from a model on past listings; the premium is unofficial.');
-    return lines.join('\n');
-  }
-  function csvText() {
-    const esc = v => { const t = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
-    const head = ['name', 'board', 'status', 'open_date', 'close_date', 'listing_date', 'issue_price', 'lot_size', 'min_lots', 'gmp_rs', 'gmp_pct', 'sub_qib', 'sub_nii', 'sub_retail', 'sub_total', 'chance_of_gain', 'gain_p10', 'gain_p50', 'gain_p90', 'allotment_p', 'worth_per_application', 'verdict', 'gamble', 'listing_gain_pct'];
-    const out = [head.join(',')];
-    for (const r of SCORED) {
-      const i = r.eff, s = r.score || {}, g = i.gmp || {}, sub = i.subscription || {};
-      out.push([i.name, i.board, i.status, i.open_date, i.close_date, i.listing_date, i.issue_price, i.lot_size, i.min_lots, g.rs, S.gmpPctOf(i), sub.qib, sub.nii, sub.retail, sub.total,
-        s.p_up, s.gain && s.gain.p10, s.gain && s.gain.p50, s.gain && s.gain.p90, s.allotment && s.allotment.p_min_lot, s.ev && s.ev.ev, s.verdict && s.verdict.tier, s.verdict && s.verdict.gamble, i.listing && i.listing.gain_pct].map(esc).join(','));
-    }
-    return out.join('\n');
-  }
-  function renderSettings() {
-    setTimeout(syncSelects, 0);
-    const sel = $('#s-schedule'), chk = $('#s-notify'), note = $('#s-note'), rem = $('#s-reminder');
-    if (!sel) return;
-    if (!N) { sel.disabled = true; chk.disabled = true; if (rem) rem.disabled = true; if (!note.textContent) note.textContent = 'Background refresh and notifications work in the Android app; this page shows the snapshot it was built with.'; return; }
-    if (STATUS) { sel.value = String(STATUS.schedule_hours || 0); chk.checked = !!STATUS.notify; if (rem) rem.value = String(STATUS.reminder_hour === undefined || STATUS.reminder_hour === null ? -1 : STATUS.reminder_hour); if (!note.textContent) note.textContent = 'App version ' + (STATUS.version || '?') + (STATUS.downloaded_at ? ' · last download ' + fmtTime(STATUS.downloaded_at) : ''); }
-  }
-  function bindSettings() {
-    const sel = $('#s-schedule'), chk = $('#s-notify');
-    if (sel) sel.addEventListener('change', () => { if (N) { try { N.setSchedule(Number(sel.value) || 0); } catch (e) { /* ignore */ } } });
-    if (chk) chk.addEventListener('change', () => { if (N) { try { N.setNotify(!!chk.checked); } catch (e) { /* ignore */ } } });
-    const rem = $('#s-reminder');
-    if (rem) rem.addEventListener('change', () => { if (N) { try { N.setReminderHour(Number(rem.value)); } catch (e) { /* ignore */ } } });
-    const sr = $('#s-refresh'); if (sr) sr.addEventListener('click', doRefresh);
-    const th = $('#s-theme'); if (th) { const cur = load('theme', 'system'); for (const o of th.querySelectorAll('button')) o.setAttribute('aria-pressed', o.dataset.v === cur ? 'true' : 'false');
-      th.addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; store('theme', b.dataset.v); applyTheme(b.dataset.v); for (const o of th.querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); }); }
-    const b0 = $('#share-shortlist-img'); if (b0) b0.addEventListener('click', shareShortlistCard);
-    const b1 = $('#share-shortlist'), b2 = $('#export-csv'), b3 = $('#export-json');
-    if (b1) b1.addEventListener('click', () => shareText(shortlistText(), 'IPO Radar shortlist'));
-    if (b2) b2.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText()));
-    if (b3) b3.addEventListener('click', () => shareFile('ipo-radar-' + (LIVE.generated_at || '').slice(0, 10) + '.json', 'application/json', JSON.stringify({ generated_at: LIVE.generated_at, market: LIVE.market, ipos: SCORED.map(r => ({ ...r.eff, score: r.score })) })));
-  }
-
-  // ------------------------------------------------------------ screens ---
-  const SCREENS = ['today', 'pipeline', 'planner', 'calibration', 'method', 'about'];
-  function showScreen(name, opts) {
-    if (!SCREENS.includes(name)) name = 'today';
-    for (const id of SCREENS) { const sec = document.getElementById('screen-' + id); if (sec) sec.hidden = id !== name; }
-    for (const b of document.querySelectorAll('nav.screens button')) { if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
-    try { if (location.hash.replace('#', '') !== name) history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed */ }
-    store('screen', name);
-    if (!(opts && opts.keepScroll)) window.scrollTo({ top: 0 });
-  }
-  // ------------------------------------------------------------ share cards ---
-  // Draws an IPO (or the shortlist) as a 1080x1350 PNG in the app's own typography,
-  // for WhatsApp, Instagram and any other share target. Pure canvas, no libraries.
-  const CARD = { w: 1080, h: 1350, pad: 64 };
-  const CPAL = { bg: '#f4f6f4', surface: '#ffffff', ink: '#15191b', ink2: '#45504e', muted: '#7a8683', hair: '#e2e7e5', accent: '#0b6e6d', accentSoft: '#d8eeec', good: '#1f7a3a', goodSoft: '#dff3e4', warn: '#8a5a0b', warnSoft: '#fdf0d0', crit: '#b4292b', critSoft: '#fbe3e3', amber: '#fab219' };
-  const VCOL = { apply: ['good', 'goodSoft'], lean: ['good', 'goodSoft'], coinflip: ['warn', 'warnSoft'], avoid: ['crit', 'critSoft'], watch: ['ink2', 'hair'], nodata: ['muted', 'hair'] };
-  function cFont(px, weight, mono) { return (weight || 400) + ' ' + px + 'px ' + (mono ? '"Fira Code", monospace' : '"Space Grotesk", sans-serif'); }
-  function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-  function wrapText(c, text, x, y, maxW, lh, maxLines) {
-    const words = String(text).split(/\s+/); let line = '', n = 0;
-    for (let i = 0; i < words.length; i++) {
-      const t = line ? line + ' ' + words[i] : words[i];
-      if (c.measureText(t).width > maxW && line) {
-        if (maxLines && n === maxLines - 1) { let cut = line; while (c.measureText(cut + '…').width > maxW && cut.length) cut = cut.slice(0, -1); c.fillText(cut + '…', x, y); return y + lh; }
-        c.fillText(line, x, y); y += lh; n++; line = words[i];
-      } else line = t;
-    }
-    if (line) { c.fillText(line, x, y); y += lh; }
-    return y;
-  }
-  function pill(c, x, y, text, fg, bg, px) {
-    c.font = cFont(px || 30, 600); const w = c.measureText(text).width + 44, h = (px || 30) * 1.7;
-    c.fillStyle = bg; roundRect(c, x, y, w, h, h / 2); c.fill();
-    c.fillStyle = fg; c.textBaseline = 'middle'; c.fillText(text, x + 22, y + h / 2 + 1); c.textBaseline = 'alphabetic';
-    return w;
-  }
-  function brandImage() {
-    const svg = document.querySelector('.brand .mark'); if (!svg) return Promise.resolve(null);
-    return new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); let src = svg.outerHTML; if (!/xmlns=/.test(src)) src = src.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); });
-  }
-  function cardHeader(c, logo, title) {
-    c.fillStyle = CPAL.bg; c.fillRect(0, 0, CARD.w, CARD.h);
-    const p = CARD.pad;
-    if (logo) c.drawImage(logo, p, 56, 76, 76);
-    c.fillStyle = CPAL.ink; c.font = cFont(40, 700); c.fillText('IPO Radar', p + 96, 92);
-    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); c.fillText(title || 'INDIA · LISTING-DAY GAINS', p + 96, 126);
-    const asof = 'Data as of ' + (LIVE.generated_at ? new Date(LIVE.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'unknown');
-    c.textAlign = 'right'; c.fillStyle = CPAL.ink2; c.font = cFont(24, 500); c.fillText(asof, CARD.w - p, 100); c.textAlign = 'left';
-  }
-  function cardFooter(c) {
-    const p = CARD.pad, y = CARD.h - 92;
-    c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.beginPath(); c.moveTo(p, y - 34); c.lineTo(CARD.w - p, y - 34); c.stroke();
-    c.fillStyle = CPAL.muted; c.font = cFont(22, 400);
-    wrapText(c, 'Not investment advice. Chances come from a model on past listings; the premium is unofficial. Apply only with money that can stay blocked.', p, y, CARD.w - 2 * p, 30, 2);
-    c.textAlign = 'right'; c.fillStyle = CPAL.ink2; c.font = cFont(22, 600); c.fillText('IPO Radar · a Layerbit tool', CARD.w - p, CARD.h - 24); c.textAlign = 'left';
-  }
-  function statBox(c, x, y, w, h, label, value, sub, valueColor, mono) {
-    c.fillStyle = CPAL.surface; roundRect(c, x, y, w, h, 18); c.fill(); c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.stroke();
-    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); wrapText(c, label.toUpperCase(), x + 26, y + 44, w - 52, 26, 1);
-    if (value === '–' || value === '-') { c.fillStyle = CPAL.muted; c.font = cFont(40, 400); c.fillText('not yet', x + 26, y + 106); }
-    else { c.fillStyle = valueColor || CPAL.ink; c.font = cFont(58, 700, mono); c.fillText(value, x + 26, y + 112); }
-    if (sub) { c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); wrapText(c, sub, x + 26, y + 150, w - 52, 28, 2); }
-  }
-  async function drawIpoCard(r) {
-    const ipo = r.eff, s = r.score, sub = ipo.subscription || {};
-    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
-    try { await document.fonts.load(cFont(40, 700)); await document.fonts.load(cFont(40, 400, true)); } catch (e) { /* draw with fallbacks */ }
-    const logo = await brandImage();
-    cardHeader(c, logo);
-    const p = CARD.pad; let y = 220;
-    // name + chips
-    c.fillStyle = CPAL.ink; c.font = cFont(52, 700); y = wrapText(c, ipo.name, p, y, CARD.w - 2 * p, 60, 2) + 8;
-    let cx = p;
-    cx += pill(c, cx, y, ipo.board === 'sme' ? 'SME' : 'Mainboard', CPAL.ink2, CPAL.hair, 26) + 14;
-    const stLab = ({ open: 'Bidding open', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[ipo.status] || ipo.status;
-    cx += pill(c, cx, y, stLab, ipo.status === 'open' ? CPAL.accent : CPAL.ink2, ipo.status === 'open' ? CPAL.accentSoft : CPAL.hair, 26) + 14;
-    y += 70;
-    const dl = [];
-    if (ipo.open_date || ipo.close_date) dl.push('Bids ' + dshort(ipo.open_date) + ' to ' + dshort(ipo.close_date));
-    if (ipo.listing_date) dl.push('lists ' + dshort(ipo.listing_date));
-    if (ipo.issue_price && ipo.lot_size) dl.push('₹' + ipo.issue_price + ' × ' + ipo.lot_size + ' = ' + inr(s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : ipo.issue_price * ipo.lot_size) + (s && s.ev && s.ev.min_lots > 1 ? ' (' + s.ev.min_lots + ' lots minimum)' : ' a lot'));
-    c.fillStyle = CPAL.ink2; c.font = cFont(26, 400); y = wrapText(c, dl.join('  ·  '), p, y, CARD.w - 2 * p, 34, 2) + 10;
-    // verdict band
-    if (s && ipo.status !== 'listed') {
-      const [fg, bg] = VCOL[s.verdict.tier] || VCOL.nodata;
-      c.fillStyle = CPAL[bg]; roundRect(c, p, y, CARD.w - 2 * p, 112, 20); c.fill();
-      c.fillStyle = CPAL[fg]; c.beginPath(); c.arc(p + 44, y + 56, 14, 0, Math.PI * 2); c.fill();
-      c.font = cFont(46, 700); c.fillText(s.verdict.label, p + 78, y + 72);
-      if (s.verdict.gamble) { c.textAlign = 'right'; c.font = cFont(30, 600); c.fillText(s.verdict.gamble === 'sure' ? 'Sure gamble' : 'Possible gamble', CARD.w - p - 30, y + 68); c.textAlign = 'left'; }
-      y += 136;
-    } else if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined) {
-      const up = ipo.listing.gain_pct > 0;
-      c.fillStyle = up ? CPAL.goodSoft : CPAL.critSoft; roundRect(c, p, y, CARD.w - 2 * p, 112, 20); c.fill();
-      c.fillStyle = up ? CPAL.good : CPAL.crit; c.font = cFont(46, 700); c.fillText('Listed ' + pct(ipo.listing.gain_pct, 1), p + 30, y + 72);
-      y += 136;
-    }
-    // four stats
-    const g = s && s.flags.includes('gmp_unquoted') ? null : S.gmpPctOf(ipo);
-    const bw = (CARD.w - 2 * p - 24) / 2, bh = 196;
-    const pUp = s && s.p_up !== null && s.p_up !== undefined ? s.p_up : null;
-    statBox(c, p, y, bw, bh, 'Chance of a listing gain', pUp === null ? '–' : pct0(pUp), pUp === null ? 'not enough data yet' : oddsText(pUp), pUp === null ? CPAL.muted : pUp >= 0.7 ? CPAL.good : pUp >= 0.5 ? CPAL.warn : CPAL.crit, true);
-    statBox(c, p + bw + 24, y, bw, bh, 'Unofficial premium (GMP)', g === null ? (s && s.flags.includes('gmp_unquoted') ? 'none' : '–') : pct(g, 1), g === null ? 'no grey-market quote' : (ipo.gmp && ipo.gmp.rs !== null && ipo.gmp.rs !== undefined ? '₹' + ipo.gmp.rs + ' a share' + (ipo.gmp.as_of ? ' · ' + dshort(ipo.gmp.as_of) : '') : ''), g === null ? CPAL.muted : g > 0 ? CPAL.good : CPAL.crit, true);
-    y += bh + 24;
-    const al = s && s.allotment && s.allotment.p_min_lot !== null && s.allotment.p_min_lot !== undefined ? s.allotment.p_min_lot : null;
-    statBox(c, p, y, bw, bh, 'Chance of getting shares', al === null ? '–' : al >= 0.999 ? 'Full' : '1 in ' + (1 / al).toFixed(1 / al >= 10 ? 0 : 1), al === null ? (ipo.status === 'upcoming' ? 'known once bidding starts' : 'no demand figures') : al >= 0.999 ? 'everyone who applies gets shares' : 'retail bid ' + x(sub.retail) + ' the shares on offer', CPAL.ink, true);
-    const ev = s && s.ev && s.ev.ev !== null && s.ev.ev !== undefined && ipo.status !== 'listed' ? s.ev.ev : null;
-    const invC = s && s.ev && s.ev.invested_if_allotted ? s.ev.invested_if_allotted : (ipo.issue_price && ipo.lot_size ? ipo.issue_price * ipo.lot_size : null);
-    if (ipo.status === 'listed' && ipo.listing && ipo.listing.gain_pct !== null && ipo.listing.gain_pct !== undefined && invC) {
-      const gl = invC * ipo.listing.gain_pct / 100;
-      statBox(c, p + bw + 24, y, bw, bh, 'Gain on one lot, listing day', inr(gl, { plus: true }), 'before charges and tax, on ' + inr(invC) + ' invested', gl > 0 ? CPAL.good : CPAL.crit, true);
-    } else if (ev !== null) {
-      statBox(c, p + bw + 24, y, bw, bh, 'Worth per application', inr(ev, { plus: true }), 'on average, after charges and tax' + (s.ev.ev_if_allotted !== null && s.ev.ev_if_allotted !== undefined ? '; ' + inr(s.ev.ev_if_allotted, { plus: true }) + ' if you get shares' : ''), ev > 0 ? CPAL.good : CPAL.crit, true);
-    } else if (s && s.gain && invC && ipo.status !== 'listed') {
-      const res = S.netProfitOnSale(invC, invC * (1 + s.gain.mean / 100), state.costs);
-      statBox(c, p + bw + 24, y, bw, bh, 'Profit if you get shares', inr(res.net, { plus: true }), 'after charges and tax; odds of shares unknown until bidding', res.net > 0 ? CPAL.good : CPAL.crit, true);
-    } else statBox(c, p + bw + 24, y, bw, bh, 'Worth per application', '–', 'needs a price, a lot size and a read', CPAL.muted, true);
-    y += bh + 28;
-    // demand + likely gain
-    const hasSub = ['qib', 'nii', 'retail'].some(k => sub[k] !== null && sub[k] !== undefined);
-    const half = (CARD.w - 2 * p - 24) / 2;
-    c.fillStyle = CPAL.muted; c.font = cFont(22, 500); c.fillText('DEMAND, TIMES SUBSCRIBED', p, y); c.fillText('LIKELY GAIN, WORST TO BEST', p + half + 24, y);
-    let yy = y + 26;
-    if (hasSub) {
-      const max = Math.max(1, ...['qib', 'nii', 'retail'].map(k => Number(sub[k]) || 0));
-      const scale = v => Math.min(1, Math.log1p(v) / Math.log1p(Math.max(max, 10)));
-      for (const [k, lab] of [['qib', 'Institutions'], ['nii', 'Wealthy'], ['retail', 'Retail']]) {
-        const v = sub[k] === null || sub[k] === undefined ? null : Number(sub[k]);
-        c.fillStyle = CPAL.ink2; c.font = cFont(24, 400); c.fillText(lab, p, yy + 22);
-        c.fillStyle = CPAL.hair; roundRect(c, p + 150, yy + 6, half - 150 - 96, 18, 9); c.fill();
-        if (v !== null) { c.fillStyle = '#3987e5'; roundRect(c, p + 150, yy + 6, Math.max(6, (half - 150 - 96) * scale(v)), 18, 9); c.fill(); }
-        c.fillStyle = CPAL.ink; c.font = cFont(24, 500, true); c.textAlign = 'right'; c.fillText(x(v), p + half, yy + 22); c.textAlign = 'left';
-        yy += 40;
+  function renderPlanResult() {
+    const out = $('#plan-result'); if (!out) return; out.replaceChildren();
+    const cands = SCORED.filter(r => r.score && isLive(r) && fin(r.score.p_up) && r.eff.issue_price && r.eff.lot_size);
+    if (!cands.length) { out.append(el('div', { class: 'card empty' }, icon('calc'), el('div', { text: t('Nothing open or upcoming has enough information to plan with right now. Check back when the next IPO opens.') }))); return; }
+    if (PLAN.picked === null) PLAN.picked = cands.filter(r => ['apply', 'lean'].includes(tierOf(r))).map(r => r.ipo.id);
+    const picked = new Set(PLAN.picked), acc = PLAN.accounts;
+    let total = 0, block = 0, pNone = 1, gross = 0, cost = 0, unknown = false, posEv = 0, posBlock = 0;
+    const rows = cands.sort(rankLive).map(r => {
+      const s = r.score, inv = s.ev.invested_if_allotted || minInvest(r);
+      const pa = s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+      const evIf = fin(s.ev.ev_if_allotted) ? s.ev.ev_if_allotted : netAt(inv, s.gain.mean).net;
+      const ev1 = pa === null ? null : pa * evIf, on = picked.has(r.ipo.id);
+      if (on) {
+        block += inv * acc;
+        if (ev1 === null) unknown = true; else { total += ev1 * acc; pNone *= Math.pow(1 - pa, acc); if (ev1 > 0) { posEv += ev1 * acc; posBlock += inv * acc; } }
+        const res = netAt(inv, s.gain.mean); gross += res.gross * acc; cost += (res.charges + res.tax) * acc;
       }
-      c.fillStyle = CPAL.muted; c.font = cFont(22, 400); c.fillText('overall ' + x(sub.total) + (ipo.status === 'closed' || ipo.status === 'listed' ? ', final' : ', so far'), p, yy + 18);
-    } else { c.fillStyle = CPAL.muted; c.font = cFont(24, 400); c.fillText(ipo.status === 'upcoming' ? 'Bidding has not opened yet' : 'No demand figures captured', p, yy + 22); }
-    const gx = p + half + 24;
-    if (s && s.gain && ipo.status !== 'listed') {
-      const lo = -30, hi = 90, tw = half, cxv = v => gx + Math.max(0, Math.min(1, (v - lo) / (hi - lo))) * tw;
-      c.fillStyle = CPAL.hair; roundRect(c, gx, yy + 20, tw, 16, 8); c.fill();
-      c.fillStyle = CPAL.accentSoft; roundRect(c, cxv(s.gain.p10), yy + 14, Math.max(8, cxv(s.gain.p90) - cxv(s.gain.p10)), 28, 8); c.fill();
-      c.fillStyle = CPAL.accent; c.fillRect(cxv(s.gain.p50) - 3, yy + 8, 6, 40);
-      c.strokeStyle = CPAL.muted; c.lineWidth = 2; c.beginPath(); c.moveTo(cxv(0), yy + 4); c.lineTo(cxv(0), yy + 52); c.stroke();
-      c.fillStyle = CPAL.ink2; c.font = cFont(24, 500, true); c.fillText(pct(s.gain.p10, 0), gx, yy + 86); c.textAlign = 'right'; c.fillText(pct(s.gain.p90, 0), gx + tw, yy + 86); c.textAlign = 'center'; c.fillStyle = CPAL.ink; c.font = cFont(26, 700, true); c.fillText(pct(s.gain.p50, 0) + ' middle', (gx + gx + tw) / 2, yy + 86); c.textAlign = 'left';
-    } else if (ipo.status === 'listed' && ipo.listing) {
-      c.fillStyle = CPAL.ink; c.font = cFont(28, 600, true); c.fillText('open ' + (ipo.listing.open ? '₹' + ipo.listing.open : '–') + '  ·  close ' + (ipo.listing.close ? '₹' + ipo.listing.close : '–'), gx, yy + 26);
-      if (s && s.gain) { c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); c.fillText('model range was ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0), gx, yy + 64); }
-    } else { c.fillStyle = CPAL.muted; c.font = cFont(24, 400); c.fillText('no read yet', gx, yy + 22); }
-    y = yy + 150;
-    // why: up to two warnings, then reasons
-    if (s) {
-      const lines = s.verdict.warnings.slice(0, 2).map(w => ['⚠', w]).concat(s.verdict.reasons.slice(0, 3 - Math.min(2, s.verdict.warnings.length)).map(w => ['•', w]));
-      c.font = cFont(25, 400);
-      for (const [m, t] of lines) { if (y > CARD.h - 150) break; c.fillStyle = m === '⚠' ? CPAL.crit : CPAL.ink2; c.fillText(m, p, y); y = wrapText(c, t, p + 36, y, CARD.w - 2 * p - 36, 32, 2) + 6; }
+      return { r, inv, pa, evIf, ev1, on };
+    });
+    const hero = el('div', { class: 'card plan-hero' });
+    hero.append(el('div', { class: 'small ink2', text: t('Expected profit from the ticked IPOs, across {n} account(s), after charges and tax', { n: acc }) }));
+    hero.append(el('div', { class: 'big num ' + (total >= 0 ? 'good' : 'bad'), text: inr(total, { plus: true }) }));
+    if (PLAN.target > 0) {
+      const share = Math.max(0, Math.min(1, total / PLAN.target));
+      hero.append(el('div', { class: 'meter', role: 'img', 'aria-label': t('{p} of your target', { p: Math.round(share * 100) + '%' }) }, el('i', { style: 'width:' + Math.max(2, share * 100) + '%' })));
+      hero.append(el('div', { class: 'small ink2', text: total >= PLAN.target ? t('On paper, this covers your {t} target.', { t: inr(PLAN.target) }) : t('That is {p} of your {t} monthly target.', { p: Math.round(share * 100) + '%', t: inr(PLAN.target) }) }));
     }
-    cardFooter(c);
-    return cv;
-  }
-  async function drawShortlistCard() {
-    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
-      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up)).slice(0, 7);
-    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
-    try { await document.fonts.load(cFont(40, 700)); await document.fonts.load(cFont(40, 400, true)); } catch (e) { /* fallbacks */ }
-    const logo = await brandImage();
-    cardHeader(c, logo, 'TODAY’S SHORTLIST');
-    const p = CARD.pad; let y = 206;
-    c.fillStyle = CPAL.ink; c.font = cFont(48, 700); c.fillText('Open and upcoming IPOs, best first', p, y); y += 24;
-    c.fillStyle = CPAL.ink2; c.font = cFont(25, 400); y = wrapText(c, 'Chance = how many of ten IPOs like it ended listing day above the issue price. Worth = average profit per application after charges and tax, counting the odds of getting no shares.', p, y + 26, CARD.w - 2 * p, 32, 3) + 14;
-    if (!rows.length) { c.fillStyle = CPAL.muted; c.font = cFont(30, 400); c.fillText('Nothing open or upcoming has a usable read right now.', p, y + 40); }
-    const rh = 118;
-    for (const r of rows) {
-      const s = r.score, ipo = r.eff;
-      c.fillStyle = CPAL.surface; roundRect(c, p, y, CARD.w - 2 * p, rh - 14, 18); c.fill(); c.strokeStyle = CPAL.hair; c.lineWidth = 2; c.stroke();
-      c.fillStyle = CPAL.ink; c.font = cFont(30, 700); wrapText(c, ipo.name + (ipo.board === 'sme' ? '  (SME)' : ''), p + 26, y + 42, 560, 34, 1);
-      c.fillStyle = CPAL.ink2; c.font = cFont(23, 400); c.fillText((ipo.status === 'open' ? 'Bids close ' + dshort(ipo.close_date) : 'Opens ' + dshort(ipo.open_date)) + '  ·  chance ' + pct0(s.p_up) + (s.ev.ev !== null && s.ev.ev !== undefined ? '  ·  worth ' + inr(s.ev.ev, { plus: true }) : ''), p + 26, y + 80);
-      const [fg, bg] = VCOL[s.verdict.tier] || VCOL.nodata;
-      c.font = cFont(26, 600); const pw = c.measureText(s.verdict.label).width + 44;
-      pill(c, CARD.w - p - pw - 24, y + 22, s.verdict.label, CPAL[fg], CPAL[bg], 26);
-      if (s.verdict.gamble) { c.textAlign = 'right'; c.fillStyle = s.verdict.gamble === 'sure' ? CPAL.crit : CPAL.warn; c.font = cFont(21, 600); c.fillText(s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble', CARD.w - p - 24, y + 92); c.textAlign = 'left'; }
-      y += rh; if (y > CARD.h - 220) break;
+    out.append(hero);
+    const facts = [];
+    facts.push(note(block > PLAN.capital ? 'warn' : 'info', t('Money blocked at once: {b}', { b: inr(block) }), block > PLAN.capital ? ' ' + t('— more than the {c} you set. Untick some IPOs or use fewer accounts.', { c: inr(PLAN.capital) }) : ' ' + t('of your {c}.', { c: inr(PLAN.capital) })));
+    if (!unknown && block > 0) facts.push(note('info', t('Chance that none of these applications gets any shares: {p}. Profits come in lumps, not every month.', { p: pct0(pNone) })));
+    if (unknown) facts.push(note('info', t('Some ticked IPOs have no retail demand figures yet, so their lottery odds (and profit) are not counted.')));
+    const need = posEv > 0 ? PLAN.target / (posEv / Math.max(1, posBlock)) : null;
+    if (need && isFinite(need) && PLAN.target > total) facts.push(note('info', t('At these odds you would need about {n} blocked per round to expect {t}. The share lottery, not the premium, sets the limit; more family accounts help most.', { n: inrShort(need), t: inr(PLAN.target) })));
+    if (cost > 0) facts.push(el('p', { class: 'tiny muted', text: t('If every application got shares, charges and tax would take {c} out of {g} profit. All figures above are after that.', { c: inr(cost), g: inr(gross, { plus: true }) }) }));
+    out.append(el('div', { class: 'stack' }, ...facts));
+    const list = el('div', { class: 'pick-list' });
+    for (const q of rows) {
+      const cb = el('input', { type: 'checkbox', 'aria-label': t('Include {n}', { n: q.r.eff.name }) }); cb.checked = q.on;
+      cb.addEventListener('change', () => { const set = new Set(PLAN.picked); if (cb.checked) set.add(q.r.ipo.id); else set.delete(q.r.ipo.id); PLAN.picked = [...set]; savePlan(); renderPlanResult(); });
+      const pAny = q.pa === null ? null : 1 - Math.pow(1 - q.pa, acc);
+      list.append(el('label', { class: 'pick-row' }, cb,
+        el('div', { class: 'grow' }, el('div', { class: 'n' }, q.r.eff.name, ' ', verdictPill(tierOf(q.r))), el('div', { class: 's', text: [inrShort(q.inv * acc) + ' ' + t('blocked'), q.pa === null ? t('odds not known yet') : t('{p} chance at least one account gets shares', { p: pct0(pAny) }), t('{v} if you get shares', { v: inr(q.evIf, { plus: true }) })].join(' · ') })),
+        el('div', { class: 'v ' + (q.ev1 === null ? '' : q.ev1 > 0 ? 'good' : 'bad') }, q.ev1 === null ? '?' : inr(q.ev1 * acc, { plus: true }), el('small', null, t('expected')))));
     }
-    cardFooter(c);
-    return cv;
-  }
-  function canvasPng(cv) { return cv.toDataURL('image/png'); }
-  function shareImage(name, dataUrl, caption) {
-    if (N && typeof N.shareImage === 'function') { try { N.shareImage(name, dataUrl, caption); return; } catch (e) { /* fall through */ } }
-    try {
-      const bin = atob(dataUrl.split(',')[1]); const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      const f = new File([arr], name, { type: 'image/png' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name, text: caption }).catch(() => {}); return; }
-      const a = document.createElement('a'); a.href = dataUrl; a.download = name; a.target = '_blank'; a.rel = 'noopener'; document.body.append(a); a.click(); a.remove();
-    } catch (e) { shareText(caption, name); }
-  }
-  // The card is shown before it is sent: the person sees exactly what goes out,
-  // and on a platform with no share sheet (a browser preview) they still get the picture.
-  let CARD_CUR = null;
-  function openCardSheet(title, drawFn, name, caption) {
-    const sheet = $('#cardsheet'), pv = $('#card-preview'); if (!sheet) return;
-    $('#card-title').textContent = title;
-    pv.replaceChildren(el('div', { class: 'wait' }, el('span', { class: 'spin' }), 'Drawing the card…'));
-    CARD_CUR = null; sheet.hidden = false;
-    const close = () => { sheet.hidden = true; CARD_CUR = null; };
-    $('#card-close').onclick = close; sheet.onclick = (ev) => { if (ev.target === sheet) close(); };
-    $('#card-share').onclick = () => { if (CARD_CUR) shareImage(CARD_CUR.name, CARD_CUR.data, CARD_CUR.caption); };
-    $('#card-save').onclick = () => { if (!CARD_CUR) return; const a = document.createElement('a'); a.href = CARD_CUR.data; a.download = CARD_CUR.name; a.target = '_blank'; a.rel = 'noopener'; document.body.append(a); a.click(); a.remove(); };
-    Promise.resolve().then(drawFn).then((cv) => {
-      const data = canvasPng(cv); CARD_CUR = { name, data, caption };
-      const img = new Image(); img.alt = title + ' as a shareable card'; img.src = data; pv.replaceChildren(img);
-    }).catch(() => { pv.replaceChildren(el('div', { class: 'wait', text: 'Could not draw the card on this device. Share as text instead.' })); });
-  }
-  function shareIpoCard(r) {
-    openCardSheet(r.eff.name, () => drawIpoCard(r), r.eff.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-ipo-radar.png', readText(r));
-  }
-  function shareShortlistCard() {
-    openCardSheet('Today’s shortlist', drawShortlistCard, 'ipo-radar-shortlist-' + (LIVE.generated_at || '').slice(0, 10) + '.png', shortlistText());
-  }
-  function cardButton(r) {
-    return el('button', { class: 'star share', type: 'button', id: 'shc-' + r.ipo.id, 'aria-label': 'Share ' + r.eff.name + ' as an image card', onclick: (ev) => { ev.stopPropagation(); shareIpoCard(r); } },
-      svgEl('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M7 8l5-5 5 5' })), ' Share card');
-  }
-  // ------------------------------------------------------------ dropdowns ---
-  // The native <select> keeps the value and fires 'change' as before; what the
-  // user sees and taps is a button plus an in-app sheet in the app's own font.
-  const PICK_TITLES = { 'f-sort': 'Sort the pipeline', 'p-broker': 'Your broker', 's-schedule': 'Background refresh', 's-reminder': 'Watchlist reminder time' };
-  function enhanceSelects() {
-    for (const sel of document.querySelectorAll('select:not(.enhanced)')) {
-      sel.classList.add('enhanced'); sel.setAttribute('aria-hidden', 'true'); sel.tabIndex = -1;
-      const btn = el('button', { type: 'button', class: 'pick-btn', id: 'pb-' + sel.id, 'aria-haspopup': 'listbox', 'aria-label': PICK_TITLES[sel.id] || 'Choose' },
-        el('span', { class: 'v' }), svgEl('svg', { class: 'chev', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M6 9l6 6 6-6' })));
-      sel.insertAdjacentElement('afterend', btn);
-      const sync = () => { const o = sel.options[sel.selectedIndex]; btn.querySelector('.v').textContent = o ? o.textContent : ''; };
-      sync(); sel.addEventListener('change', sync); sel._syncPick = sync;
-      btn.addEventListener('click', () => openPicker(sel, btn));
-    }
-  }
-  function syncSelects() { for (const sel of document.querySelectorAll('select.enhanced')) if (sel._syncPick) sel._syncPick(); }
-  function openPicker(sel, btn) {
-    const sheet = $('#picker'), host = $('#picker-opts'); host.replaceChildren();
-    $('#picker-title').textContent = PICK_TITLES[sel.id] || 'Choose';
-    const close = () => { sheet.hidden = true; btn.focus({ preventScroll: true }); };
-    for (const o of sel.options) {
-      const row = el('button', { type: 'button', class: 'opt-row', role: 'option', 'aria-selected': o.selected ? 'true' : 'false' }, el('span', { text: o.textContent }), svgEl('svg', { class: 'tick', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, svgEl('path', { d: 'M5 12l5 5 9-10' })));
-      row.addEventListener('click', () => { if (sel.value !== o.value) { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } close(); });
-      host.append(row);
-    }
-    sheet.hidden = false;
-    const selRow = host.querySelector('[aria-selected="true"]'); (selRow || host.firstChild).focus({ preventScroll: true });
-    sheet.onclick = (ev) => { if (ev.target === sheet) close(); };
-    $('#picker-close').onclick = close;
-  }
-  function bindExplain() {
-    const sheet = $('#explain'); if (!sheet) return;
-    const close = () => { sheet.hidden = true; };
-    if (!window.__ipoExplainBound) { window.__ipoExplainBound = true; document.addEventListener('click', (ev) => { const t = ev.target.closest('[data-term]'); if (!t) return; ev.preventDefault(); ev.stopPropagation(); openExplain(t.dataset.term); }, true); }
-    $('#explain-close').addEventListener('click', close);
-    sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); if (ev.key === 'Escape') { for (const id of ['#picker', '#cardsheet']) { const pk = $(id); if (pk && !pk.hidden) pk.hidden = true; } } });
-    $('#explain-all').addEventListener('click', () => { close(); showScreen('about'); const g = $('#glossary'); if (g) g.scrollIntoView({ block: 'start' }); });
-    // glossary on the More screen, from the same text
-    const g = $('#glossary-body'); if (g) { g.replaceChildren(); for (const k of TERM_ORDER) { const t = TERMS[k]; g.append(el('details', { class: 'gl' }, el('summary', { text: t.t }), ...t.d.map(line => el('p', { text: line })))); } }
-    // first-open guide on Today
-    const intro = $('#intro'); if (intro) { intro.hidden = !!load('intro_seen', false); const ok = $('#intro-ok'); if (ok) ok.addEventListener('click', () => { store('intro_seen', true); intro.hidden = true; }); }
-  }
-  function bindContact() {
-    for (const b of document.querySelectorAll('[data-goto]')) b.addEventListener('click', () => showScreen(b.dataset.goto));
-    const sheet = $('#help');
-    const open = () => { sheet.hidden = false; const c = $('#help-close'); if (c) c.focus(); };
-    const close = () => { sheet.hidden = true; };
-    for (const b of document.querySelectorAll('[data-help]')) b.addEventListener('click', open);
-    const cl = $('#help-close'); if (cl) cl.addEventListener('click', close);
-    sheet.addEventListener('click', (ev) => { if (ev.target === sheet) close(); });
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet.hidden) close(); });
-    // on Android hand mailto/WhatsApp to the system (mail app / WhatsApp) through the bridge
-    for (const id of ['help-mail', 'help-wa']) { const a = document.getElementById(id); if (a && N) a.addEventListener('click', (ev) => { ev.preventDefault(); try { N.openExternal(a.href); } catch (e) { /* ignore */ } close(); }); }
-  }
-  function bindScreens() {
-    document.querySelector('nav.screens').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b) showScreen(b.dataset.screen); });
-    window.addEventListener('hashchange', () => { const h = location.hash.replace('#', ''); if (SCREENS.includes(h)) showScreen(h, { keepScroll: true }); });
-  }
-  function renderToday() {
-    const host = $('#picks'); host.replaceChildren();
-    const rows = SCORED.filter(r => r.score && ['open', 'upcoming'].includes(r.ipo.status) && r.score.p_up !== null)
-      .sort((a, b) => (ORDER[a.score.verdict.tier] - ORDER[b.score.verdict.tier]) || (b.score.p_up - a.score.p_up)).slice(0, 6);
-    if (!rows.length) { host.append(el('p', { class: 'muted', text: 'Nothing open or upcoming has a usable read right now.' })); return; }
-    for (const r of rows) {
-      const s = r.score, ipo = r.eff;
-      const card = el('button', { class: 'pick', type: 'button', id: 'pick-' + ipo.id, style: '--i:' + host.children.length, onclick: () => { state.open = ipo.id; renderTable(); showScreen('pipeline'); const t = document.getElementById('row-' + ipo.id); if (t) t.scrollIntoView({ block: 'center' }); } });
-      card.append(el('div', { class: 'n' }, ipo.name, ' ', el('span', { class: 'chip', text: ipo.board === 'sme' ? 'SME' : 'Mainboard' })));
-      card.append(ringEl(s.p_up, 64));
-      card.append(el('div', null, el('span', { class: 'verdict ' + s.verdict.tier, 'data-term': 'verdicts', text: s.verdict.label }), s.verdict.gamble ? el('span', { class: 'gamble ' + s.verdict.gamble, 'data-term': 'gamble', style: 'display:inline;margin-left:8px', text: s.verdict.gamble === 'sure' ? 'sure gamble' : 'possible gamble' }) : null));
-      const m = el('div', { class: 'm' });
-      m.append(el('span', null, 'Chance of a gain ', el('b', { class: 'num', text: pct0(s.p_up) }), el('span', { class: 'muted', text: ' (' + oddsText(s.p_up).replace(' such IPOs list up', '') + ')' })));
-      if (s.gain) m.append(el('span', null, 'Middle-case gain ', el('b', { class: 'num', text: pct(s.gain.p50, 0) })));
-      if (s.ev.ev !== null && s.ev.ev !== undefined) m.append(el('span', null, 'Worth per application ', el('b', { class: 'num', text: inr(s.ev.ev, { plus: true }) })));
-      m.append(el('span', null, ipo.status === 'open' ? 'Bids close ' + dshort(ipo.close_date) : 'Opens ' + dshort(ipo.open_date)));
-      m.append(el('span', { class: WATCH.has(ipo.id) ? 'warn' : 'muted', text: WATCH.has(ipo.id) ? '★ watching' : '' }));
-      card.append(m);
-      host.append(card);
-    }
-    host.append(el('div', { class: 'pick share-pick' }, el('button', { class: 'btn primary', type: 'button', id: 'pick-share', onclick: shareShortlistCard }, 'Share shortlist as an image'), el('button', { class: 'btn', type: 'button', id: 'pick-share-text', onclick: () => shareText(shortlistText(), 'IPO Radar shortlist') }, 'Share as text')));
+    out.append(el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Choose IPOs') })), el('p', { class: 'sec-sub', text: t('One minimum application per account per IPO. Bidding for more lots does not improve your odds in a popular IPO.') }), list));
   }
 
-  // ------------------------------------------------------------- wiring ---
-  function renderAll() { renderHead(); renderTiles(); renderToday(); renderWatchlist(); renderTable(); renderPlanner(); }
-  // Wraps a horizontally scrolling element with a fade + chevron cue that
-  // shows while there is more content to the right and hides at the end.
-  function scrollCue(strip, extraStyle) {
-    const wrap = el('div', { class: 'hwrap' });
-    if (extraStyle) strip.style.cssText += ';' + extraStyle;
-    const more = el('button', { type: 'button', class: 'chips-more', 'aria-label': 'Scroll right for more' }, el('span', { class: 'arr', text: '\u203a' }));
-    wrap.append(strip, more);
-    const cue = () => {
-      const max = strip.scrollWidth - strip.clientWidth;
-      wrap.classList.toggle('no-scroll', max <= 4);
-      wrap.classList.toggle('at-end', strip.scrollLeft >= max - 4);
-      wrap.classList.toggle('at-start', strip.scrollLeft <= 4);
+  // ------------------------------------------------------------- journal ---
+  function journalFor(id) { return JOURNAL.find(e => e.id === id) || null; }
+  function saveJournal() { store('journal', JOURNAL); }
+  function entryProfit(e) {
+    if (!(e.allotted > 0) || !e.price || !e.lot) return { profit: 0, known: e.allotted === 0, est: false };
+    const r = BYID.get(e.id), lst = r && r.eff.listing;
+    const sell = fin(e.sell) ? Number(e.sell) : (lst && fin(lst.close) ? Number(lst.close) : null);
+    if (sell === null) return { profit: null, known: false, est: false };
+    const inv = e.price * e.lot * (e.minLots || 1);
+    return { profit: S.netProfitOnSale(inv, inv * sell / e.price, COSTS).net * e.allotted, known: true, est: !fin(e.sell) };
+  }
+  function journalSheet(id) {
+    const r = BYID.get(id); if (!r) return;
+    const i = r.eff, cur = journalFor(id) || { id, name: i.name, board: i.board, price: i.issue_price || i.price_band_high, lot: i.lot_size, minLots: Number(i.min_lots) || (i.board === 'sme' ? 2 : 1), accounts: 1, allotted: null, sell: null, at: TODAY };
+    const draft = Object.assign({}, cur);
+    const allotBox = el('div');
+    const drawAllot = () => {
+      allotBox.replaceChildren();
+      if (r.st === 'open' || r.st === 'upcoming') { allotBox.append(el('p', { class: 'small muted', text: t('Come back after the allotment result to record whether you got shares.') })); return; }
+      allotBox.append(el('div', { class: 'field' }, t('How many accounts got shares?'), stepper(fin(draft.allotted) ? draft.allotted : 0, 0, draft.accounts, v => { draft.allotted = v; }, t('Accounts that got shares'))));
+      const sell = el('input', { type: 'number', inputmode: 'decimal', step: 'any', value: fin(draft.sell) ? String(draft.sell) : '', placeholder: i.listing && fin(i.listing.close) ? t('listing close ₹{c}', { c: i.listing.close }) : '₹' });
+      sell.addEventListener('input', () => { draft.sell = sell.value === '' ? null : Number(sell.value); });
+      allotBox.append(el('label', { class: 'field' }, t('Price you sold at (per share)'), sell, el('span', { class: 'hint', text: t('Leave empty to use the listing-day close.') })));
     };
-    strip.addEventListener('scroll', cue, { passive: true });
-    window.addEventListener('resize', cue);
-    more.addEventListener('click', () => strip.scrollBy({ left: Math.max(120, strip.clientWidth * 0.6), behavior: 'smooth' }));
-    if (window.ResizeObserver) new ResizeObserver(cue).observe(strip); else { requestAnimationFrame(cue); setTimeout(cue, 300); }
-    requestAnimationFrame(cue);
+    drawAllot();
+    const body = [
+      el('p', { class: 'small', text: t('Keep a private record of your IPO applications and see what you really made. Saved only on this phone.') }),
+      el('div', { class: 'field' }, t('How many accounts did you apply from?'), stepper(draft.accounts, 1, 10, v => { draft.accounts = v; if (fin(draft.allotted) && draft.allotted > v) draft.allotted = v; drawAllot(); }, t('Accounts applied'))),
+      allotBox,
+      el('div', { class: 'btn-row' },
+        el('button', { type: 'button', class: 'btn primary', onclick: () => { JOURNAL = JOURNAL.filter(e => e.id !== id); if (!(r.st === 'open' || r.st === 'upcoming') && !fin(draft.allotted)) draft.allotted = 0; JOURNAL.unshift(draft); saveJournal(); closeSheet(); toast(t('Saved to My IPOs')); if (UI.tab === 'ipo') renderIpo(); else if (UI.tab === 'more') renderMore(); } }, t('Save')),
+        journalFor(id) ? el('button', { type: 'button', class: 'btn', onclick: () => { JOURNAL = JOURNAL.filter(e => e.id !== id); saveJournal(); closeSheet(); toast(t('Removed')); if (UI.tab === 'ipo') renderIpo(); else if (UI.tab === 'more') renderMore(); } }, icon('trash'), t('Remove')) : null),
+    ];
+    openSheet(i.name, body);
+  }
+  function journalBlock() {
+    const sec = el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('My IPOs') })));
+    if (!JOURNAL.length) { sec.append(el('div', { class: 'card empty' }, icon('wallet'), el('div', { text: t('Record the IPOs you apply for (open any IPO → I applied) and see your real hit rate and profit here.') }))); return sec; }
+    let apps = 0, got = 0, done = 0, profit = 0, est = false;
+    for (const e of JOURNAL) { apps += e.accounts || 1; if (fin(e.allotted)) { done += e.accounts || 1; got += e.allotted; } const p = entryProfit(e); if (fin(p.profit)) profit += p.profit; if (p.est) est = true; }
+    sec.append(el('div', { class: 'journal-sum' },
+      el('div', { class: 'stat' }, el('div', { class: 'v num', text: String(apps) }), el('div', { class: 'l', text: t('Applications') })),
+      el('div', { class: 'stat' }, el('div', { class: 'v num', text: done ? Math.round(100 * got / done) + '%' : '–' }), el('div', { class: 'l', text: t('Got shares') })),
+      el('div', { class: 'stat' }, el('div', { class: 'v num ' + (profit >= 0 ? 'good' : 'bad'), text: inrShort(profit) }), el('div', { class: 'l', text: t('Profit after costs') + (est ? '*' : '') }))));
+    const list = el('div', { class: 'list' });
+    for (const e of JOURNAL) {
+      const p = entryProfit(e);
+      list.append(el('button', { type: 'button', class: 'list-row', onclick: () => (BYID.has(e.id) ? journalSheet(e.id) : null) }, el('span', { class: 'ico' }, icon('wallet')),
+        el('div', { class: 'grow' }, el('div', { class: 't', text: e.name }), el('div', { class: 's', text: t('{a} account(s)', { a: e.accounts }) + ' · ' + (fin(e.allotted) ? t('{g} got shares', { g: e.allotted }) : t('result pending')) })),
+        el('span', { class: 'end num ' + (fin(p.profit) && p.profit !== 0 ? (p.profit > 0 ? 'good' : 'bad') : '') }, fin(p.profit) ? inr(p.profit, { plus: true }) : '–')));
+    }
+    sec.append(list);
+    if (est) sec.append(el('p', { class: 'tiny muted', text: t('* Where you did not enter a sale price, the listing-day close is used.') }));
+    return sec;
+  }
+
+  // --------------------------------------------------------------- proof ---
+  const REPO = 'https://github.com/vysakhsuresh/ipo-radar';
+  function extLink(href, label, cls) { return el('a', { class: cls || 'btn sm', href, target: '_blank', rel: 'noopener', onclick: (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', href); } } }, icon('ext'), label); }
+  function renderProof() {
+    const host = $('#screen-proof'); host.replaceChildren();
+    host.append(el('div', { class: 'hello' }, el('h1', { text: t('Track record') }), el('p', { class: 'lede', text: t('Every call is saved when bidding closes, before anyone knows the result, and checked after listing. Nothing is edited later, so you can judge us on our record.') })));
+    const tk = D.track;
+    const rows = tk && Array.isArray(tk.rows) ? tk.rows.filter(x => fin(x.actual_gain_pct) || x.listed_up !== undefined) : [];
+    if (tk && rows.length) {
+      const bv = tk.by_verdict || {}, a = bv.apply || {}, l = bv.lean || {};
+      const n = (a.n || 0) + (l.n || 0), up = (a.n_up || 0) + (l.n_up || 0);
+      const hero = el('div', { class: 'card proof-hero' });
+      hero.append(el('span', { class: 'seal' }, icon('lock'), t('Saved before listing · never edited')));
+      hero.append(el('div', { class: 'big num', text: n ? Math.round(100 * up / n) + '%' : '–' }));
+      hero.append(el('p', null, t('When we said'), ' ', el('b', null, t('Apply')), ' ', t('or'), ' ', el('b', null, t('Leaning yes')), ', ', el('b', null, t('{u} of {n}', { u: up, n })), ' ', t('IPOs listed above their issue price.'), fin(tk.base_rate) ? ' ' + t('Across all IPOs in the same period, {b} did.', { b: pct0(tk.base_rate) }) : ''));
+      if (tk.n_backfill) hero.append(el('p', { class: 'tiny', text: t('{a} calls were saved live; {b} older ones were reconstructed from the data we had before they listed and are marked as such.', { a: tk.n_locked || 0, b: tk.n_backfill }) }));
+      host.append(hero);
+      const vb = el('div', { class: 'vbars' });
+      for (const tier of ['apply', 'lean', 'coinflip', 'watch', 'avoid']) {
+        const v = bv[tier]; if (!v || !v.n) continue;
+        const upP = v.n_up / v.n;
+        vb.append(el('div', { class: 'vbar' }, el('div', { class: 'h' }, verdictPill(tier), el('span', { class: 'small ink2' }, t('{u} of {n} listed up', { u: v.n_up, n: v.n }), fin(v.median_gain) ? ' · ' + t('typical {g}', { g: pct(v.median_gain, 0) }) : '')),
+          el('div', { class: 'track', role: 'img', 'aria-label': pct0(upP) }, el('i', { class: 'up', style: 'width:' + (upP * 100) + '%' }), el('i', { class: 'dn', style: 'width:' + ((1 - upP) * 100) + '%' }))));
+      }
+      host.append(el('div', { class: 'card stack' }, el('h3', { text: t('How each label turned out') }), el('p', { class: 'small ink2', text: t('Green: listed above the issue price. Red: at or below. A good label system shows mostly green at the top and more red at the bottom.') }), vb));
+      const checks = [];
+      if (fin(tk.brier) && fin(tk.brier_gmp_only)) checks.push(note(tk.brier <= tk.brier_gmp_only ? 'good' : 'warn', tk.brier <= tk.brier_gmp_only ? t('Our chances were more accurate than going by the grey-market premium alone.') : t('Our chances were not yet more accurate than going by the grey-market premium alone. We show this because hiding it would be dishonest.'), el('span', { class: 'tiny muted', style: 'display:block', text: t('Accuracy score (lower is better): ours {a}, premium-only {b}.', { a: tk.brier.toFixed(3), b: tk.brier_gmp_only.toFixed(3) }) })));
+      if (fin(tk.range_coverage)) checks.push(note('info', t('{p} of actual listing gains landed inside our “likely range”. The range is built to catch about 8 in 10.', { p: pct0(tk.range_coverage) })));
+      if (checks.length) host.append(el('div', { class: 'stack' }, ...checks));
+      if (Array.isArray(tk.calibration) && tk.calibration.length) host.append(el('div', { class: 'card chart' }, relChart(tk.calibration.map(b => ({ pred: b.pred_mean, obs: b.obs_rate, n: b.n })))));
+      host.append(ledgerCard(rows));
+    } else {
+      host.append(el('div', { class: 'card proof-hero' }, el('span', { class: 'seal' }, icon('lock'), t('Saved before listing · never edited')), el('p', null, t('The public record of our calls starts building as IPOs close and list. Until it has enough entries, the evidence below (how past IPOs actually listed) is the best check.'))));
+    }
+    host.append(modelCard());
+    const exp = el('details', { class: 'card more' }, el('summary', null, t('For the curious: the raw evidence')));
+    const box = el('div', { class: 'stack-lg', style: 'margin-top:12px' });
+    box.append(chartGmp(), bucketTable(), coefTable());
+    exp.append(box);
+    host.append(exp);
+    host.append(el('div', { class: 'btn-row' }, extLink(REPO + '/blob/main/data/predictions.json', t('Every saved call (raw file)')), extLink(REPO + '/commits/main/data/predictions.json', t('Change history'))));
+    host.append(footer());
+  }
+  function ledgerCard(rows) {
+    const card = el('div', { class: 'card stack' }, el('div', { class: 'sec-h' }, el('h3', { text: t('Every call, newest first') })));
+    const seg = el('div', { class: 'seg', role: 'group' });
+    for (const [k, lab] of [['locked', 'Saved live'], ['all', 'Include reconstructed']]) seg.append(el('button', { type: 'button', 'aria-pressed': UI.ledger === k ? 'true' : 'false', onclick: () => { UI.ledger = k; const y = window.scrollY; renderProof(); window.scrollTo(0, y); } }, t(lab)));
+    if (rows.some(x => x.lock_stage === 'backfill')) card.append(seg);
+    let shown = rows.filter(x => UI.ledger === 'all' || x.lock_stage !== 'backfill');
+    if (!shown.length) shown = rows;
+    const list = el('div', { class: 'ledger' });
+    const draw = (lim) => {
+      list.replaceChildren();
+      for (const x of shown.slice(0, lim)) {
+        const up = x.listed_up === true || (fin(x.actual_gain_pct) && x.actual_gain_pct > 0);
+        const said = x.verdict_tier === 'apply' || x.verdict_tier === 'lean' ? 'yes' : x.verdict_tier === 'avoid' ? 'no' : 'mid';
+        const right = said === 'mid' ? 'm' : (said === 'yes') === up ? 'y' : 'n';
+        list.append(el('div', { class: 'ln' },
+          el('div', { style: 'min-width:0' }, el('div', { class: 'n', text: x.name }), el('div', { class: 's' }, (x.board === 'sme' ? t('SME') + ' · ' : '') + dshort(x.listing_date) + ' · ' + t('we said') + ' ', el('b', null, vlabel(x.verdict_tier)), fin(x.p_up) ? ' (' + pct0(x.p_up) + ')' : '', x.lock_stage === 'backfill' ? ' · ' + t('reconstructed') : '')),
+          el('span', { class: 'res ' + (up ? 'good' : 'bad'), text: fin(x.actual_gain_pct) ? pct(x.actual_gain_pct, 1) : '–' }),
+          el('span', { class: 'ok ' + right, title: right === 'y' ? t('Our call was right') : right === 'n' ? t('Our call was wrong') : t('We called it a toss-up') }, icon(right === 'y' ? 'check' : right === 'n' ? 'x' : 'minus'))));
+      }
+    };
+    draw(25);
+    card.append(list);
+    if (shown.length > 25) { const more = el('button', { type: 'button', class: 'btn sm', onclick: () => { draw(shown.length); more.remove(); } }, t('Show all {n}', { n: shown.length })); card.append(more); }
+    card.append(el('p', { class: 'tiny muted', text: t('✓ the call was right (said yes and it listed up, or said avoid and it did not), ✗ wrong, – a 50-50 or too-early call.') }));
+    return card;
+  }
+  function modelCard() {
+    const P = D.params, card = el('div', { class: 'card stack' }, el('h3', { text: t('How the chances are worked out') }));
+    card.append(el('p', { class: 'small ink2', text: t('A statistical model learns from past Indian listings how the grey-market premium, demand from each investor group, the issue size and the market mood turned into first-day results, then applies that to each new IPO.') }));
+    if (!P) return card;
+    if (P.status === 'calibrated' && P.metrics) {
+      card.append(note('good', t('Fitted on {n} past listings and tested on IPOs it had not seen: it put a winner ahead of a loser {a} of the time (50% would be a coin toss).', { n: P.n_rows, a: Math.round(P.metrics.auc * 100) + '%' })));
+      if (P.metrics.reliability && P.metrics.reliability.length) card.append(el('div', { class: 'chart' }, relChart(P.metrics.reliability)));
+    } else {
+      card.append(note('info', t('Still on documented starting weights: it needs {m} past listings with full figures to fit itself and has {n}. Until then, treat every chance as a first estimate.', { m: P.min_rows_to_calibrate || 120, n: P.n_rows_gating || 0 })));
+    }
+    card.append(el('button', { type: 'button', class: 'btn sm', style: 'justify-self:start', onclick: methodSheet }, icon('book'), t('Read the full method')));
+    return card;
+  }
+  // charts --------------------------------------------------------------
+  const tip = () => $('#tip');
+  function showTip(evt, lines) { const tp = tip(); tp.replaceChildren(); lines.forEach((l, k) => tp.append(k ? el('div', { text: l }) : el('b', { text: l }))); tp.hidden = false; tp.style.left = Math.min(evt.clientX + 12, window.innerWidth - 250) + 'px'; tp.style.top = Math.min(evt.clientY + 12, window.innerHeight - 90) + 'px'; }
+  function hideTip() { tip().hidden = true; }
+  function axisText(x, y, s, anchor, extra) { return svgEl('text', Object.assign({ x, y, 'text-anchor': anchor || 'middle', 'font-size': 12, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, extra || {}), s); }
+  function relChart(bins) {
+    const wrap = el('div', { class: 'chart' }, el('h3', { text: t('When we say 70%, does it happen 7 times in 10?') }), el('p', { class: 'small ink2', text: t('Dots on the dashed line mean the chances are honest. Above the line we were too cautious, below it too hopeful. Bigger dots hold more IPOs.') }));
+    const W = 520, H = 330, m = { t: 12, r: 14, b: 40, l: 46 };
+    const sx = v => m.l + v * (W - m.l - m.r), sy = v => H - m.b - v * (H - m.t - m.b);
+    const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': t('Predicted chance against how often IPOs actually listed up') });
+    for (let v = 0; v <= 1.0001; v += 0.2) { svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(v), y2: sy(v), stroke: 'var(--grid)' })); svg.append(axisText(m.l - 6, sy(v) + 4, Math.round(v * 100) + '%', 'end')); svg.append(axisText(sx(v), H - m.b + 18, Math.round(v * 100) + '%')); }
+    svg.append(svgEl('line', { x1: sx(0), y1: sy(0), x2: sx(1), y2: sy(1), stroke: 'var(--muted)', 'stroke-dasharray': '5 5' }));
+    svg.append(svgEl('text', { x: (m.l + W - m.r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)' }, t('chance we gave')));
+    svg.append(svgEl('text', { x: 13, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)', transform: 'rotate(-90 13 ' + ((m.t + H - m.b) / 2) + ')' }, t('how often it listed up')));
+    const good = bins.filter(b => fin(b.pred) && fin(b.obs) && b.n > 0), maxN = Math.max(1, ...good.map(b => b.n));
+    svg.append(svgEl('path', { d: good.map((b, k) => (k ? 'L' : 'M') + sx(b.pred).toFixed(1) + ' ' + sy(b.obs).toFixed(1)).join(' '), fill: 'none', stroke: 'var(--brand)', 'stroke-width': 2 }));
+    for (const b of good) { const c = svgEl('circle', { cx: sx(b.pred), cy: sy(b.obs), r: 5 + 7 * Math.sqrt(b.n / maxN), fill: 'var(--brand)', stroke: 'var(--surface)', 'stroke-width': 2 }); c.addEventListener('pointermove', (e) => showTip(e, [t('{o} listed up', { o: pct0(b.obs) }), t('when we said {p}', { p: pct0(b.pred) }), t('{n} IPOs', { n: b.n })])); c.addEventListener('pointerleave', hideTip); svg.append(c); }
+    wrap.append(svg);
+    wrap.append(tableView(t('Show as a table'), [t('We said'), t('Listed up'), t('IPOs')], good.map(b => [pct0(b.pred), pct0(b.obs), String(b.n)])));
     return wrap;
   }
-  function hscroll(table, extraStyle) { return scrollCue(el('div', { class: 'hscroll' }, table), extraStyle); }
-  function bindFilters() {
-    for (const [id, key] of [['#f-board', 'board'], ['#f-status', 'status']]) {
-      $(id).addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; state[key] = b.dataset.v; for (const o of $(id).querySelectorAll('button')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); if (b.classList.contains('stile') && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); renderTable(); });
+  function tableView(title, head, rows) {
+    const d = el('details', { class: 'more' }, el('summary', null, title));
+    const tb = el('table', { class: 'data' }, el('thead', null, el('tr', null, ...head.map(h => el('th', { text: h })))), el('tbody', null, ...rows.map(r => el('tr', null, ...r.map(c => el('td', { class: 'num', text: c }))))));
+    d.append(el('div', { class: 'tbl-wrap', style: 'max-height:280px;overflow-y:auto' }, tb));
+    return d;
+  }
+  function chartGmp() {
+    const host = el('div', { class: 'chart' }, el('h3', { text: t('What the grey-market premium promised vs what listing day delivered') }), el('p', { class: 'small ink2', text: t('Each dot is a past IPO. Dots below the dashed line listed worse than the premium suggested.') }));
+    const pts = D.hist.filter(h => fin(h.gmp_pct) && fin(h.gain_pct) && (h.basis === 'close' || h.basis === 'reported'));
+    if (pts.length < 10) { host.append(el('p', { class: 'muted small', text: t('Not enough past listings with both numbers yet.') })); return host; }
+    const W = 520, H = 340, m = { t: 12, r: 14, b: 40, l: 48 };
+    const xs = pts.map(p => p.gmp_pct), ys = pts.map(p => p.gain_pct);
+    const xlo = Math.max(-30, Math.min(...xs) - 5), xhi = Math.min(160, Math.max(...xs) + 5), ylo = Math.max(-60, Math.min(...ys) - 5), yhi = Math.min(200, Math.max(...ys) + 5);
+    const sx = v => m.l + (Math.min(xhi, Math.max(xlo, v)) - xlo) / (xhi - xlo) * (W - m.l - m.r), sy = v => H - m.b - (Math.min(yhi, Math.max(ylo, v)) - ylo) / (yhi - ylo) * (H - m.t - m.b);
+    const ticks = (lo, hi) => { const st = (hi - lo) > 150 ? 50 : (hi - lo) > 60 ? 20 : 10; const o = []; for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) o.push(v); return o; };
+    const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': t('Premium before listing against the actual listing gain for {n} past IPOs', { n: pts.length }) });
+    for (const v of ticks(ylo, yhi)) { svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(v), y2: sy(v), stroke: 'var(--grid)' })); svg.append(axisText(m.l - 6, sy(v) + 4, v + '%', 'end')); }
+    for (const v of ticks(xlo, xhi)) svg.append(axisText(sx(v), H - m.b + 18, v + '%'));
+    svg.append(svgEl('line', { x1: m.l, x2: W - m.r, y1: sy(0), y2: sy(0), stroke: 'var(--axis)' }));
+    const d0 = Math.max(xlo, ylo), d1 = Math.min(xhi, yhi);
+    svg.append(svgEl('line', { x1: sx(d0), y1: sy(d0), x2: sx(d1), y2: sy(d1), stroke: 'var(--muted)', 'stroke-dasharray': '5 5' }));
+    svg.append(svgEl('text', { x: (m.l + W - m.r) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)' }, t('premium before listing')));
+    svg.append(svgEl('text', { x: 13, y: (m.t + H - m.b) / 2, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-2)', transform: 'rotate(-90 13 ' + ((m.t + H - m.b) / 2) + ')' }, t('actual listing gain')));
+    for (const p of pts) svg.append(svgEl('circle', { cx: sx(p.gmp_pct), cy: sy(p.gain_pct), r: 4.5, fill: p.board === 'sme' ? 'var(--series-sme)' : 'var(--series-main)', 'fill-opacity': 0.8, stroke: 'var(--surface)', 'stroke-width': 1.5 }));
+    svg.addEventListener('pointermove', (evt) => {
+      const rc = svg.getBoundingClientRect(), px = (evt.clientX - rc.left) * W / rc.width, py = (evt.clientY - rc.top) * H / rc.height;
+      let best = null, bd = 1e9; for (const p of pts) { const dd = Math.hypot(sx(p.gmp_pct) - px, sy(p.gain_pct) - py); if (dd < bd) { bd = dd; best = p; } }
+      if (best && bd < 24) showTip(evt, [best.name, boardName(best.board) + ' · ' + dlong(best.listing_date), t('premium {a}, listed {b}', { a: pct(best.gmp_pct, 1), b: pct(best.gain_pct, 1) })]); else hideTip();
+    });
+    svg.addEventListener('pointerleave', hideTip);
+    host.append(svg, el('div', { class: 'legend' }, el('span', null, el('i', { style: 'background:var(--series-main)' }), t('Mainboard')), el('span', null, el('i', { style: 'background:var(--series-sme)' }), t('SME'))));
+    const neg = pts.filter(p => p.gmp_pct > 0 && p.gain_pct <= 0).length, posN = pts.filter(p => p.gmp_pct > 0).length;
+    host.append(el('p', { class: 'small ink2', text: t('Of {n} IPOs with a positive premium, {k} ({p}) still listed at or below the issue price. A premium is a hint, not a promise.', { n: posN, k: neg, p: Math.round(100 * neg / Math.max(1, posN)) + '%' }) }));
+    host.append(tableView(t('Show as a table'), [t('IPO'), t('Premium'), t('Listed')], pts.slice().sort((a, b) => (b.listing_date || '') < (a.listing_date || '') ? -1 : 1).map(p => [p.name, pct(p.gmp_pct, 1), pct(p.gain_pct, 1)])));
+    return host;
+  }
+  function bucketTable() {
+    const host = el('div', { class: 'stack' }, el('h3', { text: t('Past IPOs grouped by their premium') }), el('p', { class: 'small ink2', text: t('No model, just counting. Find the row matching an IPO’s premium and see how many like it listed up.') }));
+    if (!D.params || !Array.isArray(D.params.empirical)) return host;
+    const tb = el('tbody');
+    for (const r of D.params.empirical) if (r.n) tb.append(el('tr', null, el('td', { text: r.bucket }), el('td', { text: boardName(r.board) }), el('td', { class: 'num', text: String(r.n) }), el('td', { class: 'num', text: Math.round(100 * r.p_up) + '%' }), el('td', { class: 'num', text: pct(r.median_gain, 0) }), el('td', { class: 'num', text: pct(r.p10_gain, 0) })));
+    host.append(el('div', { class: 'tbl-wrap' }, el('table', { class: 'data' }, el('thead', null, el('tr', null, ...[t('Premium'), t('Board'), t('IPOs'), t('Listed up'), t('Typical gain'), t('Bad case')].map(h => el('th', { text: h })))), tb)));
+    return host;
+  }
+  function coefTable() {
+    const host = el('div', { class: 'stack' }, el('h3', { text: t('What moves the chance up or down') }));
+    if (!D.params || !Array.isArray(D.params.coef_table)) return host;
+    const NAMES = { gmp_pct: 'Grey-market premium', gmp_missing: 'No premium quote', log_sub_qib: 'Institutional demand', log_sub_nii: 'Wealthy-investor demand', log_sub_retail: 'Retail demand', sub_missing: 'No demand figures', is_sme: 'SME issue', log_issue_size: 'Issue size', nifty_1m_pct: 'Nifty, past month', gmp_trend_pct: 'Premium trend' };
+    const rows = D.params.coef_table.slice().sort((a, b) => Math.abs(b.coef_std) - Math.abs(a.coef_std)), mx = Math.max(0.01, ...rows.map(r => Math.abs(r.coef_std)));
+    const box = el('div', { class: 'coef' });
+    for (const r of rows) { const w = Math.abs(r.coef_std) / mx * 50; box.append(el('div', { class: 'r' }, el('span', { text: t(NAMES[r.feature] || r.feature) }), el('div', { class: 'bar' }, el('div', { class: 'z' }), el('i', { style: r.coef_std >= 0 ? 'left:50%;width:' + w + '%' : 'left:' + (50 - w) + '%;width:' + w + '%' })), el('span', { class: 'num', style: 'text-align:right', text: (r.coef_std >= 0 ? '+' : '') + r.coef_std.toFixed(2) }))); }
+    host.append(box, el('p', { class: 'tiny muted', text: t('Bars to the right raise the chance, to the left lower it; longer is stronger.') }));
+    return host;
+  }
+
+  // ------------------------------------------------------------ glossary ---
+  const TERMS = {
+    howto: { t: 'How to read this app in 1 minute', d: ['Every IPO gets one coloured label: Apply, Leaning yes, 50-50 gamble, Avoid or Too early. Start there; it already weighs everything else.', 'The ring shows the chance of a listing gain. 70% means that out of ten IPOs that looked like this one, about seven ended their first day above the issue price, and three did not.', '“Get shares” is your chance in the share lottery. In a popular IPO most people get nothing and their money is simply unblocked a few days later. “1 in 7” means one applicant in seven gets shares.', '“Worth per application” puts it all together: the average profit one application brings after broker charges and tax, counting the times you get nothing.', 'Tap any IPO for its dates, the money, the demand and the reasons. Tap any underlined word or ? for its meaning.'] },
+    verdicts: { t: 'The labels', d: ['Apply: the odds are clearly on your side and nothing is flashing red.', 'Leaning yes: good odds with one caveat, or a strong early read before demand figures exist.', '50-50 gamble: about as likely to list down as up.', 'Avoid: the odds are against you before you start.', 'Too early: wait for the demand figures on the last bidding day.', 'Not enough info: no premium quote and no demand figures yet.'] },
+    chance: { t: 'Chance of a listing gain', d: ['How likely the IPO is to close its first trading day above the issue price. It comes from a model that learned from past Indian listings.', '70% does not mean you will make 70%. It means about 7 in 10 IPOs that looked like this one listed up.'] },
+    gain: { t: 'Listing gain', d: ['The difference between the IPO price you paid and the price at the end of the first trading day. A 10% gain on ₹15,000 of shares is ₹1,500 before charges and tax.'] },
+    gmp: { t: 'Grey-market premium (GMP)', d: ['Before an IPO lists, some dealers informally trade its shares among themselves. The extra they pay over the issue price is the grey-market premium.', 'It is a hint of demand, nothing more: unofficial, unregulated, sometimes stale, and for small IPOs easy to push around. We treat it as one input among several, never as the answer.'] },
+    sub: { t: 'Demand (subscription)', d: ['How many times over the IPO was bid for. “5x” means people asked for five times the shares on offer.', 'It is reported for three groups: big institutions (QIB), wealthy investors (NII) and retail (people applying up to ₹2 lakh, which is most of us).'] },
+    qib: { t: 'Big institutions (QIB)', d: ['Mutual funds, banks, insurers and foreign funds. They do their own research, so their demand is the strongest signal. They usually bid on the last day.'] },
+    nii: { t: 'Wealthy investors (NII / HNI)', d: ['People and firms bidding more than ₹2 lakh. Often borrowed money, so their demand swings with the premium.'] },
+    retail: { t: 'Retail', d: ['Individuals applying for up to ₹2 lakh. That is you. When this group is oversubscribed, shares go by lottery, so this number sets your odds.'] },
+    allot: { t: 'Chance of getting shares (allotment)', d: ['If retail demand is 7 times the shares on offer, roughly 1 applicant in 7 gets one lot, picked by a computerised lottery set by SEBI. Everyone else gets their money unblocked.', 'Bidding for more lots does not improve your chance in a popular IPO. Applying from more family demat accounts does.'] },
+    lot: { t: 'Lot', d: ['IPO shares are sold in fixed bundles called lots. Price × lot size is the smallest amount you can apply for. SME IPOs need at least two lots.'] },
+    range: { t: 'Likely gain and its range', d: ['The middle number is the most likely listing-day gain. The bad case is a result only 1 in 10 did worse than; the good case one only 1 in 10 did better than.', 'A wide range means more uncertainty, usually in small SME IPOs.'] },
+    worth: { t: 'Worth per application', d: ['The average profit one application brings, after broker charges and tax, counting the chance you get no shares at all.', 'Example: a 1 in 5 chance of a ₹2,000 profit is worth about ₹400 per application. Any single application gives either ₹2,000 or nothing; over many, it averages out.'] },
+    charges: { t: 'Broker and exchange charges', d: ['Selling on listing day costs: brokerage, securities transaction tax (STT, 0.1%), exchange and SEBI fees, GST on those, and a depository (DP) charge. Pick your broker in the Planner.'] },
+    tax: { t: 'Tax on the profit', d: ['Selling within a year counts as a short-term capital gain: 20% tax plus 4% cess on that tax. Every “in your hand” figure has it deducted.'] },
+    sme: { t: 'Mainboard and SME', d: ['Mainboard IPOs list on the main NSE and BSE exchanges. SME IPOs are small companies on NSE Emerge or BSE SME: bigger minimum amounts (₹2 lakh or more), thin trading and wilder results both ways.'] },
+    gamble: { t: 'Gamble warnings', d: ['“Possible gamble” marks a toss-up; “Sure gamble” marks an IPO where the odds are against you. They appear before your money is blocked so you can walk away.'] },
+    model: { t: 'The model', d: ['The chances come from a statistical model fitted on past Indian listings. Until it has enough history it runs on documented starting weights, and the app says so. The Track record tab shows how its calls turned out.'] },
+    fresh: { t: 'Fresh issue', d: ['New shares created by the company. The money goes into the business, for growth or paying debt.'] },
+    ofs: { t: 'Offer for sale (OFS)', d: ['Existing owners selling their shares. The money goes to them, not to the company. An IPO that is almost all OFS means insiders are cashing out.'] },
+    anchor: { t: 'Anchor investors', d: ['Big institutions that buy a part of the IPO a day before it opens. Half of their shares are locked for 30 days after allotment and the rest for 90 days; prices often dip when those lock-ins end.'] },
+  };
+  const TERM_ORDER = ['howto', 'verdicts', 'chance', 'gain', 'range', 'allot', 'worth', 'gmp', 'sub', 'qib', 'nii', 'retail', 'lot', 'charges', 'tax', 'sme', 'fresh', 'ofs', 'anchor', 'gamble', 'model'];
+  function openExplain(key) {
+    const tm = TERMS[key]; if (!tm) return;
+    openSheet(t(tm.t), [...tm.d.map(x => el('p', { text: t(x) })), el('button', { type: 'button', class: 'linkish', style: 'justify-self:start', onclick: glossarySheet }, t('All words used in this app'))]);
+  }
+  function glossarySheet() {
+    openSheet(t('Words used in this app'), el('div', { class: 'list', style: 'box-shadow:none' }, ...TERM_ORDER.map(k => el('details', { class: 'gl' }, el('summary', null, t(TERMS[k].t)), el('div', { class: 'b' }, ...TERMS[k].d.map(x => el('p', { text: t(x) })))))));
+  }
+  function methodSheet() {
+    const P = D.params;
+    const body = el('div', { class: 'prose' },
+      note('warn', el('b', null, t('A decision aid, not a tip sheet.')), ' ', t('A 75% chance of a gain is a 25% chance of a loss. Apply only with money that can stay blocked if a listing goes wrong, never with borrowed money.')),
+      el('h3', { text: t('In plain words') }),
+      el('ul', null, el('li', { text: t('We look at the grey-market premium, how many times over each investor group bid, the issue size and the market mood. From past listings the model has learned how these turned into first-day results.') }), el('li', { text: t('We then count the lottery: in a popular IPO most applicants get nothing, so the profit is multiplied by your chance of getting shares before anything is called worth it.') }), el('li', { text: t('Broker charges and tax come off every “in your hand” figure.') }), el('li', { text: t('When we are unsure we say so: Too early, Not enough info, and the gamble warnings.') })),
+      el('h3', { text: t('The labels') }),
+      el('ul', null, el('li', null, el('b', null, vlabel('apply')), ': ' + t('chance 75%+, likely gain 5%+, positive worth, no warnings. Mainboard only; an SME IPO tops out at Leaning yes.')), el('li', null, el('b', null, vlabel('lean')), ': ' + t('chance 60%+ with at most one warning, or a strong premium-only read.')), el('li', null, el('b', null, vlabel('coinflip')), ': ' + t('chance 40–60%, or a better read pulled down by two or more warnings.')), el('li', null, el('b', null, vlabel('avoid')), ': ' + t('chance under 40% or negative worth.')), el('li', null, el('b', null, vlabel('watch')), ': ' + t('only a premium so far and it does not justify a lean; decide on the last bidding day.'))),
+      el('h3', { text: t('What triggers a warning') }),
+      el('p', { text: t('A premium at or below zero or under 5%; a premium falling sharply; retail or institutions under-subscribed at close; only institutions bidding; any SME IPO; issues under ₹50 crore; a premium quote older than three days; an issue that is almost all offer-for-sale.') }),
+      el('h3', { text: t('What nobody can know') }),
+      el('ul', null, el('li', { text: t('The grey market is unofficial and can be thin or steered, especially for small SME issues.') }), el('li', { text: t('A market shock on listing morning is in nobody’s pre-listing numbers.') }), el('li', { text: P && P.status === 'calibrated' ? t('The model is fitted on {n} listings: enough to rank IPOs and flag gambles, not to promise a gain on any one IPO.', { n: P.n_rows }) : t('The model is not yet fitted to data; it runs on documented starting weights checked against recent outcomes.') }), el('li', { text: t('Expected profit is an average over many applications; most months bring zero or one allotment.') })),
+      el('h3', { text: t('Technical summary') }),
+      el('p', { class: 'small', text: 'Ridge-penalised logistic regression for P(listing-day close > issue price) on GMP % (clipped, trended), log subscription by category, board, log issue size and Nifty 1-month return, with missing-input indicators; a second regression for the gain size with P10–P90 bands from out-of-sample residuals by board. 5-fold cross-validated AUC, Brier and calibration. Allotment odds follow SEBI’s retail lottery (≈1 ÷ retail multiple). Source code and data are public.' }),
+      el('div', { class: 'btn-row' }, extLink(REPO, t('Source code and data'))));
+    openSheet(t('How IPO Radar works'), body);
+  }
+  function healthSheet() {
+    const h = D.live.health, nodes = [];
+    if (!h) { nodes.push(el('p', { text: t('This snapshot has no automatic data-check report.') })); openSheet(t('Data quality'), nodes); return; }
+    nodes.push(note(h.ok === false ? 'warn' : 'good', h.ok === false ? t('Some checks need attention. The numbers are still shown, with care flags on the affected IPOs.') : t('All automatic data checks passed.')));
+    const issues = Array.isArray(h.issues) ? h.issues : [];
+    if (issues.length) nodes.push(el('ul', { class: 'reasons' }, ...issues.slice(0, 40).map(x => el('li', { class: x.level === 'error' ? 'w' : 'r' }, icon(x.level === 'error' ? 'alert' : 'info'), el('span', null, x.ipo_id && BYID.has(x.ipo_id) ? el('b', null, BYID.get(x.ipo_id).eff.name + ': ') : null, x.msg)))));
+    const srcs = Array.isArray(h.sources) ? h.sources : [];
+    if (srcs.length) nodes.push(el('div', { class: 'money' }, ...srcs.map(s => line(s.name, el('span', { class: s.ok ? 'good' : 'bad' }, s.ok ? t('working') : t('down'), s.last_ok_at ? ' · ' + relTime(Date.parse(s.last_ok_at)) : '')))));
+    openSheet(t('Data quality'), nodes);
+  }
+  function helpSheet() {
+    const mail = 'mailto:ceo@layerbit.co.in?subject=IPO%20Radar%20support', wa = 'https://wa.me/916282595823?text=Hi%2C%20I%20need%20help%20with%20IPO%20Radar';
+    const open = (href) => (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', href); closeSheet(); } };
+    openSheet(t('Get help'), [el('p', { text: t('A number that looks wrong, an IPO we missed, a broker whose charges differ, or an idea: tell the people who build this.') }),
+      el('a', { class: 'btn primary block', href: mail, onclick: open(mail) }, icon('mail'), t('Email us')),
+      el('a', { class: 'btn wa block', href: wa, target: '_blank', rel: 'noopener', onclick: open(wa) }, icon('chat'), t('Chat on WhatsApp')),
+      el('p', { class: 'tiny muted', text: t('Most messages get a reply within one to two business days.') })]);
+  }
+  function privacySheet() {
+    openSheet(t('Privacy'), el('div', { class: 'prose' },
+      el('p', { text: t('IPO Radar has no account, no ads and no tracking.') }),
+      el('ul', null, el('li', { text: t('The app only downloads public data files. Nothing about you or your phone is sent.') }), el('li', { text: t('Your watchlist, planner inputs and My IPOs record stay on this phone.') }), el('li', { text: t('Notifications are created on the phone itself.') }), el('li', { text: t('Sharing only happens when you tap Share, through your phone’s own share menu.') })),
+      el('div', { class: 'btn-row' }, extLink(REPO + '/blob/main/PRIVACY.md', t('Full privacy policy')))));
+  }
+
+  // ---------------------------------------------------------------- more ---
+  function settingRow(ic, title, sub, end, onclick) {
+    return el(onclick ? 'button' : 'div', { type: onclick ? 'button' : null, class: 'list-row', onclick }, el('span', { class: 'ico' }, icon(ic)), el('div', { class: 'grow' }, el('div', { class: 't', text: title }), sub ? el('div', { class: 's', text: sub }) : null), end || (onclick ? icon('chev', 'chev') : null));
+  }
+  function switchEl(on, onChange, label, disabled) {
+    const inp = el('input', { type: 'checkbox', role: 'switch', 'aria-label': label, disabled: disabled ? true : null }); inp.checked = !!on;
+    inp.addEventListener('change', () => onChange(inp.checked));
+    return el('label', { class: 'switch' }, inp, el('span'));
+  }
+  function segEl(opts, cur, onPick, label) {
+    const s = el('div', { class: 'seg', role: 'group', 'aria-label': label });
+    for (const [k, lab] of opts) s.append(el('button', { type: 'button', 'aria-pressed': String(k) === String(cur) ? 'true' : 'false', onclick: () => onPick(k) }, lab));
+    return s;
+  }
+  const REMINDER_OPTS = [[-1, 'Off'], [9, '9:00 am'], [10, '10:00 am'], [12, '12 noon'], [14, '2:00 pm'], [16, '4:00 pm']];
+  const SCHEDULE_OPTS = [[0, 'Off'], [3, 'Every 3 hours'], [6, 'Every 6 hours'], [12, 'Every 12 hours'], [24, 'Once a day']];
+  function renderMore() {
+    const host = $('#screen-more'); host.replaceChildren();
+    host.append(el('div', { class: 'hello' }, el('h1', { text: t('More') })));
+    host.append(journalBlock());
+    // look & language
+    const look = el('div', { class: 'list' });
+    look.append(settingRow('globe', t('Language'), null, segEl([['en', 'English'], ['hi', 'हिन्दी']], PREF.lang, (v) => { PREF.lang = v; store('lang', v); applyPrefs(); rerender(); }, t('Language'))));
+    look.append(settingRow('text', t('Text size'), null, segEl([[1, 'A'], [1.15, 'A+'], [1.3, 'A++']], PREF.scale, (v) => { PREF.scale = Number(v); store('scale', PREF.scale); applyPrefs(); renderMore(); }, t('Text size'))));
+    look.append(settingRow('moon', t('Appearance'), null, segEl([['system', t('Auto')], ['light', t('Light')], ['dark', t('Dark')]], PREF.theme, (v) => { PREF.theme = v; store('theme', v); applyPrefs(); renderMore(); }, t('Appearance'))));
+    host.append(el('div', { class: 'sec' }, el('h2', { text: t('Display') }), look));
+    // alerts
+    const nat = !!N, al = el('div', { class: 'list' });
+    const setAlert = (k) => (on) => { ALERTS[k] = on; store('alerts', ALERTS); call('setAlerts', JSON.stringify(ALERTS)); };
+    const alertDefs = [['opening', 'bell', 'Bidding opens', 'For IPOs on your watchlist'], ['closing', 'clock', 'Last day to apply', 'Morning reminder for your watchlist'], ['allotment', 'check', 'Allotment result day', 'So you can check if you got shares'], ['listing', 'flag', 'Listing day', 'The day before and on the day'], ['verdict', 'shield', 'Label changes', 'When a watched IPO moves, say from Leaning yes to Avoid']];
+    for (const [k, ic, tl, sub] of alertDefs) al.append(settingRow(ic, t(tl), t(sub), switchEl(ALERTS[k], setAlert(k), t(tl), !nat)));
+    const rh = STATUS && STATUS.reminder_hour !== undefined && STATUS.reminder_hour !== null ? STATUS.reminder_hour : -1;
+    al.append(settingRow('clock', t('Reminder time'), t((REMINDER_OPTS.find(o => o[0] === Number(rh)) || REMINDER_OPTS[0])[1]), null, nat ? () => pickSheet(t('Reminder time'), REMINDER_OPTS.map(([k, l]) => [k, t(l)]), rh, (v) => { call('setReminderHour', Number(v)); STATUS = Object.assign({}, STATUS || {}, { reminder_hour: Number(v) }); renderMore(); }) : null));
+    al.append(settingRow('download', t('Tell me when new data arrives'), null, switchEl(STATUS && STATUS.notify, (on) => call('setNotify', on), t('Tell me when new data arrives'), !nat)));
+    const sh = STATUS ? Number(STATUS.schedule_hours || 0) : 0;
+    al.append(settingRow('db', t('Background refresh'), t((SCHEDULE_OPTS.find(o => o[0] === sh) || SCHEDULE_OPTS[0])[1]), null, nat ? () => pickSheet(t('Background refresh'), SCHEDULE_OPTS.map(([k, l]) => [k, t(l)]), sh, (v) => { call('setSchedule', Number(v)); STATUS = Object.assign({}, STATUS || {}, { schedule_hours: Number(v) }); renderMore(); }) : null));
+    host.append(el('div', { class: 'sec' }, el('h2', { text: t('Alerts') }), nat ? null : note('info', t('Alerts and background refresh work in the Android app.')), al));
+    // share
+    const shr = el('div', { class: 'list' });
+    shr.append(settingRow('share', t('Share today’s shortlist as a picture'), t('For WhatsApp, Instagram and more'), null, shareShortlistCard));
+    shr.append(settingRow('share', t('Share the shortlist as text'), null, null, () => shareText(shortlistText(), 'IPO Radar')));
+    shr.append(settingRow('download', t('Export all IPOs (spreadsheet)'), 'CSV', null, () => shareFile('ipo-radar-' + (D.live.generated_at || '').slice(0, 10) + '.csv', 'text/csv', csvText())));
+    host.append(el('div', { class: 'sec' }, el('h2', { text: t('Share') }), shr));
+    // learn
+    const lrn = el('div', { class: 'list' });
+    lrn.append(settingRow('help', t('How to read this app'), t('1 minute'), null, () => openExplain('howto')));
+    lrn.append(settingRow('book', t('Words used in this app'), t('Plain-language glossary'), null, glossarySheet));
+    lrn.append(settingRow('info', t('How IPO Radar works'), t('The method, the rules and the limits'), null, methodSheet));
+    const h = D.live.health;
+    lrn.append(settingRow('db', t('Data quality'), h ? (h.ok === false ? t('Some checks need attention') : t('All checks passed')) : t('No report in this snapshot'), null, healthSheet));
+    host.append(el('div', { class: 'sec' }, el('h2', { text: t('Learn') }), lrn));
+    // support
+    const sup = el('div', { class: 'list' });
+    sup.append(settingRow('chat', t('Get help'), t('Email or WhatsApp'), null, helpSheet));
+    sup.append(el('a', { class: 'list-row', href: 'https://www.buymeacoffee.com/layerbit', target: '_blank', rel: 'noopener', onclick: (ev) => { if (has('openExternal')) { ev.preventDefault(); call('openExternal', 'https://www.buymeacoffee.com/layerbit'); } } }, el('span', { class: 'ico', style: 'background:#ffdd00;color:#1a1a1a' }, icon('coffee')), el('div', { class: 'grow' }, el('div', { class: 't', text: t('Buy us a coffee') }), el('div', { class: 's', text: t('Keeps the data and the model running') })), icon('chev', 'chev')));
+    sup.append(settingRow('lock', t('Privacy'), t('No account, no ads, no tracking'), null, privacySheet));
+    host.append(el('div', { class: 'sec' }, el('h2', { text: t('Support') }), sup));
+    host.append(el('p', { class: 'tiny muted', style: 'text-align:center', text: 'IPO Radar ' + (STATUS && STATUS.version ? 'v' + STATUS.version : '') + ' · ' + t('a Layerbit tool') + ' · layerbit.co.in' }));
+    host.append(footer());
+  }
+
+  // ------------------------------------------------------- share & export ---
+  function shareText(text, subject) {
+    if (has('shareText')) { call('shareText', text, subject); return; }
+    if (navigator.share) { navigator.share({ title: subject, text }).catch(() => {}); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast(t('Copied'))).catch(() => toast(t('Could not copy')));
+  }
+  function shareFile(name, mime, content) {
+    if (has('shareFile')) { call('shareFile', name, mime, content); return; }
+    try { const f = new File([content], name, { type: mime }); if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name }).catch(() => {}); return; } } catch (e) { /* fall through */ }
+    const a = el('a', { href: URL.createObjectURL(new Blob([content], { type: mime })), download: name }); document.body.append(a); a.click(); a.remove();
+  }
+  function shareImage(name, dataUrl, caption) {
+    if (has('shareImage')) { call('shareImage', name, dataUrl, caption); return; }
+    try {
+      const bin = atob(dataUrl.split(',')[1]), arr = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
+      const f = new File([arr], name, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name, text: caption }).catch(() => {}); return; }
+      const a = el('a', { href: dataUrl, download: name }); document.body.append(a); a.click(); a.remove();
+    } catch (e) { shareText(caption, name); }
+  }
+  function readText(r) {
+    const i = r.eff, s = r.score, L2 = [];
+    L2.push(i.name + ' (' + (i.board === 'sme' ? 'SME' : 'Mainboard') + ' IPO)');
+    if (i.open_date || i.close_date) L2.push('Bidding ' + dlong(i.open_date) + ' to ' + dlong(i.close_date) + (i.listing_date ? ', lists ' + dlong(i.listing_date) : ''));
+    const inv = minInvest(r); if (inv) L2.push('Minimum ' + inr(inv));
+    if (s && fin(s.p_up)) L2.push('Chance of a listing gain: ' + pct0(s.p_up) + (s.gain ? ' · likely ' + pct(s.gain.p50, 0) + ' (range ' + pct(s.gain.p10, 0) + ' to ' + pct(s.gain.p90, 0) + ')' : ''));
+    if (s && s.allotment && fin(s.allotment.p_min_lot)) L2.push('Chance of getting shares: ' + (s.allotment.p_min_lot >= 0.999 ? 'everyone' : '1 in ' + (1 / s.allotment.p_min_lot).toFixed(1)));
+    if (s && fin(s.ev.ev)) L2.push('Worth per application after charges & tax: ' + inr(s.ev.ev, { plus: true }));
+    if (s && r.st !== 'listed') { L2.push('IPO Radar says: ' + VERDICT[tierOf(r)].label); for (const w of s.verdict.warnings.slice(0, 3)) L2.push('⚠ ' + w); }
+    L2.push('— IPO Radar · data as of ' + (D.live.generated_at || '').slice(0, 16).replace('T', ' ') + ' UTC. Not investment advice.');
+    return L2.join('\n');
+  }
+  function shortlistRows() { return SCORED.filter(r => isLive(r) && r.score && fin(r.score.p_up)).sort(rankLive); }
+  function shortlistText() {
+    const L2 = ['IPO Radar shortlist, ' + dshort(TODAY)];
+    for (const r of shortlistRows()) L2.push('• ' + r.eff.name + (r.eff.board === 'sme' ? ' (SME)' : '') + ': ' + VERDICT[tierOf(r)].label + ', ' + pct0(r.score.p_up) + ' chance' + (fin(r.score.ev.ev) ? ', worth ' + inr(r.score.ev.ev, { plus: true }) : '') + (r.st === 'open' ? ', closes ' + dshort(r.eff.close_date) : ', opens ' + dshort(r.eff.open_date)));
+    L2.push('Not investment advice.');
+    return L2.join('\n');
+  }
+  function csvText() {
+    const esc = v => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const head = ['name', 'board', 'status', 'open_date', 'close_date', 'listing_date', 'issue_price', 'lot_size', 'min_lots', 'gmp_rs', 'gmp_pct', 'sub_qib', 'sub_nii', 'sub_retail', 'sub_total', 'chance_of_gain', 'gain_p10', 'gain_p50', 'gain_p90', 'allotment_p', 'worth_per_application', 'verdict', 'listing_gain_pct'];
+    const out = [head.join(',')];
+    for (const r of SCORED) { const i = r.eff, s = r.score || {}, g = i.gmp || {}, sub = i.subscription || {}; out.push([i.name, i.board, r.st, i.open_date, i.close_date, i.listing_date, i.issue_price, i.lot_size, i.min_lots, g.rs, S.gmpPctOf(i), sub.qib, sub.nii, sub.retail, sub.total, s.p_up, s.gain && s.gain.p10, s.gain && s.gain.p50, s.gain && s.gain.p90, s.allotment && s.allotment.p_min_lot, s.ev && s.ev.ev, s.verdict && s.verdict.tier, i.listing && i.listing.gain_pct].map(esc).join(',')); }
+    return out.join('\n');
+  }
+  // Share cards: a 1080x1350 PNG in the app's own type, drawn on a canvas, previewed before sending.
+  const CARD = { w: 1080, h: 1350, pad: 64 };
+  const CP = { bg: '#f4f6f9', surface: '#ffffff', ink: '#0b1b2b', ink2: '#3f5064', muted: '#66768a', hair: '#e1e7ee', brand: '#0e7c86', brandSoft: '#dcf0f1', navy: '#0b2540', gold: '#e6a817', good: '#137a3a', goodFill: '#1fa855', goodSoft: '#dcf5e4', warn: '#9a5208', warnSoft: '#fdf0d6', crit: '#b3261e', critSoft: '#fde4e1', info: '#2a5db0', infoSoft: '#e3ecfb' };
+  const VC = { apply: ['#ffffff', 'goodFill'], lean: ['good', 'goodSoft'], coinflip: ['warn', 'warnSoft'], avoid: ['crit', 'critSoft'], watch: ['info', 'infoSoft'], nodata: ['muted', 'hair'] };
+  const col = (k) => (k.startsWith('#') ? k : CP[k]);
+  function cFont(px, w, mono) { return (w || 400) + ' ' + px + 'px ' + (mono ? '"Fira Code", monospace' : '"Space Grotesk", "Noto Sans Devanagari", sans-serif'); }
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function wrapT(c, text, x, y, maxW, lh, maxLines) {
+    const words = String(text).split(/\s+/); let ln = '', n = 0;
+    for (const w of words) { const tt = ln ? ln + ' ' + w : w; if (c.measureText(tt).width > maxW && ln) { if (maxLines && n === maxLines - 1) { let cut = ln; while (c.measureText(cut + '…').width > maxW && cut.length) cut = cut.slice(0, -1); c.fillText(cut + '…', x, y); return y + lh; } c.fillText(ln, x, y); y += lh; n++; ln = w; } else ln = tt; }
+    if (ln) { c.fillText(ln, x, y); y += lh; } return y;
+  }
+  function pillC(c, x, y, text, fg, bg, px) { c.font = cFont(px || 30, 700); const w = c.measureText(text).width + 48, h = (px || 30) * 1.8; c.fillStyle = col(bg); rr(c, x, y, w, h, h / 2); c.fill(); c.fillStyle = col(fg); c.textBaseline = 'middle'; c.fillText(text, x + 24, y + h / 2 + 1); c.textBaseline = 'alphabetic'; return w; }
+  function logoImg() { const svg = $('#brand svg'); if (!svg) return Promise.resolve(null); return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); let src = svg.outerHTML; if (!/xmlns=/.test(src)) src = src.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); }); }
+  function cardHead(c, logo, sub) {
+    c.fillStyle = CP.bg; c.fillRect(0, 0, CARD.w, CARD.h);
+    c.fillStyle = CP.navy; c.fillRect(0, 0, CARD.w, 172);
+    const p = CARD.pad; if (logo) c.drawImage(logo, p, 48, 78, 78);
+    c.fillStyle = '#ffffff'; c.font = cFont(42, 700); c.fillText('IPO Radar', p + 100, 92);
+    c.fillStyle = '#9fd8dc'; c.font = cFont(23, 500); c.fillText(sub, p + 100, 126);
+    c.textAlign = 'right'; c.fillStyle = '#c8dde4'; c.font = cFont(24, 500); c.fillText(t('Data as of') + ' ' + (D.live.generated_at ? new Date(D.live.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–'), CARD.w - p, 100); c.textAlign = 'left';
+  }
+  function cardFoot(c) {
+    const p = CARD.pad, y = CARD.h - 96;
+    c.strokeStyle = CP.hair; c.lineWidth = 2; c.beginPath(); c.moveTo(p, y - 32); c.lineTo(CARD.w - p, y - 32); c.stroke();
+    c.fillStyle = CP.muted; c.font = cFont(22, 400); wrapT(c, t('Not investment advice. Chances come from a model on past listings; the grey-market premium is unofficial.'), p, y, CARD.w - 2 * p - 260, 30, 2);
+    c.textAlign = 'right'; c.fillStyle = CP.brand; c.font = cFont(24, 700); c.fillText('IPO Radar', CARD.w - p, y); c.fillStyle = CP.muted; c.font = cFont(20, 500); c.fillText(t('a Layerbit tool'), CARD.w - p, y + 30); c.textAlign = 'left';
+  }
+  function statC(c, x, y, w, h, label, value, sub, vcol) {
+    c.fillStyle = CP.surface; rr(c, x, y, w, h, 22); c.fill(); c.strokeStyle = CP.hair; c.lineWidth = 2; c.stroke();
+    c.fillStyle = CP.muted; c.font = cFont(23, 600); wrapT(c, label, x + 28, y + 46, w - 56, 28, 1);
+    c.fillStyle = vcol || CP.ink; c.font = cFont(60, 700, true); c.fillText(value, x + 28, y + 118);
+    if (sub) { c.fillStyle = CP.ink2; c.font = cFont(23, 400); wrapT(c, sub, x + 28, y + 156, w - 56, 28, 2); }
+  }
+  async function fontsReady() { try { await document.fonts.load(cFont(40, 700)); await document.fonts.load(cFont(40, 700, true)); } catch (e) { /* fallbacks */ } }
+  async function drawIpoCard(r) {
+    const i = r.eff, s = r.score, st = r.st, tier = tierOf(r);
+    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
+    await fontsReady(); cardHead(c, await logoImg(), t('Indian IPOs, in plain words'));
+    const p = CARD.pad; let y = 248;
+    c.fillStyle = CP.ink; c.font = cFont(56, 700); y = wrapT(c, i.name, p, y, CARD.w - 2 * p, 64, 2) + 6;
+    let cx = p; cx += pillC(c, cx, y, boardName(i.board), CP.ink2, CP.hair, 26) + 12; pillC(c, cx, y, statusName(st), st === 'open' ? 'good' : 'ink2', st === 'open' ? 'goodSoft' : 'hair', 26);
+    y += 74;
+    const due = dueInfo(r); c.fillStyle = due.hot ? CP.crit : CP.ink2; c.font = cFont(28, 600); c.fillText(due.t, p, y + 10); y += 46;
+    if (st !== 'listed') {
+      const [fg, bg] = VC[tier] || VC.nodata;
+      c.fillStyle = col(bg); rr(c, p, y, CARD.w - 2 * p, 150, 26); c.fill();
+      c.fillStyle = col(fg); c.font = cFont(56, 700); c.fillText(vlabel(tier), p + 36, y + 72);
+      c.font = cFont(25, 500); wrapT(c, vline(tier), p + 36, y + 114, CARD.w - 2 * p - 72, 30, 1);
+      y += 178;
+      const bw = (CARD.w - 2 * p - 24) / 2, bh = 210, pu = s && fin(s.p_up) ? s.p_up : null, inv = minInvest(r), al = s && s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+      statC(c, p, y, bw, bh, t('Chance of a listing gain'), pu === null ? '–' : pct0(pu), pu === null ? t('not enough data yet') : t('{o} similar IPOs listed above their price.', { o: cap(oddsWords(pu)) }), pu === null ? CP.muted : pu >= 0.7 ? CP.good : pu >= 0.5 ? CP.warn : CP.crit);
+      statC(c, p + bw + 24, y, bw, bh, t('Likely gain'), s && s.gain ? pct(s.gain.p50, 0) : '–', s && s.gain ? t('range {a} to {b}', { a: pct(s.gain.p10, 0), b: pct(s.gain.p90, 0) }) : '', s && s.gain && s.gain.p50 > 0 ? CP.good : CP.crit);
+      y += bh + 24;
+      statC(c, p, y, bw, bh, t('You need'), inv ? inrShort(inv) : '–', inv ? t('minimum application') : '', CP.ink);
+      statC(c, p + bw + 24, y, bw, bh, t('Chance of getting shares'), al === null ? '–' : allotText(al), al === null ? (st === 'upcoming' ? t('known once bidding starts') : t('no demand figures yet')) : t('share lottery'), CP.ink);
+      y += bh + 30;
+      if (s) { c.font = cFont(25, 400); for (const w of s.verdict.warnings.slice(0, 2)) { if (y > CARD.h - 170) break; c.fillStyle = CP.warn; c.fillText('⚠', p, y); c.fillStyle = CP.ink2; y = wrapT(c, w, p + 40, y, CARD.w - 2 * p - 40, 32, 2) + 8; } }
+    } else {
+      const lg = i.listing && fin(i.listing.gain_pct) ? Number(i.listing.gain_pct) : null;
+      c.fillStyle = lg !== null && lg > 0 ? CP.goodSoft : CP.critSoft; rr(c, p, y, CARD.w - 2 * p, 170, 26); c.fill();
+      c.fillStyle = lg !== null && lg > 0 ? CP.good : CP.crit; c.font = cFont(72, 700, true); c.fillText(lg !== null ? pct(lg, 1) : '–', p + 36, y + 104);
+      c.font = cFont(26, 500); c.fillText(t('on listing day'), p + 36, y + 146); y += 200;
+      const tr = trackRow(i.id); if (tr) { c.fillStyle = CP.ink2; c.font = cFont(30, 500); wrapT(c, t('Before listing we gave it a {p} chance of a gain and called it “{v}”.', { p: pct0(tr.p_up), v: vlabel(tr.verdict_tier) }), p, y + 20, CARD.w - 2 * p, 40, 3); }
     }
-    $('#f-nodata').addEventListener('change', () => { state.hideNodata = $('#f-nodata').checked; renderTable(); });
-    // "more to the right" cue on the status row
-    const host = $('#f-status-wrap'), strip = $('#f-status'); const old = $('#f-status-more'); if (old) old.remove();
-    host.replaceChildren(scrollCue(strip));
-    $('#f-sort').addEventListener('change', () => { state.sort = $('#f-sort').value; renderTable(); });
+    cardFoot(c); return cv;
   }
-  function start() {
-    computeAll();
-    bindFilters(); bindPlanner(); bindScreens(); bindContact(); bindSettings(); bindExplain(); enhanceSelects();
-    const pk = $('#picks'); if (pk && !pk.parentNode.classList.contains('hwrap')) { const par = pk.parentNode, nx = pk.nextSibling; par.insertBefore(scrollCue(pk), nx); }
-    renderAll(); renderStatus(); renderSettings();
-    $('#cal-lede').textContent = !PARAMS ? 'No model report in this snapshot.'
-      : PARAMS.status === 'calibrated' ? 'This is the model’s report card. It was fitted on ' + PARAMS.n_rows + ' IPOs listed between ' + dlong(PARAMS.date_range[0]) + ' and ' + dlong(PARAMS.date_range[1]) + ', and every figure below was measured on IPOs it had not seen while learning.'
-      : 'This is where the model’s report card will appear. Right now it runs on documented starting weights (premium first, then institutional demand, then the rest) because the history holds only ' + (PARAMS.n_rows_gating || 0) + ' past listings with full figures; ' + (PARAMS.min_rows_to_calibrate || 120) + ' are needed. The table of past listings below needs no model and is already worth reading.';
-    chartGmp(); chartRel(); bucketTable(); coefTable(); methodText();
-    const h = (location.hash || '').replace('#', '');
-    showScreen(SCREENS.includes(h) ? h : (load('screen', 'today') || 'today'), { keepScroll: true });
+  async function drawShortlistCard() {
+    const rows = shortlistRows().slice(0, 6);
+    const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; const c = cv.getContext('2d');
+    await fontsReady(); cardHead(c, await logoImg(), t('Today’s shortlist') + ' · ' + dshort(TODAY));
+    const p = CARD.pad; let y = 250;
+    c.fillStyle = CP.ink; c.font = cFont(50, 700); c.fillText(t('Open and upcoming IPOs, best first'), p, y); y += 36;
+    if (!rows.length) { c.fillStyle = CP.muted; c.font = cFont(30, 400); c.fillText(t('Nothing open or upcoming has a read right now.'), p, y + 40); }
+    for (const r of rows) {
+      const s = r.score, i = r.eff, tier = tierOf(r);
+      c.fillStyle = CP.surface; rr(c, p, y, CARD.w - 2 * p, 132, 22); c.fill(); c.strokeStyle = CP.hair; c.lineWidth = 2; c.stroke();
+      c.fillStyle = CP.ink; c.font = cFont(32, 700); wrapT(c, i.name + (i.board === 'sme' ? ' (SME)' : ''), p + 28, y + 52, 560, 36, 1);
+      c.fillStyle = CP.ink2; c.font = cFont(24, 400); c.fillText((r.st === 'open' ? t('Apply by {d}', { d: dshort(i.close_date) }) : t('Opens {d}', { d: dshort(i.open_date) })) + '  ·  ' + pct0(s.p_up) + ' ' + t('chance'), p + 28, y + 96);
+      const [fg, bg] = VC[tier] || VC.nodata; c.font = cFont(26, 700); const pw = c.measureText(vlabel(tier)).width + 48;
+      pillC(c, CARD.w - p - pw - 26, y + 40, vlabel(tier), fg, bg, 26);
+      y += 148; if (y > CARD.h - 250) break;
+    }
+    cardFoot(c); return cv;
   }
-  start();
+  function openCard(title, draw, name, caption) {
+    const pv = el('div', { class: 'preview' }, el('span', { class: 'spin' }));
+    let data = null;
+    const shareB = el('button', { type: 'button', class: 'btn primary', disabled: true, onclick: () => { if (data) shareImage(name, data, caption); } }, icon('share'), t('Share'));
+    openSheet(title, [pv, el('div', { class: 'btn-row' }, shareB, el('button', { type: 'button', class: 'btn', onclick: () => shareText(caption, title) }, t('Share as text'))), el('p', { class: 'tiny muted', text: t('Sends as a picture with a short summary as the caption.') })]);
+    Promise.resolve().then(draw).then(cv => { data = cv.toDataURL('image/png'); pv.replaceChildren(el('img', { src: data, alt: title })); shareB.disabled = false; }).catch(() => pv.replaceChildren(el('p', { class: 'muted', text: t('Could not draw the picture on this phone. Share as text instead.') })));
   }
-  let booted = false;
+  function shareIpoCard(r) { openCard(r.eff.name, () => drawIpoCard(r), r.eff.name.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-ipo-radar.png', readText(r)); }
+  function shareShortlistCard() { openCard(t('Today’s shortlist'), drawShortlistCard, 'ipo-radar-shortlist-' + TODAY + '.png', shortlistText()); }
+
+  // ---------------------------------------------------------------- boot ---
+  let bound = false;
+  function bindOnce() {
+    if (bound) return; bound = true;
+    $('#refresh').addEventListener('click', doRefresh);
+    $('#fresh').addEventListener('click', dataSheet);
+    $('#brand').addEventListener('click', () => go('home'));
+    $('#back').addEventListener('click', leaveDetail);
+    $('#sheet-close').addEventListener('click', closeSheet);
+    $('#sheet').addEventListener('click', (ev) => { if (ev.target === ev.currentTarget) closeSheet(); });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeSheet(); });
+    // any element with data-term opens its plain-language explanation
+    document.addEventListener('click', (ev) => { const tm = ev.target.closest && ev.target.closest('[data-term]'); if (!tm) return; ev.preventDefault(); ev.stopPropagation(); openExplain(tm.dataset.term); }, true);
+    // relative times and "today" stay true while the app stays open
+    setInterval(() => { const d = istDate(); if (d !== TODAY) rerender(); else renderTop(); }, 60000);
+  }
+  function boot(payload) {
+    applyPrefs(); bindOnce();
+    setData(payload); computeAll();
+    const r = parseHash();
+    if (r.tab === 'ipo' && BYID.has(r.id)) { UI.prevTab = 'ipos'; UI.ipo = r.id; UI.tab = 'ipo'; setHash('home', false); setHash('ipo/' + encodeURIComponent(r.id), true); pushedDetail = true; }
+    else { const tb = r.tab || load('tab', 'home'); UI.tab = SCREENS.includes(tb) && tb !== 'ipo' ? tb : 'home'; setHash(UI.tab, false); }
+    renderTop(); show({ top: true });
+  }
+  // The Android shell hands in fresher data. Re-render in place: same screen, same filters, same scroll.
   window.ipoRadarLoad = function (payload) {
     if (!payload || !payload.live) return;
-    try { boot(payload); } catch (e) { console.error('ipoRadarLoad failed', e); }
+    try {
+      setData(payload); rerender();
+      if (UI.tab === 'ipo' && !BYID.has(UI.ipo)) go('ipos');
+      if (manual) { toast(t('Updated with the latest data')); manual = false; }
+    } catch (e) { console.error('ipoRadarLoad failed', e); }
   };
-  boot(INLINE); booted = true;
+
+  const HI = {};
+
+  let inline = {};
+  try { inline = JSON.parse(document.getElementById('data').textContent || '{}'); } catch (e) { inline = {}; }
+  boot(inline);
 })();
