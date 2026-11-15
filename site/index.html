@@ -110,7 +110,7 @@ html[lang="hi"] body { line-height: 1.6; }
 .app { min-height: calc(var(--vh, 1vh) * 100); }
 .topbar { position: sticky; top: 0; z-index: 20; background: var(--bg); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--hair); padding-top: env(safe-area-inset-top, 0px); }
 .topbar .in { max-width: 1100px; margin: 0 auto; height: var(--top-h); display: flex; align-items: center; gap: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.125rem; letter-spacing: -0.02em; background: none; border: 0; padding: 0; color: var(--ink); }
+.brand { white-space: nowrap; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.125rem; letter-spacing: -0.02em; background: none; border: 0; padding: 0; color: var(--ink); }
 .brand svg { width: 34px; height: 34px; border-radius: 9px; flex: none; }
 .topbar .back { display: none; }
 .topbar.detail .back { display: inline-flex; }
@@ -450,6 +450,13 @@ a.list-row { text-decoration: none; }
 .toast[hidden] { display: none; }
 footer.foot { color: var(--muted); font-size: .8125rem; text-align: center; padding: 8px 0 0; display: grid; gap: 4px; }
 
+@media (max-width: 400px) {
+  /* small phones (360-400 px wide): logo only, so the status pill fits; tab labels may wrap instead of being cut */
+  .topbar:not(.detail) .brand span { display: none; }
+  .fresh { max-width: none; }
+  .tab .lab { white-space: normal; text-align: center; line-height: 1.15; font-size: .6875rem; }
+  .tab .ic { width: 48px; }
+}
 @media (max-width: 380px) {
   .stats { grid-template-columns: 1fr 1fr; }
   .ipo .kpis { grid-template-columns: 1fr 1fr; }

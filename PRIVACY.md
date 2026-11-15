@@ -53,4 +53,4 @@ IPO Radar provides information and statistical estimates only. It does not offer
 
 ## Changes and contact
 
-If this policy changes, the new version will be published at this same address with a new date. Questions: open an issue at <https://github.com/vysakhsuresh/ipo-radar/issues>.
+If this policy changes, the new version will be published at this same address with a new date. Questions: email <ceo@layerbit.co.in> or open an issue at <https://github.com/vysakhsuresh/ipo-radar/issues>.

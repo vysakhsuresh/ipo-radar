@@ -1,6 +1,6 @@
 # Google Play listing — draft
 
-Package: `com.layerbit.iporadar` · versionName 1.0.0 (versionCode 2) · min Android 8.0 (API 26), target API 36.
+Package: `com.layerbit.iporadar` · versionName 1.0.0 (versionCode 3) · min Android 8.0 (API 26), target API 36.
 
 ## App name
 
@@ -58,8 +58,8 @@ IPO Radar provides information and statistical estimates only. It is not investm
 ## Contact details
 
 - Website: the project's GitHub page
-- Email: (developer account email)
-- Privacy policy URL: host `PRIVACY.md` (e.g. GitHub Pages or the raw GitHub view of the file) and paste the public URL.
+- Email: ceo@layerbit.co.in
+- Privacy policy URL: https://github.com/vysakhsuresh/ipo-radar/blob/main/PRIVACY.md
 
 ## Data safety form
 
