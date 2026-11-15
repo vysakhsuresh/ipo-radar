@@ -89,6 +89,26 @@ def build_history(http: Http, years: list[int] | tuple[int, ...], today: date,
     return out
 
 
+HISTORY_DROP = ("about", "post_listing", "health_flags", "score")
+
+
+def compact_for_history(r: dict) -> dict:
+    """history.json is downloaded by the app, so keep it lean: one `sources` entry per
+    distinct URL (the first field that came from it) and no prose / live-only fields."""
+    for k in HISTORY_DROP:
+        r.pop(k, None)
+    srcs = r.get("sources") or {}
+    seen: set = set()
+    slim = {}
+    for k, u in srcs.items():
+        if u in seen:
+            continue
+        seen.add(u)
+        slim[k] = u
+    r["sources"] = slim
+    return r
+
+
 def merge_into_history(hist: dict, rows: list[dict], today: date) -> dict:
     by_id = {r["id"]: r for r in hist.get("rows", []) if r.get("id")}
     for r in rows:
@@ -97,6 +117,7 @@ def merge_into_history(hist: dict, rows: list[dict], today: date) -> dict:
     out = []
     for r in merged:
         finalise_row(r, today)
+        compact_for_history(r)
         if not (r.get("listing") and r["listing"].get("gain_pct") is not None):
             continue
         if junk_reason(r) in ("non-equity security type", "non-equity name", "non-equity symbol", "price is a debt face value",
@@ -219,6 +240,58 @@ def enrich_gmp(http: Http, rows: list[dict], today: date, limit: int = 2000) -> 
     return n
 
 
+def enrich_nse_categories(http: Http, rows: list[dict], today: date, limit: int = 2000) -> int:
+    """Category-wise final subscription (QIB / NII / bNII / sNII / retail) from NSE's
+    ipo-detail for listings whose Chittorgarh page shows only the total (it hides the
+    split for older issues). NSE's SME books carry no 'offered' figure, so in practice
+    this fills main-board rows."""
+    from fetch.sources import nse
+    n = 0
+    warmed = False
+    for r in rows:
+        s = r.get("subscription") or {}
+        if not r.get("symbol") or s.get("qib") is not None or n >= limit:
+            continue
+        if not warmed:
+            nse.warm_up(http)
+            warmed = True
+        n += 1
+        series = "SME" if r.get("board") == "sme" else "EQ"
+        url = nse.URL_DETAIL.format(symbol=r["symbol"], series=series)
+        try:
+            cats = nse.parse_categories(http.get_json(url, headers=nse.HEADERS, retries=1) or {})
+        except Exception:  # noqa: BLE001
+            continue
+        cats = {k: v for k, v in cats.items() if v is not None}
+        if cats.get("qib") is None or cats.get("total") is None:
+            continue
+        r["subscription"] = {**s, **{k: v for k, v in cats.items() if k != "total" or s.get("total") is None},
+                             "as_of": s.get("as_of") or r.get("close_date")}
+        r.setdefault("sources", {})["subscription_categories"] = url
+        finalise_row(r, today)
+    return n
+
+
+def drop_post_listing_gmp(rows: list[dict]) -> int:
+    """A GMP stamped on or after the listing day is not a pre-listing input. Use the last
+    dated quote before listing when there is one; otherwise flag the row so the
+    quote's timing is known to be uncertain."""
+    n = 0
+    for r in rows:
+        g, ld = r.get("gmp") or {}, r.get("listing_date")
+        if g.get("rs") is None or not ld or not g.get("as_of") or str(g["as_of"]) < ld:
+            continue
+        pre = [h for h in (g.get("history") or []) if h.get("date") and h["date"] < ld]
+        if pre:
+            price = r.get("issue_price")
+            r["gmp"] = {**g, "rs": pre[-1]["rs"], "as_of": pre[-1]["date"],
+                        "pct": round(100.0 * pre[-1]["rs"] / price, 2) if price else g.get("pct")}
+        else:
+            r["flags"] = sorted(set(r.get("flags") or []) | {"gmp_date_unknown"})
+        n += 1
+    return n
+
+
 def enrich_yahoo(http: Http, rows: list[dict], today: date, limit: int = 2000) -> int:
     """Listing-day open and close from Yahoo for rows with only a debut price (or none)."""
     n = 0
@@ -265,6 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-pages", action="store_true", help="skip the per-IPO Chittorgarh pages")
     ap.add_argument("--no-gmp", action="store_true", help="skip the per-IPO InvestorGain GMP series")
     ap.add_argument("--no-yahoo", action="store_true", help="skip Yahoo listing-day closes")
+    ap.add_argument("--no-nse", action="store_true", help="skip NSE category-wise subscription")
     ap.add_argument("--limit", type=int, default=2000, help="max requests per enrichment step")
     a = ap.parse_args(argv)
     today = date.fromisoformat(a.today)
@@ -285,8 +359,11 @@ def main(argv: list[str] | None = None) -> int:
             log["chittorgarh_pages"] = {"ok": True, "rows": enrich_from_pages(http, allrows, today, a.limit)}
         if not a.no_gmp:
             log["investorgain_gmp_series"] = {"ok": True, "rows": enrich_gmp(http, allrows, today, a.limit)}
+        if not a.no_nse:
+            log["nse_categories"] = {"ok": True, "rows": enrich_nse_categories(http, allrows, today, a.limit)}
         if not a.no_yahoo:
             log["yahoo_listing_close"] = {"ok": True, "rows": enrich_yahoo(http, allrows, today, a.limit)}
+        log["post_listing_gmp_fixed"] = {"ok": True, "rows": drop_post_listing_gmp(allrows)}
         hist = merge_into_history(hist, [], today)
         dump_json(path, hist)
     except Exception as e:  # noqa: BLE001
