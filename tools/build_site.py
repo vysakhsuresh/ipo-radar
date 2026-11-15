@@ -8,6 +8,10 @@ Writes:
   dist/artifact.html  the same page as a fragment (no doctype/html/head/body),
                       which is what the claude.ai Artifact publisher expects
   dist/data/*.json    copies of the data for anyone who wants the raw numbers
+                      (scored, ipos, history, params, track_record, predictions)
+
+The inlined payload is {live, params, history, track}: `track` is
+data/track_record.json (null when it has not been built yet).
 
 The page carries its data inline so it works from a file:// URL, from Pages
 and as an artifact with no network access.
@@ -39,6 +43,8 @@ def main(argv=None):
     ap.add_argument("--scored", default=os.path.join(ROOT, "data", "scored.json"))
     ap.add_argument("--params", default=os.path.join(ROOT, "model", "params.json"))
     ap.add_argument("--history", default=os.path.join(ROOT, "data", "history.json"))
+    ap.add_argument("--track", default=os.path.join(ROOT, "data", "track_record.json"))
+    ap.add_argument("--predictions", default=os.path.join(ROOT, "data", "predictions.json"))
     a = ap.parse_args(argv)
 
     live = load(a.scored, None) or load(os.path.join(ROOT, "data", "ipos.json"), {"ipos": [], "market": {}, "sources": []})
@@ -56,7 +62,8 @@ def main(argv=None):
         slim.append({"name": r.get("name"), "board": r.get("board"), "listing_date": r.get("listing_date"),
                      "gmp_pct": (round(gmp_pct_of(r), 2) if gmp_pct_of(r) is not None else None),
                      "gain_pct": round(float(lst["gain_pct"]), 2), "basis": lst.get("gain_basis") or "close"})
-    payload = json.dumps({"live": live, "params": params, "history": slim}, ensure_ascii=False, separators=(",", ":"))
+    track = load(a.track, None)
+    payload = json.dumps({"live": live, "params": params, "history": slim, "track": track}, ensure_ascii=False, separators=(",", ":"))
     # '<' never appears raw inside the data block: that defeats '</script>', '<!--' and
     # '<script' sequences hidden in a scraped company name or note (valid JSON either way)
     payload = payload.replace("<", "\\u003c")
@@ -103,7 +110,7 @@ def main(argv=None):
                              {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}, f, indent=1)
     with open(os.path.join(a.out, "index.html"), "w", encoding="utf-8") as f:
         f.write(full)
-    for src in (a.scored, a.params, a.history, os.path.join(ROOT, "data", "ipos.json")):
+    for src in (a.scored, a.params, a.history, a.track, a.predictions, os.path.join(ROOT, "data", "ipos.json")):
         if os.path.exists(src):
             shutil.copy(src, os.path.join(a.out, "data", os.path.basename(src)))
     print(f"built {a.out}/index.html ({len(full)//1024} KB), {len(live.get('ipos', []))} IPOs, {len(slim)} history rows")
