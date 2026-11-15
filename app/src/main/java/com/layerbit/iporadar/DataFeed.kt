@@ -47,6 +47,7 @@ object DataFeed {
     const val KEY_SCHEDULE_HOURS = "schedule_hours"    // 0 = off
     const val KEY_NOTIFY = "notify"                    // notify when new data lands
     const val KEY_LAST_ERROR = "last_error"
+    private const val KEY_ETAG = "etag_"                // + file key: ETag of the cached copy
 
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 20_000
@@ -84,7 +85,8 @@ object DataFeed {
     class Result(val ok: Boolean, val changed: Boolean, val generatedAt: String?, val error: String?)
 
     private sealed class Fetch {
-        class Ok(val text: String) : Fetch()
+        class Ok(val text: String, val etag: String? = null) : Fetch()
+        object NotModified : Fetch()
         object NotFound : Fetch()
         class Failed(val reason: String) : Fetch()
     }
@@ -99,18 +101,29 @@ object DataFeed {
         p.edit().putLong(KEY_ATTEMPT_AT, System.currentTimeMillis()).apply()
         val bust = System.currentTimeMillis() / 1000
         val got = LinkedHashMap<String, String>()
+        val etags = HashMap<String, String?>()
+        // Conditional GET: an unchanged file answers 304 and is read from the cache (history.json is ~2 MB).
+        fun get(k: String, path: String): Fetch {
+            val cached = cachedText(ctx, k)
+            val tag = if (cached != null) p.getString(KEY_ETAG + k, null) else null
+            return when (val f = fetch(RAW + path, bust, tag)) {
+                is Fetch.NotModified -> if (cached != null) { etags[k] = tag; Fetch.Ok(cached, tag) } else fetch(RAW + path, bust, null)
+                else -> f
+            }
+        }
         for ((k, path) in FILES) {
-            when (val f = fetch(RAW + path, bust)) {
-                is Fetch.Ok -> got[k] = f.text
+            when (val f = get(k, path)) {
+                is Fetch.Ok -> { got[k] = f.text; etags[k] = f.etag }
                 is Fetch.NotFound -> return fail(ctx, "could not download $path (not found)")
                 is Fetch.Failed -> return fail(ctx, "could not download $path (${f.reason})")
+                is Fetch.NotModified -> return fail(ctx, "could not download $path (cache missing)")
             }
         }
         for ((k, path) in OPTIONAL) {
-            when (val f = fetch(RAW + path, bust)) {
-                is Fetch.Ok -> got[k] = f.text
+            when (val f = get(k, path)) {
+                is Fetch.Ok -> { got[k] = f.text; etags[k] = f.etag }
                 is Fetch.NotFound -> Unit                                   // gone upstream: drop it
-                is Fetch.Failed -> cachedText(ctx, k)?.let { got[k] = it }  // keep the last good copy
+                is Fetch.Failed, is Fetch.NotModified -> cachedText(ctx, k)?.let { got[k] = it }  // keep the last good copy
             }
         }
 
@@ -122,12 +135,16 @@ object DataFeed {
         if (changed || currentGen(ctx) == null) {
             if (!commit(ctx, got)) return fail(ctx, "could not save the downloaded data")
         }
-        p.edit()
+        val e = p.edit()
             .putLong(KEY_DOWNLOADED_AT, System.currentTimeMillis())
             .putString(KEY_GENERATED_AT, generatedAt)
             .putString(KEY_HASH, hash)
             .remove(KEY_LAST_ERROR)
-            .apply()
+        for (k in FILES.keys + OPTIONAL.keys) {
+            val tag = etags[k]
+            if (tag != null && got.containsKey(k)) e.putString(KEY_ETAG + k, tag) else e.remove(KEY_ETAG + k)
+        }
+        e.apply()
         if (changed) runCatching { Alerts.recordVerdicts(ctx, got["live"]!!) }
         runCatching { RadarWidget.updateAll(ctx) }
         Result(true, changed, generatedAt, null)
@@ -159,17 +176,17 @@ object DataFeed {
     }.getOrDefault(false)
 
     /** GET with cache-busting, timeouts and one retry with backoff; the body must parse as JSON. */
-    private fun fetch(url: String, bust: Long): Fetch {
+    private fun fetch(url: String, bust: Long, etag: String?): Fetch {
         var last: Fetch = Fetch.Failed("no attempt")
         for (attempt in 0..1) {
             if (attempt > 0) runCatching { Thread.sleep(RETRY_BACKOFF_MS) }
-            last = fetchOnce("$url?t=$bust")
+            last = fetchOnce("$url?t=$bust", etag)
             if (last !is Fetch.Failed) return last
         }
         return last
     }
 
-    private fun fetchOnce(url: String): Fetch {
+    private fun fetchOnce(url: String, etag: String?): Fetch {
         val c = try { URL(url).openConnection() as HttpURLConnection } catch (e: Exception) { return Fetch.Failed("bad url") }
         return try {
             c.connectTimeout = CONNECT_TIMEOUT_MS
@@ -179,12 +196,14 @@ object DataFeed {
             c.setRequestProperty("Accept", "application/json")
             c.setRequestProperty("Cache-Control", "no-cache")
             c.setRequestProperty("Pragma", "no-cache")
+            if (etag != null) c.setRequestProperty("If-None-Match", etag)
             when (val code = c.responseCode) {
                 200 -> {
                     val text = c.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     val v = runCatching { JSONTokener(text).nextValue() }.getOrNull()
-                    if (v is JSONObject || v is JSONArray) Fetch.Ok(text) else Fetch.Failed("not valid JSON")
+                    if (v is JSONObject || v is JSONArray) Fetch.Ok(text, c.getHeaderField("ETag")) else Fetch.Failed("not valid JSON")
                 }
+                304 -> Fetch.NotModified
                 404, 410 -> Fetch.NotFound
                 else -> Fetch.Failed("HTTP $code")
             }
