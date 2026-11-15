@@ -147,10 +147,12 @@ class RadarWidget : AppWidgetProvider() {
 
         private fun ageText(ctx: Context, live: JSONObject): String {
             val p = DataFeed.prefs(ctx)
+            // when the app last checked for new data (what people expect), falling back
+            // to the snapshot's own time for the copy bundled with the app
             val gen = live.optString("generated_at")
-            val at = runCatching { OffsetDateTime.parse(gen).toInstant() }.getOrNull()
+            val at = p.getLong(DataFeed.KEY_DOWNLOADED_AT, 0L).takeIf { it > 0 }?.let { Instant.ofEpochMilli(it) }
+                ?: runCatching { OffsetDateTime.parse(gen).toInstant() }.getOrNull()
                 ?: runCatching { Instant.parse(gen) }.getOrNull()
-                ?: p.getLong(DataFeed.KEY_DOWNLOADED_AT, 0L).takeIf { it > 0 }?.let { Instant.ofEpochMilli(it) }
                 ?: return ""
             val mins = Duration.between(at, Instant.now()).toMinutes().coerceAtLeast(0)
             val age = when {

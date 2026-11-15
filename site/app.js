@@ -458,10 +458,16 @@
     const busy = !!(STATUS && STATUS.refreshing);
     let cls = 'fresh', txt;
     const ageH = gen ? (Date.now() - gen) / 36e5 : null;
-    if (busy) { cls += ' busy'; txt = t('Updating…'); }
-    else if (STATUS && STATUS.online === false) { cls += ' off'; txt = t('Offline') + ' · ' + relTime(gen); }
+    // In the app the pill says when we last CHECKED for new data (what people expect
+    // after tapping refresh). When the numbers themselves were produced lives in the
+    // "About this data" sheet. Markets are shut at weekends, so only data older than
+    // three days is flagged.
+    const checked = STATUS && STATUS.last_success_at ? STATUS.last_success_at : 0;
+    if (busy) { cls += ' busy'; txt = t('Checking for updates…'); }
+    else if (STATUS && STATUS.online === false) { cls += ' off'; txt = t('Offline') + (checked ? ' · ' + t('checked {r}', { r: relTime(checked) }) : ''); }
     else if (STATUS && STATUS.error && manual) { cls += ' err'; txt = t('Update failed'); }
-    else { txt = t('Updated {r}', { r: relTime(gen) }); if (ageH !== null && ageH > 30) cls += ' stale'; }
+    else if (checked) { txt = t('Checked {r}', { r: relTime(checked) }); if (ageH !== null && ageH > 72) cls += ' stale'; }
+    else { txt = t('Updated {r}', { r: relTime(gen) }); if (ageH !== null && ageH > 72) cls += ' stale'; }
     if (D.live.health && D.live.health.ok === false && !busy) cls += ' stale';
     pill.className = cls; pill.lastChild.textContent = txt;
     pill.setAttribute('aria-label', t('Data status: {s}. Tap for details.', { s: txt }));
@@ -485,8 +491,8 @@
   function dataSheet() {
     const gen = dataAgeMs(), h = D.live.health, nodes = [];
     nodes.push(el('div', { class: 'money' },
-      line(t('Prices and demand as of'), gen ? new Date(gen).toLocaleString(PREF.lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–'),
-      STATUS ? line(t('Last downloaded'), STATUS.downloaded_at ? relTime(STATUS.downloaded_at) : t('bundled with the app')) : null,
+      line(t('Prices and demand as of'), gen ? new Date(gen).toLocaleString(PREF.lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }) + ' IST' : '–'),
+      STATUS ? line(t('Last checked for new data'), STATUS.last_success_at ? relTime(STATUS.last_success_at) : t('not yet')) : null,
       STATUS && STATUS.schedule_hours > 0 ? line(t('Background refresh'), t('every {n} h', { n: STATUS.schedule_hours })) : null,
       line(t('Model'), D.params ? (D.params.status === 'calibrated' ? t('fitted on {n} past listings', { n: D.params.n_rows }) : t('starting weights (not yet fitted)')) : '–')));
     if (h && Array.isArray(h.issues) && h.issues.length) nodes.push(note(h.ok === false ? 'warn' : 'info', t('Data checks found {n} thing(s) to be careful about. See More → Data quality.', { n: h.issues.length })));
@@ -1677,6 +1683,11 @@
     "These {b} calls were worked out afterwards, from the numbers known before each IPO listed. The model learned from these same IPOs, so real results will likely be a little worse. Live calls, saved before listing and never edited, start from {d}.": "ये {b} अनुमान बाद में, हर IPO की लिस्टिंग से पहले मौजूद आंकड़ों से निकाले गए। मॉडल ने इन्हीं IPO से सीखा है, इसलिए असली नतीजे थोड़े कमज़ोर हो सकते हैं। लिस्टिंग से पहले सेव होने वाले और कभी न बदलने वाले लाइव अनुमान {d} से शुरू हैं।",
     "Our record on past IPOs (back-test)": "पिछले IPO पर हमारा रिकॉर्ड (बैक-टेस्ट)",
     "You already have the latest data": "आपके पास पहले से नया डेटा है",
+    "Checking for updates…": "अपडेट देख रहे हैं…",
+    "checked {r}": "{r} जाँचा",
+    "Checked {r}": "{r} जाँचा गया",
+    "Last checked for new data": "नया डेटा आखिरी बार जाँचा",
+    "not yet": "अभी नहीं",
     "registrar": "रजिस्ट्रार",
     "Check on BSE": "BSE पर देखें",
     "Registrar not captured for this IPO; the exchange pages work for every issue.": "इस IPO का रजिस्ट्रार हमारे पास नहीं है; एक्सचेंज के पेज हर इश्यू के लिए काम करते हैं।",
