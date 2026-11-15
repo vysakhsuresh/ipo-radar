@@ -30,6 +30,7 @@ How it works: `MainActivity` is a WebView served from the bundled `assets/www` (
 * **Allotment is a lottery and the page does the arithmetic.** When retail is oversubscribed, every applicant gets at most one minimum lot by computerised lottery, so the chance is roughly 1 ÷ (retail times subscribed) whether you bid one lot or ten. Expected value = that chance × net profit on one lot.
 * **Costs are real.** Defaults match a discount broker's delivery sell (0.1% STT, exchange and SEBI charges, GST, ₹15.34 DP charge) and 20% STCG plus cess; change the preset to your broker.
 * **Every number has a source.** `data/ipos.json` carries the URLs each row was built from and `sources` logs what the last refresh fetched.
+* **Predictions are on the record.** When bidding closes, the score is written to `data/predictions.json` and never edited; `data/track_record.json` then compares each locked call with how the IPO actually listed.
 
 ## Icon
 
@@ -44,6 +45,7 @@ site/app.js          page logic: table, detail rows, what-if, planner, charts
 site/score.js        the scoring model in JS (mirrors model/*.py; parity-tested)
 model/features.py    feature engineering              model/rules.py    allotment odds, costs, SEBI limits
 model/score.py       scoring + verdict rules          model/calibrate.py fits params.json from history
+model/track.py       prediction ledger + track record model/health.py   data health checks
 model/fit.py         numpy logistic/ridge + metrics   model/prior.py    documented prior weights
 model/tests/         parity (JS vs Python), rules
 fetch/               live-data fetchers (NSE, Chittorgarh, Investorgain, market) + history builder
@@ -60,7 +62,8 @@ data/scored.json     pipeline + scores  model/params.json  fitted (or prior) mod
 ```bash
 pip install -r requirements.txt
 python -m model.calibrate            # writes model/params.json (prior until 120 listings)
-python -m model.score                # writes data/scored.json
+python -m model.score                # writes data/scored.json (with the health block)
+python -m model.track                # locks closed IPOs into data/predictions.json, writes data/track_record.json
 python tools/build_site.py --out dist
 python -m pytest -q model/tests fetch/tests
 open dist/index.html                 # or serve dist/ anywhere
@@ -70,12 +73,29 @@ Live refresh (needs open internet, which GitHub Actions has):
 
 ```bash
 python -m fetch.run --out data                        # current pipeline, GMP, subscription, market
-python -m fetch.history --years 2024 2025 2026        # calibration rows from the performance trackers
+python -m fetch.history --years 2024 2025 2026        # calibration rows: trackers + IPO pages + GMP series (slow, cached)
 ```
 
 ## Data feed setup
 
 Settings → Actions → General → Workflow permissions: **Read and write**, then run the `refresh` workflow once from the Actions tab. Afterwards it runs four times a day on trading days and commits the refreshed data the app downloads.
+
+## Open data
+
+Every refresh publishes the data behind the page as plain JSON. On GitHub Pages (once Pages is enabled with "GitHub Actions" as the source, the `pages` job in `refresh.yml` deploys `dist/`) the files sit next to the page; the same files are always in this repository under `data/` and `model/` (raw.githubusercontent.com works as an API too).
+
+| Endpoint | What it is |
+|---|---|
+| `data/scored.json` | the live pipeline (upcoming, open, closed and the last 30 days of listings) with every score, plus `health` (data checks in plain English) and `source_status` |
+| `data/ipos.json` | the same pipeline before scoring, with the provenance log (`sources`) of the last fetch |
+| `data/history.json` | every listed IPO with its listing-day outcome and pre-listing inputs (the calibration set; append-only) |
+| `data/predictions.json` | the prediction ledger: one row per IPO, locked when bidding closed and **never changed afterwards** (`lock_stage` `close` / `pre_listing`); `backfill` rows are hindsight scores of older listings, labelled as such |
+| `data/track_record.json` | how those predictions did: hit rate of Apply/Lean calls, results by verdict, Brier score against a GMP-only baseline, calibration bins, how often the actual gain fell inside the P10–P90 range, split by board; `locked_only` holds the genuine (non-backfill) numbers |
+| `data/params.json` | the fitted (or prior) model and its out-of-sample metrics (`model/params.json` in the repository) |
+
+Per IPO, beyond the score inputs: `gmp.sources` (each site's latest quote; `gmp.rs` is the median of quotes no older than three days, `gmp.spread_rs` / `gmp.disagree` flag a split market), `registrar` with its allotment-status page, `allotment_date` / `refund_date` / `demat_date` (`timeline_estimated` when derived from SEBI's T+3 schedule), `fresh_issue_cr` / `ofs_cr`, `anchor` with lock-in dates, `face_value`, `about`, `symbol`, `aliases` (other ids the same IPO was known by), `board_basis` and, after listing, `post_listing` (`d1`, `w1`, `m1`, `m3`, `m6`: % over the issue price at those horizons). Field-by-field definitions: `data/SCHEMA.md`.
+
+Debt, InvIT, REIT, rights and partly-paid lines from the exchange feeds are filtered out; only equity IPOs (mainboard and SME) are listed.
 
 ## Verdict rules
 

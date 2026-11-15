@@ -106,7 +106,7 @@ def lock_live(preds: dict, live: dict, params: dict, today: str, ship_date: str 
         score = ipo.get("score") or score_ipo(ipo, params, live.get("market"), today=today)
         if score.get("p_up") is None:
             continue                       # nothing to lock: no GMP and no demand figures
-        row = prediction_row(ipo, score, today, stage, status)
+        row = prediction_row(ipo, score, live.get("generated_at") or today, stage, status)
         if ipo.get("aliases"):
             row["aliases"] = sorted(ipo["aliases"])
         new.append(row)
