@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older (android:fullBackupContent). Back up only the settings
+     (schedule, alerts, watchlist, theme); the IPO data is re-downloaded. -->
+<full-backup-content>
+    <include domain="sharedpref" path="ipo-radar.xml" />
+</full-backup-content>

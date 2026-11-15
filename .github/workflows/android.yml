@@ -24,12 +24,18 @@ jobs:
           python-version: "3.12"
       # ubuntu-latest already carries the Android SDK (ANDROID_HOME is set); AGP downloads
       # the exact platform/build-tools it needs on first use.
-      - name: Build debug APK (runs tools/build_site.py into app assets first)
+      - name: Build debug APK and release bundle (runs tools/build_site.py into app assets first)
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew --no-daemon assembleDebug bundleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: ipo-radar-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+      # Unsigned here (no keystore in CI); proves R8 + resource shrinking still build.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipo-radar-release-aab-unsigned
+          path: app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14

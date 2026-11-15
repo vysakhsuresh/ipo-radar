@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp" android:height="140dp" android:viewportWidth="250" android:viewportHeight="140">
+    <path android:fillColor="@color/widget_bg" android:pathData="M20,0h210a20,20 0,0 1,20 20v100a20,20 0,0 1,-20 20h-210a20,20 0,0 1,-20 -20v-100a20,20 0,0 1,20 -20z"/>
+    <path android:fillColor="@color/accent" android:pathData="M16,16h12v12h-12z"/>
+    <path android:fillColor="@color/widget_text" android:pathData="M34,18h60v8h-60z"/>
+    <path android:fillColor="@color/widget_button" android:pathData="M210,22a12,12 0,1 1,24 0a12,12 0,1 1,-24 0z"/>
+    <path android:fillColor="@color/accent" android:pathData="M16,38h18v22h-18z"/>
+    <path android:fillColor="@color/widget_muted" android:pathData="M40,50h50v8h-50z"/>
+    <path android:fillColor="@color/widget_text" android:pathData="M16,70h70v7h-70z"/>
+    <path android:fillColor="@color/tier_lean" android:pathData="M92,70h50v7h-50z"/>
+    <path android:fillColor="@color/widget_muted" android:pathData="M148,70h56v7h-56z"/>
+    <path android:fillColor="@color/widget_text" android:pathData="M16,86h60v7h-60z"/>
+    <path android:fillColor="@color/tier_apply" android:pathData="M82,86h34v7h-34z"/>
+    <path android:fillColor="@color/widget_muted" android:pathData="M122,86h56v7h-56z"/>
+    <path android:fillColor="@color/widget_text" android:pathData="M16,102h80v7h-80z"/>
+    <path android:fillColor="@color/tier_coinflip" android:pathData="M102,102h42v7h-42z"/>
+    <path android:fillColor="@color/widget_muted" android:pathData="M16,122h64v6h-64z"/>
+</vector>
