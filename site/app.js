@@ -107,11 +107,11 @@
     const sign = n < 0 ? '−' : (opts && opts.plus && n > 0 ? '+' : '');
     let s = String(Math.round(Math.abs(n)));
     if (s.length > 3) { const last3 = s.slice(-3); s = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3; }
-    return sign + '₹' + s;
+    return sign + (sign ? '⁠' : '') + '₹' + s;   // word joiner: never wrap between the sign and ₹
   }
   function inrShort(n) {
     if (n === null || n === undefined || !isFinite(n)) return '–';
-    const a = Math.abs(n), sign = n < 0 ? '−' : '';
+    const a = Math.abs(n), sign = n < 0 ? '−⁠' : '';
     if (a >= 1e7) return sign + '₹' + (a / 1e7).toFixed(a >= 1e9 ? 0 : 1).replace(/\.0$/, '') + ' ' + t('cr');
     if (a >= 1e5) return sign + '₹' + (a / 1e5).toFixed(a >= 1e6 ? 0 : 1).replace(/\.0$/, '') + ' ' + t('lakh');
     return inr(n);
@@ -347,7 +347,7 @@
       card.append(el('div', { class: 'kpis' },
         kpi(t('Day one'), lg !== null ? pct(lg, 1) : '–', lg === null ? '' : lg > 0 ? 'good' : 'bad'),
         kpi(t('Now'), now !== null ? pct(now, 1) : '–', now === null ? '' : now > 0 ? 'good' : 'bad'),
-        kpi(t('We said'), tr ? vlabel(tr.verdict_tier) : (s ? pct0(s.p_up) : '–'))));
+        kpi(t('We said'), tr ? vlabel(tr.verdict_tier) : (s ? pct0(s.p_up) : '–'), tr ? 'txt' : '')));
     }
     const due = dueInfo(r);
     card.append(el('div', { class: 'due' + (due.hot ? ' hot' : '') }, icon('clock'), due.t));
@@ -1466,6 +1466,10 @@
   window.ipoRadarLoad = function (payload) {
     if (!payload || !payload.live) return;
     try {
+      // never step back in time: a downloaded snapshot older than the one already
+      // shown (e.g. the copy bundled in a newer app build) is ignored
+      const now = dataAgeMs(), inc = Date.parse(payload.live.generated_at || '');
+      if (now && isFinite(inc) && inc < now) { if (manual) { toast(t('You already have the latest data')); manual = false; } return; }
       setData(payload); rerender();
       if (UI.tab === 'ipo' && !BYID.has(UI.ipo)) go('ipos');
       if (manual) { toast(t('Updated with the latest data')); manual = false; }
@@ -1672,6 +1676,7 @@
     "Back-test on past IPOs": "पिछले IPO पर जाँच",
     "These {b} calls were worked out afterwards, from the numbers known before each IPO listed. The model learned from these same IPOs, so real results will likely be a little worse. Live calls, saved before listing and never edited, start from {d}.": "ये {b} अनुमान बाद में, हर IPO की लिस्टिंग से पहले मौजूद आंकड़ों से निकाले गए। मॉडल ने इन्हीं IPO से सीखा है, इसलिए असली नतीजे थोड़े कमज़ोर हो सकते हैं। लिस्टिंग से पहले सेव होने वाले और कभी न बदलने वाले लाइव अनुमान {d} से शुरू हैं।",
     "Our record on past IPOs (back-test)": "पिछले IPO पर हमारा रिकॉर्ड (बैक-टेस्ट)",
+    "You already have the latest data": "आपके पास पहले से नया डेटा है",
     "registrar": "रजिस्ट्रार",
     "Check on BSE": "BSE पर देखें",
     "Registrar not captured for this IPO; the exchange pages work for every issue.": "इस IPO का रजिस्ट्रार हमारे पास नहीं है; एक्सचेंज के पेज हर इश्यू के लिए काम करते हैं।",
