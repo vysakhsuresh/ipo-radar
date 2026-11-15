@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-15T10:55:51Z",
+ "generated_at": "2026-11-15T17:47:06Z",
  "rows": [
   {
    "id": "ibl-finance-2024",
@@ -67517,7 +67517,7 @@
     "bnii": 303.82,
     "snii": 229.7,
     "retail": 195.87,
-    "total": 63.69,
+    "total": 107.71,
     "as_of": "2026-09-03",
     "day": 3,
     "employee": null
@@ -67540,17 +67540,17 @@
    "status": "listed",
    "min_lots": 1,
    "sources": {
-    "name": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-    "board": "https://www.nseindia.com/api/ipo-detail?symbol=MOMSBELIEF&series=EQ",
+    "name": "https://www.nseindia.com/api/ipo-detail?symbol=MOMSBELIEF&series=EQ",
     "price_band_low": "https://www.nseindia.com/api/public-past-issues",
-    "subscription": "https://www.chittorgarh.com/ipo/rays-of-belief-ipo/2787/",
-    "gmp_history": "https://www.investorgain.com/gmp/rays-of-belief-ipo/2041/"
+    "subscription": "https://www.nseindia.com/api/ipo-active-category?symbol=MOMSBELIEF",
+    "gmp_history": "https://www.investorgain.com/gmp/rays-of-belief-ipo/2041/",
+    "issue_price": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1"
    },
    "flags": [
     "gmp_pre_listing",
     "price_band_only"
    ],
-   "exchange": "NSE,BSE",
+   "exchange": "NSE",
    "open_date": "2026-09-01",
    "close_date": "2026-09-03",
    "price_band_low": 227.0,
@@ -67563,7 +67563,7 @@
    "security_type": "Equity",
    "face_value": 10.0,
    "registrar": {
-    "name": "Kfin Technologies Ltd.",
+    "name": "KFin Technologies Limited",
     "status_url": "https://ipostatus.kfintech.com/"
    },
    "min_investment": 14818.0,
@@ -68215,11 +68215,11 @@
    "issue_size_cr": 732.97,
    "name": "Asset Reconstruction Company (India) Limited",
    "board": "mainboard",
-   "exchange": "NSE,BSE",
+   "exchange": "NSE",
    "open_date": "2026-09-09",
    "close_date": "2026-09-11",
    "listing_date": "2026-09-17",
-   "price_band_low": 132.0,
+   "price_band_low": 139.0,
    "price_band_high": 139.0,
    "issue_price": 139.0,
    "ofs_cr": 732.97,
@@ -68228,12 +68228,12 @@
    "status": "listed",
    "min_lots": 1,
    "sources": {
-    "name": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-    "board": "https://www.nseindia.com/api/public-past-issues",
+    "name": "https://www.nseindia.com/api/public-past-issues",
     "ofs_cr": "https://webnodejs.chittorgarh.com/cloud/report/data-read/82/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
     "subscription": "https://www.chittorgarh.com/ipo/asset-reconstruction-ipo/2558/",
     "gmp_history": "https://www.investorgain.com/gmp/asset-reconstruction-ipo/1848/",
-    "subscription_categories": "https://www.nseindia.com/api/ipo-detail?symbol=ARCIL&series=EQ"
+    "subscription_categories": "https://www.nseindia.com/api/ipo-detail?symbol=ARCIL&series=EQ",
+    "issue_size_cr": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1"
    },
    "flags": [
     "gmp_pre_listing"
@@ -70134,7 +70134,7 @@
    "id": "national-stock-exchange-of-india-2026",
    "name": "National Stock Exchange of India Limited",
    "board": "mainboard",
-   "exchange": "BSE",
+   "exchange": "NSE",
    "open_date": "2026-09-17",
    "close_date": "2026-09-21",
    "listing_date": "2026-09-24",
@@ -70146,18 +70146,16 @@
    "status": "listed",
    "min_lots": 1,
    "sources": {
-    "name": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-    "board": "https://www.nseindia.com/api/ipo-detail?symbol=NSE&series=EQ",
-    "open_date": "https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/",
-    "close_date": "https://www.chittorgarh.com/ipo/nse-ipo/3151/",
+    "name": "https://www.nseindia.com/api/ipo-detail?symbol=NSE&series=EQ",
     "price_band_low": "https://www.nseindia.com/api/public-past-issues",
     "ofs_cr": "https://webnodejs.chittorgarh.com/cloud/report/data-read/82/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-    "subscription": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
+    "subscription": "https://www.nseindia.com/api/ipo-active-category?symbol=NSE",
     "ref1": "https://www.ipoplatform.com/ipo/national-stock-exchange-of-india-ipo/4698",
     "ref2": "https://www.business-standard.com/markets/ipo/nse-ipo-listing-can-national-stock-exchange-of-india-deliver-big-gains-check-date-and-gmp-126092300607_1.html",
     "ref3": "https://www.kotakneo.com/ipo/nse-ipo/",
     "ref4": "https://groww.in/ipo/nse-ipo",
-    "ref5": "https://www.investorgain.com/ipo/nse-ipo/2305/"
+    "ref5": "https://www.investorgain.com/ipo/nse-ipo/2305/",
+    "listing_date": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1"
    },
    "flags": [
     "gmp_date_unknown",
@@ -70171,7 +70169,7 @@
    "security_type": "Equity",
    "face_value": 1.0,
    "registrar": {
-    "name": "MUFG Intime India Pvt.Ltd.",
+    "name": "MUFG Intime India Private Limited (formerly Link Intime India Private Limited)",
     "status_url": "https://in.mpms.mufg.com/Initial_Offer/public-issues.html"
    },
    "min_investment": 14280.0,
@@ -70189,9 +70187,7 @@
    "refund_date": "2026-09-23",
    "demat_date": "2026-09-23",
    "timeline_estimated": true,
-   "aliases": [
-    "national-stock-exchange-of-india-nse-2026"
-   ],
+   "aliases": [],
    "fresh_issue_cr": 0.0,
    "sector": "Stock exchange",
    "notes": "Listed Sep 24, 2026 at 1800 vs 1785 (+0.84%); venue mostly reported as BSE. Entire issue OFS, ~22,562 cr. Subscription 5.71x; retail 1.39x (1.37x other). GMP fell from 310 pre-launch to ~68 before listing (implied 1853). Last close 1730.90 on Oct 9, 2026.",
