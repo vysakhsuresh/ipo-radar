@@ -19,9 +19,11 @@ The screen is a single HTML page with the data inlined, bundled into the APK so 
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Needs a JDK 17, the Android SDK (compileSdk 34) and python3 on the PATH (the `buildWeb` Gradle task runs `tools/build_site.py`). The `android` workflow builds the same debug APK on every push and attaches it to the run under Artifacts, so a phone can install it without any local tooling. A signed release build reads `keystore.properties` (never committed), exactly as Dawn Patrol does.
+Needs JDK 21 (Gradle 8.13 does not run on Java 25), the Android SDK (compileSdk/targetSdk 36) and python3 on the PATH (the `buildWeb` Gradle task runs `tools/build_site.py`). `./gradlew bundleRelease` produces the Play Store AAB (R8 + resource shrinking), signed when `keystore.properties` (never committed) is present. The `android` workflow builds the debug APK and the unsigned AAB on every push. Play listing draft: `docs/play-listing.md`; privacy policy: `PRIVACY.md`.
 
-How it works: `MainActivity` is a WebView served from the bundled `assets/www` (built from `site/`), with pull-to-refresh. On launch and on pull-down it downloads `data/scored.json`, `model/params.json` and `data/history.json` from this repository's `main` branch, caches them in the app's private storage and hands them to the page through `window.ipoRadarLoad`, so the pipeline updates without an app update. External links (Get help, Buy me a coffee, sources) open in the phone's browser. The `refresh` workflow is the app's data feed: it refetches the sources four times a day and commits the files the app downloads.
+How it works: `MainActivity` is a WebView served from the bundled `assets/www` (built from `site/`), with pull-to-refresh. On launch and on pull-down it downloads `data/scored.json`, `model/params.json`, `data/history.json` and (optional) `data/track_record.json` from this repository's `main` branch, swaps them in atomically, and hands them to the page through `window.ipoRadarLoad` only when the content changed; the page keeps its screen, filters and scroll. A home-screen widget lists open IPOs with their labels, and opt-in local notifications cover watchlist dates (bidding opens, last day, allotment, listing) and label changes. The bridge the page uses (`window.IpoNative`) is documented at the top of `MainActivity.kt`. The `refresh` workflow is the app's data feed.
+
+The page (`site/app.js`) has five screens: Today, IPOs (with a full page per IPO), Planner, Track record and More (My IPOs record, display, alerts, glossary, method, data quality, help). Every string goes through `t()`; Hindi translations live in the `HI` table near the end of the file.
 
 ## How it is honest
 
