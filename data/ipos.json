@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-11-17T21:14:07Z",
+ "generated_at": "2026-11-18T12:07:58Z",
  "market": {
-  "nifty": 25387.4,
-  "nifty_1w_pct": 0.98,
-  "nifty_1m_pct": 9.68,
-  "nifty_3m_pct": 4.13,
-  "vix": 15.51,
-  "as_of": "2026-11-17"
+  "nifty": 25227.95,
+  "nifty_1w_pct": -0.11,
+  "nifty_1m_pct": 8.99,
+  "nifty_3m_pct": 4.77,
+  "vix": 15.56,
+  "as_of": "2026-11-18"
  },
  "sources": [
   {
    "url": "https://www.nseindia.com/",
-   "fetched_at": "2026-11-17T21:09:12Z",
+   "fetched_at": "2026-11-18T12:03:40Z",
    "ok": false,
    "status": null,
    "rows": 0,
@@ -19,7 +19,7 @@
   },
   {
    "url": "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
-   "fetched_at": "2026-11-17T21:09:14Z",
+   "fetched_at": "2026-11-18T12:03:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -27,7 +27,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/allIndices",
-   "fetched_at": "2026-11-17T21:09:16Z",
+   "fetched_at": "2026-11-18T12:03:44Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -35,7 +35,7 @@
   },
   {
    "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=3mo&interval=1d",
-   "fetched_at": "2026-11-17T21:09:16Z",
+   "fetched_at": "2026-11-18T12:03:44Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -43,7 +43,7 @@
   },
   {
    "url": "https://www.nseindia.com/",
-   "fetched_at": "2026-11-17T21:09:18Z",
+   "fetched_at": "2026-11-18T12:03:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -51,7 +51,7 @@
   },
   {
    "url": "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
-   "fetched_at": "2026-11-17T21:09:20Z",
+   "fetched_at": "2026-11-18T12:03:47Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -59,7 +59,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-current-issue",
-   "fetched_at": "2026-11-17T21:09:21Z",
+   "fetched_at": "2026-11-18T12:03:49Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -67,7 +67,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/all-upcoming-issues?category=ipo",
-   "fetched_at": "2026-11-17T21:09:23Z",
+   "fetched_at": "2026-11-18T12:03:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -75,7 +75,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/public-past-issues",
-   "fetched_at": "2026-11-17T21:09:25Z",
+   "fetched_at": "2026-11-18T12:03:53Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -83,7 +83,15 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
-   "fetched_at": "2026-11-17T21:09:32Z",
+   "fetched_at": "2026-11-18T12:03:55Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/ipo-active-category?symbol=CRYSTALCP",
+   "fetched_at": "2026-11-18T12:03:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -91,7 +99,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=WATRANA&series=SME",
-   "fetched_at": "2026-11-17T21:09:38Z",
+   "fetched_at": "2026-11-18T12:03:58Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -99,7 +107,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=VPFL&series=SME",
-   "fetched_at": "2026-11-17T21:09:45Z",
+   "fetched_at": "2026-11-18T12:04:00Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -107,7 +115,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=VPFL",
-   "fetched_at": "2026-11-17T21:09:47Z",
+   "fetched_at": "2026-11-18T12:04:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -115,7 +123,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=NSE&series=EQ",
-   "fetched_at": "2026-11-17T21:09:53Z",
+   "fetched_at": "2026-11-18T12:04:08Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -123,7 +131,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=NSE",
-   "fetched_at": "2026-11-17T21:09:55Z",
+   "fetched_at": "2026-11-18T12:04:10Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -131,7 +139,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=MOMSBELIEF&series=EQ",
-   "fetched_at": "2026-11-17T21:10:02Z",
+   "fetched_at": "2026-11-18T12:04:17Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -139,7 +147,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=MOMSBELIEF",
-   "fetched_at": "2026-11-17T21:10:04Z",
+   "fetched_at": "2026-11-18T12:04:18Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -147,7 +155,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-detail?symbol=ESFL&series=SME",
-   "fetched_at": "2026-11-17T21:10:10Z",
+   "fetched_at": "2026-11-18T12:04:25Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -155,7 +163,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/ipo-active-category?symbol=ESFL",
-   "fetched_at": "2026-11-17T21:10:12Z",
+   "fetched_at": "2026-11-18T12:04:27Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -163,7 +171,7 @@
   },
   {
    "url": "source:nse",
-   "fetched_at": "2026-11-17T21:10:12Z",
+   "fetched_at": "2026-11-18T12:04:27Z",
    "ok": true,
    "status": null,
    "rows": 121,
@@ -171,7 +179,7 @@
   },
   {
    "url": "https://webnodejs.chittorgarh.com/cloud/report/data-read/82/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-   "fetched_at": "2026-11-17T21:10:14Z",
+   "fetched_at": "2026-11-18T12:04:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -179,7 +187,7 @@
   },
   {
    "url": "https://webnodejs.chittorgarh.com/cloud/report/data-read/82/1/11/2026/2026-27/0/sme/0?search=&v=1",
-   "fetched_at": "2026-11-17T21:10:17Z",
+   "fetched_at": "2026-11-18T12:04:31Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -187,7 +195,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-gmp-grey-market-premium/97/",
-   "fetched_at": "2026-11-17T21:10:18Z",
+   "fetched_at": "2026-11-18T12:04:34Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -195,7 +203,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-gmp-grey-market-premium/97/",
-   "fetched_at": "2026-11-17T21:10:21Z",
+   "fetched_at": "2026-11-18T12:04:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -203,7 +211,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ipo_gmp/",
-   "fetched_at": "2026-11-17T21:10:21Z",
+   "fetched_at": "2026-11-18T12:04:47Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -211,7 +219,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ipo_gmp/",
-   "fetched_at": "2026-11-17T21:10:25Z",
+   "fetched_at": "2026-11-18T12:04:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -219,7 +227,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/mahanadi-coalfields-ipo/3247/",
-   "fetched_at": "2026-11-17T21:10:26Z",
+   "fetched_at": "2026-11-18T12:04:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -227,7 +235,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/crystal-crop-protection-ipo/2813/",
-   "fetched_at": "2026-11-17T21:10:28Z",
+   "fetched_at": "2026-11-18T12:04:53Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -235,7 +243,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/bombay-coated-and-special-steels-ipo/2671/",
-   "fetched_at": "2026-11-17T21:10:30Z",
+   "fetched_at": "2026-11-18T12:04:55Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -243,7 +251,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/mksons-fine-jewels-ipo/3100/",
-   "fetched_at": "2026-11-17T21:10:32Z",
+   "fetched_at": "2026-11-18T12:04:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -251,7 +259,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/sfc-environmental-technologies-ipo/2070/",
-   "fetched_at": "2026-11-17T21:10:34Z",
+   "fetched_at": "2026-11-18T12:04:58Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -259,7 +267,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/bls-polymers-ipo/2559/",
-   "fetched_at": "2026-11-17T21:10:37Z",
+   "fetched_at": "2026-11-18T12:04:59Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -267,7 +275,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/eaaa-india-alternatives-ipo/2061/",
-   "fetched_at": "2026-11-17T21:10:39Z",
+   "fetched_at": "2026-11-18T12:05:01Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -275,7 +283,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/paras-healthcare-ipo/2256/",
-   "fetched_at": "2026-11-17T21:10:42Z",
+   "fetched_at": "2026-11-18T12:05:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -283,7 +291,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/jio-platforms-ipo/3152/",
-   "fetched_at": "2026-11-17T21:10:43Z",
+   "fetched_at": "2026-11-18T12:05:04Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -291,7 +299,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/sahajanand-medical-technologies-ipo/2550/",
-   "fetched_at": "2026-11-17T21:10:45Z",
+   "fetched_at": "2026-11-18T12:05:05Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -299,7 +307,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/bonfiglioli-transmissions-ipo/2861/",
-   "fetched_at": "2026-11-17T21:10:48Z",
+   "fetched_at": "2026-11-18T12:05:07Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -307,7 +315,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/zetwerk-ipo/3091/",
-   "fetched_at": "2026-11-17T21:10:50Z",
+   "fetched_at": "2026-11-18T12:05:08Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -315,7 +323,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/tonbo-imaging-india-ipo/3215/",
-   "fetched_at": "2026-11-17T21:10:53Z",
+   "fetched_at": "2026-11-18T12:05:10Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -323,7 +331,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/fusion-cx-ipo/2455/",
-   "fetched_at": "2026-11-17T21:10:56Z",
+   "fetched_at": "2026-11-18T12:05:11Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -331,7 +339,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/hd-fire-protect-ipo/2628/",
-   "fetched_at": "2026-11-17T21:10:58Z",
+   "fetched_at": "2026-11-18T12:05:13Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -339,7 +347,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/watrana-rentals-ipo/2503/",
-   "fetched_at": "2026-11-17T21:11:01Z",
+   "fetched_at": "2026-11-18T12:05:15Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -347,7 +355,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/vedant-poly-fabs-ipo/3143/",
-   "fetched_at": "2026-11-17T21:11:03Z",
+   "fetched_at": "2026-11-18T12:05:16Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -355,7 +363,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/maxwell-engineering-solutions-ipo/2704/",
-   "fetched_at": "2026-11-17T21:11:06Z",
+   "fetched_at": "2026-11-18T12:05:18Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -363,7 +371,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/vectras-enprocon-ipo/2740/",
-   "fetched_at": "2026-11-17T21:11:09Z",
+   "fetched_at": "2026-11-18T12:05:19Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -371,7 +379,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/hgs-india-ipo/2981/",
-   "fetched_at": "2026-11-17T21:11:11Z",
+   "fetched_at": "2026-11-18T12:05:21Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -379,7 +387,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/johnsoncab-electricals-ipo/3217/",
-   "fetched_at": "2026-11-17T21:11:13Z",
+   "fetched_at": "2026-11-18T12:05:22Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -387,7 +395,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/antala-industries-ipo/3221/",
-   "fetched_at": "2026-11-17T21:11:16Z",
+   "fetched_at": "2026-11-18T12:05:24Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -395,7 +403,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ajwa-projects-ipo/2761/",
-   "fetched_at": "2026-11-17T21:11:18Z",
+   "fetched_at": "2026-11-18T12:05:25Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -403,7 +411,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/carver-roboweld-ipo/3239/",
-   "fetched_at": "2026-11-17T21:11:21Z",
+   "fetched_at": "2026-11-18T12:05:27Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -411,7 +419,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/wiscon-industries-ipo/3202/",
-   "fetched_at": "2026-11-17T21:11:23Z",
+   "fetched_at": "2026-11-18T12:05:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -419,7 +427,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/core4-engineers-ipo/2969/",
-   "fetched_at": "2026-11-17T21:11:26Z",
+   "fetched_at": "2026-11-18T12:05:30Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -427,7 +435,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/shellz-india-ipo/2966/",
-   "fetched_at": "2026-11-17T21:11:29Z",
+   "fetched_at": "2026-11-18T12:05:31Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -435,7 +443,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/ravita-engineering-services-ipo/2959/",
-   "fetched_at": "2026-11-17T21:11:31Z",
+   "fetched_at": "2026-11-18T12:05:33Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -443,7 +451,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/ipo/vaibhav-vyapaar-ipo/3180/",
-   "fetched_at": "2026-11-17T21:11:34Z",
+   "fetched_at": "2026-11-18T12:05:34Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -451,7 +459,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-   "fetched_at": "2026-11-17T21:11:36Z",
+   "fetched_at": "2026-11-18T12:05:37Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -459,7 +467,7 @@
   },
   {
    "url": "https://www.chittorgarh.com/report/ipo-subscription-status-live-bidding-data-bse-nse/21/",
-   "fetched_at": "2026-11-17T21:11:39Z",
+   "fetched_at": "2026-11-18T12:05:40Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -467,15 +475,15 @@
   },
   {
    "url": "source:chittorgarh",
-   "fetched_at": "2026-11-17T21:11:40Z",
+   "fetched_at": "2026-11-18T12:05:40Z",
    "ok": true,
    "status": null,
-   "rows": 97,
+   "rows": 93,
    "note": ""
   },
   {
    "url": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/mainboard/0?search=&v=1",
-   "fetched_at": "2026-11-17T21:11:41Z",
+   "fetched_at": "2026-11-18T12:05:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -483,7 +491,7 @@
   },
   {
    "url": "https://webnodejs.chittorgarh.com/cloud/report/data-read/236/1/11/2026/2026-27/0/sme/0?search=&v=1",
-   "fetched_at": "2026-11-17T21:11:44Z",
+   "fetched_at": "2026-11-18T12:05:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -491,7 +499,7 @@
   },
   {
    "url": "source:chittorgarh_tracker",
-   "fetched_at": "2026-11-17T21:11:44Z",
+   "fetched_at": "2026-11-18T12:05:46Z",
    "ok": true,
    "status": null,
    "rows": 302,
@@ -499,7 +507,7 @@
   },
   {
    "url": "https://www.investorgain.com/report/live-ipo-gmp/331/",
-   "fetched_at": "2026-11-17T21:11:45Z",
+   "fetched_at": "2026-11-18T12:05:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -507,7 +515,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/mahanadi-coalfields-ipo/2401/",
-   "fetched_at": "2026-11-17T21:11:47Z",
+   "fetched_at": "2026-11-18T12:05:48Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -515,7 +523,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/watrana-rentals-ipo/1818/",
-   "fetched_at": "2026-11-17T21:11:49Z",
+   "fetched_at": "2026-11-18T12:05:49Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -523,7 +531,7 @@
   },
   {
    "url": "https://www.investorgain.com/gmp/crystal-crop-protection-ipo/2067/",
-   "fetched_at": "2026-11-17T21:11:50Z",
+   "fetched_at": "2026-11-18T12:05:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -531,7 +539,7 @@
   },
   {
    "url": "source:investorgain",
-   "fetched_at": "2026-11-17T21:11:50Z",
+   "fetched_at": "2026-11-18T12:05:51Z",
    "ok": true,
    "status": null,
    "rows": 26,
@@ -539,7 +547,7 @@
   },
   {
    "url": "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/",
-   "fetched_at": "2026-11-17T21:11:52Z",
+   "fetched_at": "2026-11-18T12:05:52Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -547,7 +555,7 @@
   },
   {
    "url": "source:ipowatch",
-   "fetched_at": "2026-11-17T21:11:52Z",
+   "fetched_at": "2026-11-18T12:05:52Z",
    "ok": true,
    "status": null,
    "rows": 5,
@@ -555,7 +563,7 @@
   },
   {
    "url": "https://www.nseindia.com/api/holiday-master?type=trading",
-   "fetched_at": "2026-11-17T21:11:52Z",
+   "fetched_at": "2026-11-18T12:05:52Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -563,7 +571,7 @@
   },
   {
    "url": "https://www.nseindia.com/",
-   "fetched_at": "2026-11-17T21:11:54Z",
+   "fetched_at": "2026-11-18T12:05:54Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -571,231 +579,367 @@
   },
   {
    "url": "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
-   "fetched_at": "2026-11-17T21:11:56Z",
+   "fetched_at": "2026-11-18T12:05:56Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=ARCIL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:11:58Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=09-11-2026&to=18-11-2026&symbol=VPFL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:05:58Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-09-2026&to=17-11-2026&symbol=MOMSBELIEF&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:00Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=22-10-2026&to=18-11-2026&symbol=FUSIONCX&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:00Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=12-10-2026&to=17-11-2026&symbol=RKFAL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:02Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=21-10-2026&to=18-11-2026&symbol=LOANFRONT&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:02Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=17-11-2026&symbol=NITYAS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:04Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=22-10-2026&to=18-11-2026&symbol=RAVITA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:04Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=17-11-2026&symbol=VNL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:06Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-11-2026&to=18-11-2026&symbol=HGSINDIALT&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:06Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=17-11-2026&symbol=EVENTIONS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:08Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-11-2026&to=18-11-2026&symbol=MAXENGS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:08Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-10-2026&to=17-11-2026&symbol=PAPADMALJI&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:10Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=21-10-2026&to=18-11-2026&symbol=HDFIRE&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:10Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-10-2026&to=17-11-2026&symbol=SRIT&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:12Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-10-2026&to=18-11-2026&symbol=BONFIG&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:11Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-10-2026&to=17-11-2026&symbol=SHAHINVEST&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:15Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-10-2026&to=18-11-2026&symbol=SMT&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:13Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=ACEVECTOR&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:16Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-10-2026&to=18-11-2026&symbol=TONBO&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:15Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=RUNWALENTR&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:19Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=03-11-2026&to=18-11-2026&symbol=BLSPOLY&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:17Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=ORIENTCABL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:21Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-10-2026&to=18-11-2026&symbol=ZETWERK&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:19Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=GERMAN&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:23Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=28-10-2026&to=18-11-2026&symbol=JPL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:21Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=HIMALAYAN&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:25Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=28-10-2026&to=18-11-2026&symbol=PARASHLTH&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:23Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=17-11-2026&symbol=BMISL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:27Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=02-11-2026&to=18-11-2026&symbol=EDELALTS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:25Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-10-2026&to=17-11-2026&symbol=MONEYVIEW&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:29Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=03-11-2026&to=18-11-2026&symbol=SFCTECH&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:26Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-10-2026&to=17-11-2026&symbol=AONESTEELS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:31Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=04-11-2026&to=18-11-2026&symbol=MKJEWELS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-10-2026&to=17-11-2026&symbol=GREENASIA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:33Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-11-2026&to=18-11-2026&symbol=BCSSL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:30Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=ARMEE&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:36Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=ARCIL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:32Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=SWASTIKAIN&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:38Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-09-2026&to=18-11-2026&symbol=MOMSBELIEF&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:34Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=ADROITIND&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:40Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=12-10-2026&to=18-11-2026&symbol=RKFAL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:36Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=ELEVATE&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:42Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=18-11-2026&symbol=NITYAS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:38Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=COREIN&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:44Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=18-11-2026&symbol=VNL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:41Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=17-11-2026&symbol=POOJALOGIS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:47Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-10-2026&to=18-11-2026&symbol=EVENTIONS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=29-09-2026&to=17-11-2026&symbol=VARMORA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:49Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-10-2026&to=18-11-2026&symbol=PAPADMALJI&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:45Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=25-09-2026&to=17-11-2026&symbol=AXIOMGAS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:51Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-10-2026&to=18-11-2026&symbol=SHAHINVEST&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=17-11-2026&symbol=SONA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:53Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=06-10-2026&to=18-11-2026&symbol=SRIT&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:49Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=17-11-2026&symbol=NSE&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:55Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=ACEVECTOR&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:50Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=RUNWALENTR&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:53Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=GERMAN&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:55Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=ORIENTCABL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:56Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=HIMALAYAN&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:06:59Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=05-10-2026&to=18-11-2026&symbol=BMISL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:00Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-10-2026&to=18-11-2026&symbol=AONESTEELS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:03Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-10-2026&to=18-11-2026&symbol=MONEYVIEW&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:05Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-10-2026&to=18-11-2026&symbol=GREENASIA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:07Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=ELEVATE&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:09Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=SWASTIKAIN&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:11Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=ARMEE&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:13Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=ADROITIND&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:15Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=COREIN&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:17Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=30-09-2026&to=18-11-2026&symbol=POOJALOGIS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:19Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=29-09-2026&to=18-11-2026&symbol=VARMORA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:21Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=25-09-2026&to=18-11-2026&symbol=AXIOMGAS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:24Z",
+   "ok": true,
+   "status": 200,
+   "rows": 0,
+   "note": ""
+  },
+  {
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=18-11-2026&symbol=NSE&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:25Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -803,263 +947,127 @@
   },
   {
    "url": "https://query1.finance.yahoo.com/v8/finance/chart/NSE.NS?range=1y&interval=1d",
-   "fetched_at": "2026-11-17T21:12:55Z",
+   "fetched_at": "2026-11-18T12:07:26Z",
    "ok": false,
    "status": null,
    "rows": 0,
    "note": "http 404"
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=17-11-2026&symbol=SPECTRAA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:12:58Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=18-11-2026&symbol=SONA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:28Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=17-11-2026&symbol=KHERIAAUTO&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:00Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=18-11-2026&symbol=KHERIAAUTO&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:30Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=17-11-2026&symbol=JSIPL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:02Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=24-09-2026&to=18-11-2026&symbol=SPECTRAA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:32Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=17-11-2026&symbol=SSRETAIL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:04Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=18-11-2026&symbol=HEROMOTORS&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:34Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=17-11-2026&symbol=HEROMOTORS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:06Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=18-11-2026&symbol=SSRETAIL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:36Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=21-09-2026&to=17-11-2026&symbol=MANIKA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:09Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=23-09-2026&to=18-11-2026&symbol=JSIPL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:38Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=18-09-2026&to=17-11-2026&symbol=VEEGALAND&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:11Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=21-09-2026&to=18-11-2026&symbol=MANIKA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:40Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=RENTOMOJO&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:13Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=18-09-2026&to=18-11-2026&symbol=VEEGALAND&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:42Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=STEAMHOUSE&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:15Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=MPIMANIPAL&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:44Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=MPIMANIPAL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:17Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=STEAMHOUSE&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:46Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=KARAMTARA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:19Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=RENTOMOJO&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:49Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=LCCPROJECT&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:21Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=LCCPROJECT&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:51Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=17-11-2026&symbol=VINOD&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:23Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=KARAMTARA&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:53Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=16-09-2026&to=17-11-2026&symbol=GLASSWALL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:25Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=17-09-2026&to=18-11-2026&symbol=VINOD&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:55Z",
    "ok": true,
    "status": 200,
    "rows": 0,
    "note": ""
   },
   {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=16-09-2026&to=17-11-2026&symbol=PRASOLCHEM&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:27Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=16-09-2026&to=17-11-2026&symbol=KANOHAR&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:29Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=15-09-2026&to=17-11-2026&symbol=PRANAV&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:31Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=11-09-2026&to=17-11-2026&symbol=QUALIANCE&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:34Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=08-09-2026&to=17-11-2026&symbol=DEEPA&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:36Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-09-2026&to=17-11-2026&symbol=PERNIASPOP&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:38Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-09-2026&to=17-11-2026&symbol=ASHUTOSH&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:40Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=07-09-2026&to=17-11-2026&symbol=SHANTIINOR&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:42Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=04-09-2026&to=17-11-2026&symbol=PRIORITY&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:44Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=04-09-2026&to=17-11-2026&symbol=ESDS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:46Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=03-09-2026&to=17-11-2026&symbol=LUMINO&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:49Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=02-09-2026&to=17-11-2026&symbol=ANNU&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:51Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=02-09-2026&to=17-11-2026&symbol=SUMAX&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:54Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-09-2026&to=17-11-2026&symbol=SKYWAYS&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:56Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-09-2026&to=17-11-2026&symbol=HTEL&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:13:58Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-09-2026&to=17-11-2026&symbol=SYMBIOTEC&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:14:01Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-09-2026&to=17-11-2026&symbol=MADHURKNIT&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:14:03Z",
-   "ok": true,
-   "status": 200,
-   "rows": 0,
-   "note": ""
-  },
-  {
-   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=01-09-2026&to=17-11-2026&symbol=ABH&type=priceVolumeDeliverable&series=ALL",
-   "fetched_at": "2026-11-17T21:14:05Z",
+   "url": "https://www.nseindia.com/api/historicalOR/generateSecurityWiseHistoricalData?from=16-09-2026&to=18-11-2026&symbol=PRASOLCHEM&type=priceVolumeDeliverable&series=ALL",
+   "fetched_at": "2026-11-18T12:07:57Z",
    "ok": true,
    "status": 200,
    "rows": 0,
@@ -1069,43 +1077,43 @@
  "source_status": {
   "nse": {
    "ok": true,
-   "last_ok_at": "2026-11-17T21:14:07Z",
+   "last_ok_at": "2026-11-18T12:07:58Z",
    "rows": 121,
-   "typical_rows": 120.1,
+   "typical_rows": 120.3,
    "last_note": "",
-   "checked_at": "2026-11-17T21:14:07Z"
+   "checked_at": "2026-11-18T12:07:58Z"
   },
   "chittorgarh": {
    "ok": true,
-   "last_ok_at": "2026-11-17T21:14:07Z",
-   "rows": 97,
-   "typical_rows": 103.7,
+   "last_ok_at": "2026-11-18T12:07:58Z",
+   "rows": 93,
+   "typical_rows": 101.6,
    "last_note": "",
-   "checked_at": "2026-11-17T21:14:07Z"
+   "checked_at": "2026-11-18T12:07:58Z"
   },
   "chittorgarh_tracker": {
    "ok": true,
-   "last_ok_at": "2026-11-17T21:14:07Z",
+   "last_ok_at": "2026-11-18T12:07:58Z",
    "rows": 302,
    "typical_rows": 302.0,
    "last_note": "",
-   "checked_at": "2026-11-17T21:14:07Z"
+   "checked_at": "2026-11-18T12:07:58Z"
   },
   "investorgain": {
    "ok": true,
-   "last_ok_at": "2026-11-17T21:14:07Z",
+   "last_ok_at": "2026-11-18T12:07:58Z",
    "rows": 26,
    "typical_rows": 26.0,
    "last_note": "",
-   "checked_at": "2026-11-17T21:14:07Z"
+   "checked_at": "2026-11-18T12:07:58Z"
   },
   "ipowatch": {
    "ok": true,
-   "last_ok_at": "2026-11-17T21:14:07Z",
+   "last_ok_at": "2026-11-18T12:07:58Z",
    "rows": 5,
-   "typical_rows": 4.4,
+   "typical_rows": 4.5,
    "last_note": "",
-   "checked_at": "2026-11-17T21:14:07Z"
+   "checked_at": "2026-11-18T12:07:58Z"
   }
  },
  "ipos": [
@@ -1254,17 +1262,17 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 297.25,
-    "as_of": "2026-11-17",
+    "last_price": 282.9,
+    "as_of": "2026-11-18",
     "d1": 13.19,
     "w1": 5.02,
-    "m1": null,
+    "m1": 4.39,
     "m3": null,
     "m6": null,
     "listing_open": 335.0,
     "listing_close": 306.75,
     "ticker": "NSE:HDFIRE",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -1376,17 +1384,17 @@
    "security_type": "SME",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 58.3,
-    "as_of": "2026-11-17",
+    "last_price": 57.35,
+    "as_of": "2026-11-18",
     "d1": -1.76,
     "w1": -1.2,
-    "m1": null,
+    "m1": 6.2,
     "m3": null,
     "m6": null,
     "listing_open": 52.9,
     "listing_close": 53.05,
     "ticker": "NSE:LOANFRONT",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -1523,8 +1531,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 294.85,
-    "as_of": "2026-11-17",
+    "last_price": 277.4,
+    "as_of": "2026-11-18",
     "d1": 0.22,
     "w1": -5.73,
     "m1": null,
@@ -1533,7 +1541,7 @@
     "listing_open": 305.0,
     "listing_close": 289.65,
     "ticker": "NSE:FUSIONCX",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -1650,8 +1658,8 @@
    "security_type": "SME",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 118.5,
-    "as_of": "2026-11-17",
+    "last_price": 114.6,
+    "as_of": "2026-11-18",
     "d1": 1.52,
     "w1": -7.63,
     "m1": null,
@@ -1660,7 +1668,7 @@
     "listing_open": 112.0,
     "listing_close": 113.7,
     "ticker": "NSE:RAVITA",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -1811,8 +1819,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 784.35,
-    "as_of": "2026-11-17",
+    "last_price": 800.05,
+    "as_of": "2026-11-18",
     "d1": -1.96,
     "w1": 8.99,
     "m1": null,
@@ -1821,7 +1829,7 @@
     "listing_open": 586.0,
     "listing_close": 574.5,
     "ticker": "NSE:BONFIG",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -1967,8 +1975,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 548.85,
-    "as_of": "2026-11-17",
+    "last_price": 546.8,
+    "as_of": "2026-11-18",
     "d1": 9.78,
     "w1": 38.53,
     "m1": null,
@@ -1977,7 +1985,7 @@
     "listing_open": 371.15,
     "listing_close": 377.65,
     "ticker": "NSE:SMT",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -2240,8 +2248,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 1585.2,
-    "as_of": "2026-11-17",
+    "last_price": 1474.8,
+    "as_of": "2026-11-18",
     "d1": 61.97,
     "w1": 72.74,
     "m1": null,
@@ -2250,7 +2258,7 @@
     "listing_open": 1160.0,
     "listing_close": 1133.8,
     "ticker": "NSE:TONBO",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -2412,8 +2420,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 176.31,
-    "as_of": "2026-11-17",
+    "last_price": 166.69,
+    "as_of": "2026-11-18",
     "d1": -8.44,
     "w1": 8.59,
     "m1": null,
@@ -2422,7 +2430,7 @@
     "listing_open": 159.25,
     "listing_close": 138.25,
     "ticker": "NSE:ZETWERK",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -2666,8 +2674,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 1395.9,
-    "as_of": "2026-11-17",
+    "last_price": 1388.5,
+    "as_of": "2026-11-18",
     "d1": 26.68,
     "w1": 28.45,
     "m1": null,
@@ -2676,7 +2684,7 @@
     "listing_open": 1358.0,
     "listing_close": 1417.5,
     "ticker": "NSE:JPL",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -2863,8 +2871,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 880.85,
-    "as_of": "2026-11-17",
+    "last_price": 829.8,
+    "as_of": "2026-11-18",
     "d1": 6.15,
     "w1": 5.45,
     "m1": null,
@@ -2873,7 +2881,7 @@
     "listing_open": 720.0,
     "listing_close": 735.6,
     "ticker": "NSE:PARASHLTH",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -3197,8 +3205,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 1963.4,
-    "as_of": "2026-11-17",
+    "last_price": 1915.7,
+    "as_of": "2026-11-18",
     "d1": 3.77,
     "w1": 1.03,
     "m1": null,
@@ -3207,7 +3215,7 @@
     "listing_open": 1675.5,
     "listing_close": 1727.8,
     "ticker": "NSE:EDELALTS",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -3394,8 +3402,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 275.5,
-    "as_of": "2026-11-17",
+    "last_price": 279.98,
+    "as_of": "2026-11-18",
     "d1": 79.2,
     "w1": 60.72,
     "m1": null,
@@ -3404,7 +3412,7 @@
     "listing_open": 248.0,
     "listing_close": 268.8,
     "ticker": "NSE:BLSPOLY",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -3587,8 +3595,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 432.5,
-    "as_of": "2026-11-17",
+    "last_price": 423.4,
+    "as_of": "2026-11-18",
     "d1": 29.12,
     "w1": 26.83,
     "m1": null,
@@ -3597,7 +3605,7 @@
     "listing_open": 355.1,
     "listing_close": 426.1,
     "ticker": "NSE:SFCTECH",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -4226,8 +4234,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 187.66,
-    "as_of": "2026-11-17",
+    "last_price": 175.96,
+    "as_of": "2026-11-18",
     "d1": 0.12,
     "w1": -4.59,
     "m1": null,
@@ -4236,7 +4244,7 @@
     "listing_open": 171.0,
     "listing_close": 162.2,
     "ticker": "NSE:MKJEWELS",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -4418,8 +4426,8 @@
    "security_type": "Equity",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 83.41,
-    "as_of": "2026-11-17",
+    "last_price": 84.37,
+    "as_of": "2026-11-18",
     "d1": 15.62,
     "w1": 2.34,
     "m1": null,
@@ -4428,7 +4436,7 @@
     "listing_open": 91.0,
     "listing_close": 94.81,
     "ticker": "NSE:BCSSL",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -4588,8 +4596,8 @@
    "security_type": "SME",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 223.0,
-    "as_of": "2026-11-17",
+    "last_price": 211.85,
+    "as_of": "2026-11-18",
     "d1": 40.0,
     "w1": 70.12,
     "m1": null,
@@ -4598,7 +4606,7 @@
     "listing_open": 160.0,
     "listing_close": 168.0,
     "ticker": "NSE:HGSINDIALT",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -4904,8 +4912,8 @@
    "security_type": "SME",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 296.3,
-    "as_of": "2026-11-17",
+    "last_price": 281.8,
+    "as_of": "2026-11-18",
     "d1": 99.49,
     "w1": 83.01,
     "m1": null,
@@ -4914,7 +4922,7 @@
     "listing_open": 300.2,
     "listing_close": 315.2,
     "ticker": "NSE:MAXENGS",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -5213,8 +5221,8 @@
    "security_type": "SME",
    "board_basis": "source",
    "post_listing": {
-    "last_price": 69.25,
-    "as_of": "2026-11-17",
+    "last_price": 65.8,
+    "as_of": "2026-11-18",
     "d1": -5.0,
     "w1": -22.5,
     "m1": null,
@@ -5223,7 +5231,7 @@
     "listing_open": 94.0,
     "listing_close": 89.3,
     "ticker": "NSE:VPFL",
-    "checked": "2026-11-17"
+    "checked": "2026-11-18"
    }
   },
   {
@@ -5390,9 +5398,9 @@
   },
   {
    "gmp": {
-    "rs": 16.0,
-    "pct": 5.88,
-    "as_of": "2026-11-17",
+    "rs": 19.0,
+    "pct": 6.99,
+    "as_of": "2026-11-18",
     "history": [
      {
       "date": "2026-11-13",
@@ -5412,26 +5420,30 @@
      },
      {
       "date": "2026-11-17",
-      "rs": 16.0
+      "rs": 19.0
+     },
+     {
+      "date": "2026-11-18",
+      "rs": 19.0
      }
     ],
     "sources": [
      {
       "source": "investorgain",
       "rs": 19.0,
-      "as_of": "2026-11-17",
+      "as_of": "2026-11-18",
       "url": "https://www.investorgain.com/report/live-ipo-gmp/331/"
      },
      {
       "source": "ipowatch",
-      "rs": 13.0,
-      "as_of": "2026-11-17",
+      "rs": 19.0,
+      "as_of": "2026-11-18",
       "url": "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/"
      }
     ],
-    "spread_rs": 6.0,
+    "spread_rs": 0.0,
     "n_fresh": 2,
-    "disagree": true
+    "disagree": false
    },
    "issue_size_cr": 455.49,
    "id": "crystal-crop-protection-2026",
@@ -5444,7 +5456,7 @@
    "price_band_high": 272.0,
    "issue_price": 272.0,
    "lot_size": 55,
-   "status": "upcoming",
+   "status": "open",
    "sources": {
     "name": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
     "price_band_low": "https://www.nseindia.com/api/ipo-current-issue",
@@ -5467,28 +5479,27 @@
     "face_value": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
     "registrar": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
     "about": "https://www.chittorgarh.com/ipo/crystal-crop-protection-ipo/2813/",
-    "subscription": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
+    "subscription": "https://www.nseindia.com/api/ipo-active-category?symbol=CRYSTALCP",
     "lead_managers": "https://www.nseindia.com/api/ipo-detail?symbol=CRYSTALCP&series=Equity",
     "anchor": "https://www.chittorgarh.com/ipo/crystal-crop-protection-ipo/2813/",
     "anchor_cr": "https://www.chittorgarh.com/ipo/crystal-crop-protection-ipo/2813/"
    },
    "flags": [
-    "price_band_only",
-    "sub_partial"
+    "price_band_only"
    ],
    "board": "mainboard",
    "exchange": "NSE",
    "min_lots": 1,
    "subscription": {
-    "qib": null,
-    "nii": null,
-    "bnii": null,
-    "snii": null,
-    "retail": null,
-    "employee": null,
-    "total": 0.0,
-    "as_of": "2026-11-17",
-    "day": null
+    "qib": 2.07,
+    "nii": 0.75,
+    "bnii": 0.62,
+    "snii": 1.03,
+    "retail": 1.28,
+    "employee": 2.91,
+    "total": 1.4,
+    "as_of": "2026-11-18",
+    "day": 1
    },
    "listing": null,
    "min_investment": 14960.0,
@@ -5521,8 +5532,8 @@
   },
   {
    "gmp": {
-    "rs": 3.58,
-    "as_of": "2026-11-17",
+    "rs": 3.05,
+    "as_of": "2026-11-18",
     "history": [
      {
       "date": "2026-11-14",
@@ -5538,25 +5549,29 @@
      },
      {
       "date": "2026-11-17",
-      "rs": 3.58
+      "rs": 3.65
+     },
+     {
+      "date": "2026-11-18",
+      "rs": 3.05
      }
     ],
-    "pct": 2.63,
+    "pct": 2.24,
     "sources": [
      {
       "source": "investorgain",
-      "rs": 3.65,
-      "as_of": "2026-11-17",
+      "rs": 3.1,
+      "as_of": "2026-11-18",
       "url": "https://www.investorgain.com/report/live-ipo-gmp/331/"
      },
      {
       "source": "ipowatch",
-      "rs": 3.5,
-      "as_of": "2026-11-17",
+      "rs": 3.0,
+      "as_of": "2026-11-18",
       "url": "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/"
      }
     ],
-    "spread_rs": 0.15,
+    "spread_rs": 0.1,
     "n_fresh": 2,
     "disagree": false
    },
@@ -5630,9 +5645,9 @@
   },
   {
    "gmp": {
-    "rs": 25.0,
-    "pct": 10.2,
-    "as_of": "2026-11-17",
+    "rs": 37.0,
+    "pct": 15.1,
+    "as_of": "2026-11-18",
     "history": [
      {
       "date": "2026-11-13",
@@ -5653,19 +5668,23 @@
      {
       "date": "2026-11-17",
       "rs": 25.0
+     },
+     {
+      "date": "2026-11-18",
+      "rs": 37.0
      }
     ],
     "sources": [
      {
       "source": "investorgain",
-      "rs": 25.0,
-      "as_of": "2026-11-17",
+      "rs": 37.0,
+      "as_of": "2026-11-18",
       "url": "https://www.investorgain.com/report/live-ipo-gmp/331/"
      },
      {
       "source": "ipowatch",
-      "rs": 25.0,
-      "as_of": "2026-11-17",
+      "rs": 37.0,
+      "as_of": "2026-11-18",
       "url": "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/"
      }
     ],
@@ -5725,7 +5744,7 @@
     "retail": null,
     "employee": null,
     "total": 0.0,
-    "as_of": "2026-11-17",
+    "as_of": "2026-11-18",
     "day": null
    },
    "listing": null,
