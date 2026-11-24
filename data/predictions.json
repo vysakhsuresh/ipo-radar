@@ -1,5 +1,5 @@
 {
-"generated_at": "2026-11-23T13:26:18Z",
+"generated_at": "2026-11-24T14:07:11Z",
 "started": "2026-11-15",
 "rows": [
 {
@@ -19056,6 +19056,44 @@
 "model_status": "calibrated",
 "listing_date": "2026-11-26",
 "close_date": "2026-11-20"
+},
+{
+"id": "mahanadi-coalfields-2026",
+"name": "Mahanadi Coalfields Limited",
+"board": "mainboard",
+"locked_at": "2026-11-24T14:06:43Z",
+"lock_stage": "close",
+"p_up": 0.5455,
+"gain_p10": -20.17,
+"gain_p50": -3.73,
+"gain_p90": 15.59,
+"verdict_tier": "avoid",
+"verdict_label": "Avoid",
+"gmp_pct": 0.0,
+"sub_total": 1.52,
+"sub_retail": 0.46,
+"model_status": "calibrated",
+"listing_date": "2026-11-27",
+"close_date": "2026-11-23"
+},
+{
+"id": "watrana-rentals-2026",
+"name": "Watrana Rentals Limited",
+"board": "sme",
+"locked_at": "2026-11-24T14:06:43Z",
+"lock_stage": "close",
+"p_up": 0.9261,
+"gain_p10": -2.69,
+"gain_p50": 22.05,
+"gain_p90": 50.33,
+"verdict_tier": "lean",
+"verdict_label": "Lean apply",
+"gmp_pct": 16.33,
+"sub_total": 150.48,
+"sub_retail": 108.71,
+"model_status": "calibrated",
+"listing_date": "2026-11-27",
+"close_date": "2026-11-23"
 }
 ]
 }
