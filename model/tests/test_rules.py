@@ -68,6 +68,7 @@ def test_tax_only_on_gains_stt_not_deductible_and_net_sign():
 def test_open_book_under_one_is_unknown_not_full():
     assert p_allotment(0.4, status="open")["p_min_lot"] is None
     assert p_allotment(0.4, status="closed")["p_min_lot"] == 1.0
+    assert p_allotment(0.0, status="upcoming")["p_min_lot"] is None
     assert p_allotment(3.0, status="open")["p_min_lot"] == pytest.approx(1 / 3)
 
 

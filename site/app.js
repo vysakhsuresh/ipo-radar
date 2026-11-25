@@ -172,8 +172,25 @@
       if (r && r.listing === undefined && r.gain_pct !== undefined) return r;
       const lst = (r && r.listing) || {}; if (!fin(lst.gain_pct)) return null;
       const g = r.gmp || {}; let p = g.pct; if (!fin(p) && fin(g.rs) && r.issue_price) p = 100 * Number(g.rs) / Number(r.issue_price);
-      return { name: r.name, board: r.board, listing_date: r.listing_date, gmp_pct: fin(p) ? Math.round(p * 100) / 100 : null, gain_pct: Math.round(Number(lst.gain_pct) * 100) / 100, basis: lst.gain_basis || 'close' };
+      const ret = r.subscription && fin(r.subscription.retail) && Number(r.subscription.retail) > 0 ? Number(r.subscription.retail) : null;
+      return { name: r.name, board: r.board, listing_date: r.listing_date, gmp_pct: fin(p) ? Math.round(p * 100) / 100 : null, gain_pct: Math.round(Number(lst.gain_pct) * 100) / 100, basis: lst.gain_basis || 'close', retail: ret };
     }).filter(Boolean);
+  }
+  // Before bidding opens there is no demand figure, so the lottery odds are
+  // estimated as the average chance of one lot in past IPOs on the same board
+  // with a similar premium (then any board in that band, then the whole board).
+  function estOdds(r) {
+    const sim = r.score && r.score.similar, board = r.eff.board;
+    const odds = (rows) => rows.length ? rows.reduce((a, h) => a + Math.min(1, 1 / h.retail), 0) / rows.length : null;
+    const withRet = D.hist.filter(h => fin(h.retail));
+    if (sim && fin(sim.lo) && fin(sim.hi)) {
+      const band = withRet.filter(h => fin(h.gmp_pct) && h.gmp_pct >= sim.lo && h.gmp_pct < sim.hi);
+      const same = band.filter(h => h.board === board);
+      if (same.length >= 10) return odds(same);
+      if (band.length >= 10) return odds(band);
+    }
+    const sameBoard = withRet.filter(h => h.board === board);
+    return sameBoard.length >= 10 ? odds(sameBoard) : null;
   }
   function setData(payload) {
     const live = payload.live || { ipos: [], market: {}, sources: [] };
@@ -910,18 +927,19 @@
     if (!cands.length) { out.append(el('div', { class: 'card empty' }, icon('calc'), el('div', { text: t('Nothing open or upcoming has enough information to plan with right now. Check back when the next IPO opens.') }))); return; }
     if (PLAN.picked === null) PLAN.picked = cands.filter(r => ['apply', 'lean'].includes(tierOf(r))).map(r => r.ipo.id);
     const picked = new Set(PLAN.picked), acc = PLAN.accounts;
-    let total = 0, block = 0, pNone = 1, gross = 0, cost = 0, unknown = false, posEv = 0, posBlock = 0;
+    let total = 0, block = 0, pNone = 1, gross = 0, cost = 0, unknown = false, anyEst = false, posEv = 0, posBlock = 0;
     const rows = cands.sort(rankLive).map(r => {
       const s = r.score, inv = s.ev.invested_if_allotted || minInvest(r);
-      const pa = s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+      const known = s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
+      const pa = known !== null ? known : estOdds(r), est = known === null && pa !== null;
       const evIf = fin(s.ev.ev_if_allotted) ? s.ev.ev_if_allotted : netAt(inv, s.gain.mean).net;
       const ev1 = pa === null ? null : pa * evIf, on = picked.has(r.ipo.id);
       if (on) {
         block += inv * acc;
-        if (ev1 === null) unknown = true; else { total += ev1 * acc; pNone *= Math.pow(1 - pa, acc); if (ev1 > 0) { posEv += ev1 * acc; posBlock += inv * acc; } }
+        if (ev1 === null) unknown = true; else { if (est) anyEst = true; total += ev1 * acc; pNone *= Math.pow(1 - pa, acc); if (ev1 > 0) { posEv += ev1 * acc; posBlock += inv * acc; } }
         const res = netAt(inv, s.gain.mean); gross += res.gross * acc; cost += (res.charges + res.tax) * acc;
       }
-      return { r, inv, pa, evIf, ev1, on };
+      return { r, inv, pa, est, evIf, ev1, on };
     });
     const hero = el('div', { class: 'card plan-hero' });
     hero.append(el('div', { class: 'small ink2', text: t('Expected profit from the ticked IPOs, across {n} account(s), after charges and tax', { n: acc }) }));
@@ -935,6 +953,7 @@
     const facts = [];
     facts.push(note(block > PLAN.capital ? 'warn' : 'info', t('Money blocked at once: {b}', { b: inr(block) }), block > PLAN.capital ? ' ' + t('— more than the {c} you set. Untick some IPOs or use fewer accounts.', { c: inr(PLAN.capital) }) : ' ' + t('of your {c}.', { c: inr(PLAN.capital) })));
     if (!unknown && block > 0) facts.push(note('info', t('Chance that none of these applications gets any shares: {p}. Profits come in lumps, not every month.', { p: pct0(pNone) })));
+    if (anyEst) facts.push(note('info', t('Bidding has not started for some ticked IPOs, so their odds are estimated from past IPOs with a similar premium. The figure firms up once demand numbers come in.')));
     if (unknown) facts.push(note('info', t('Some ticked IPOs have no retail demand figures yet, so their lottery odds (and profit) are not counted.')));
     const need = posEv > 0 ? PLAN.target / (posEv / Math.max(1, posBlock)) : null;
     if (need && isFinite(need) && PLAN.target > total) facts.push(note('info', t('At these odds you would need about {n} blocked per round to expect {t}. The share lottery, not the premium, sets the limit; more family accounts help most.', { n: inrShort(need), t: inr(PLAN.target) })));
@@ -946,7 +965,7 @@
       cb.addEventListener('change', () => { const set = new Set(PLAN.picked); if (cb.checked) set.add(q.r.ipo.id); else set.delete(q.r.ipo.id); PLAN.picked = [...set]; savePlan(); renderPlanResult(); });
       const pAny = q.pa === null ? null : 1 - Math.pow(1 - q.pa, acc);
       list.append(el('label', { class: 'pick-row' }, cb,
-        el('div', { class: 'grow' }, el('div', { class: 'n' }, q.r.eff.name, ' ', verdictPill(tierOf(q.r))), el('div', { class: 's', text: [inrShort(q.inv * acc) + ' ' + t('blocked'), q.pa === null ? t('odds not known yet') : t('{p} chance at least one account gets shares', { p: pct0(pAny) }), t('{v} if you get shares', { v: inr(q.evIf, { plus: true }) })].join(' · ') })),
+        el('div', { class: 'grow' }, el('div', { class: 'n' }, q.r.eff.name, ' ', verdictPill(tierOf(q.r))), el('div', { class: 's', text: [inrShort(q.inv * acc) + ' ' + t('blocked'), q.pa === null ? t('odds not known yet') : t(q.est ? 'about {p} chance at least one account gets shares (estimate)' : '{p} chance at least one account gets shares', { p: pct0(pAny) }), t('{v} if you get shares', { v: inr(q.evIf, { plus: true }) })].join(' · ') })),
         el('div', { class: 'v ' + (q.ev1 === null ? '' : q.ev1 > 0 ? 'good' : 'bad') }, q.ev1 === null ? '?' : inr(q.ev1 * acc, { plus: true }), el('small', null, t('expected')))));
     }
     out.append(el('div', { class: 'sec' }, el('div', { class: 'sec-h' }, el('h2', { text: t('Choose IPOs') })), el('p', { class: 'sec-sub', text: t('One minimum application per account per IPO. Bidding for more lots does not improve your odds in a popular IPO.') }), list));
@@ -1774,6 +1793,8 @@
     "— more than the {c} you set. Untick some IPOs or use fewer accounts.": "— आपके तय {c} से ज़्यादा। कुछ IPO अनटिक करें या कम अकाउंट इस्तेमाल करें।",
     "of your {c}.": "— आपके {c} में से।",
     "Chance that none of these applications gets any shares: {p}. Profits come in lumps, not every month.": "इनमें से किसी भी आवेदन पर शेयर न मिलने का मौका: {p}। मुनाफ़ा कभी-कभार एक साथ आता है, हर महीने नहीं।",
+    "Bidding has not started for some ticked IPOs, so their odds are estimated from past IPOs with a similar premium. The figure firms up once demand numbers come in.": "कुछ टिक किए IPO में बोली अभी शुरू नहीं हुई, इसलिए उनकी संभावना मिलते-जुलते प्रीमियम वाले पिछले IPO से अनुमानित है। डिमांड के आंकड़े आने पर यह आंकड़ा पक्का होगा।",
+    "about {p} chance at least one account gets shares (estimate)": "लगभग {p} संभावना कि कम से कम एक अकाउंट को शेयर मिलें (अनुमान)",
     "Some ticked IPOs have no retail demand figures yet, so their lottery odds (and profit) are not counted.": "कुछ टिक किए IPO के रिटेल डिमांड आंकड़े अभी नहीं हैं, इसलिए उनकी लॉटरी के मौके (और मुनाफ़ा) नहीं गिने गए।",
     "At these odds you would need about {n} blocked per round to expect {t}. The share lottery, not the premium, sets the limit; more family accounts help most.": "इन मौकों पर {t} की उम्मीद के लिए हर बार लगभग {n} ब्लॉक करना होगा। सीमा प्रीमियम नहीं, शेयर लॉटरी तय करती है; परिवार के ज़्यादा अकाउंट सबसे ज़्यादा मदद करते हैं।",
     "If every application got shares, charges and tax would take {c} out of {g} profit. All figures above are after that.": "अगर हर आवेदन पर शेयर मिलें, तो {g} मुनाफ़े में से {c} चार्ज और टैक्स में जाएगा। ऊपर के सभी आंकड़े उसके बाद के हैं।",

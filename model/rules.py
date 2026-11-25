@@ -121,6 +121,8 @@ def p_allotment(sub: float | None, lots_bid: int = 1, board: str = "mainboard", 
     """
     if sub is None:
         return {"p_min_lot": None, "expected_lots": None, "basis": "no subscription data"}
+    if status == "upcoming":
+        return {"p_min_lot": None, "expected_lots": None, "basis": "bidding not open yet: odds unknown"}
     if status == "open" and sub < 1.0:
         return {"p_min_lot": None, "expected_lots": None, "basis": "bidding still on and retail not yet full: odds unknown"}
     if sub <= 1.0:

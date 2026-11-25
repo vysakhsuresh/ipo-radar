@@ -126,6 +126,7 @@
   function pAllotment(sub, lotsBid, board, status) {
     lotsBid = lotsBid || 1; status = status || 'closed';
     if (sub === null || sub === undefined) return { p_min_lot: null, expected_lots: null, basis: 'no subscription data' };
+    if (status === 'upcoming') return { p_min_lot: null, expected_lots: null, basis: 'bidding not open yet: odds unknown' };
     if (status === 'open' && sub < 1.0) return { p_min_lot: null, expected_lots: null, basis: 'bidding still on and retail not yet full: odds unknown' };
     if (sub <= 1.0) return { p_min_lot: 1.0, expected_lots: lotsBid, basis: 'category under-subscribed: full allotment' };
     const p = Math.min(1.0, 1.0 / sub);
