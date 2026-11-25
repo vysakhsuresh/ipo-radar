@@ -350,15 +350,14 @@
     const card = el('button', { type: 'button', class: 'card tap ipo' + (st === 'listed' ? ' listed' : ''), 'data-id': i.id, onclick: () => openIpo(i.id) });
     const tags = el('div', { class: 'meta' }, el('span', { class: 'tag ' + (i.board === 'sme' ? 'sme' : 'main'), text: boardName(i.board) }), el('span', { class: 'tag' + (st === 'open' ? ' open' : ''), text: statusName(st) }), WATCH.has(i.id) ? el('span', { class: 'tag gold' }, '★ ' + t('Watching')) : null, r.edited ? el('span', { class: 'tag', text: t('your numbers') }) : null);
     const lg = st === 'listed' && i.listing && fin(i.listing.gain_pct) ? Number(i.listing.gain_pct) : null;
-    card.append(el('div', { class: 'top' }, el('div', { class: 'grow' }, el('div', { class: 'nm', text: i.name }), tags), st === 'listed' ? null : ringEl(s && s.p_up)));
+    card.append(el('div', { class: 'top' }, el('div', { class: 'grow' }, el('div', { class: 'nm', text: i.name }), tags, st === 'listed' ? null : el('div', { class: 'vrow' }, verdictPill(tier))), st === 'listed' ? null : ringEl(s && s.p_up)));
     if (st !== 'listed') {
-      card.append(el('div', { class: 'row wrapf' }, verdictPill(tier)));
       card.append(el('div', { class: 'say', text: s && fin(s.p_up) ? t('{o} similar IPOs listed above their price.', { o: cap(oddsWords(s.p_up)) }) + ' ' + vline(tier) : vline(tier) }));
       const inv = minInvest(r), al = s && s.allotment && fin(s.allotment.p_min_lot) ? s.allotment.p_min_lot : null;
       card.append(el('div', { class: 'kpis' },
         kpi(t('You need'), inv ? inrShort(inv) : '–'),
         kpi(t('Likely gain'), s && s.gain ? pct(s.gain.p50, 0) : '–', s && s.gain ? (s.gain.p50 > 0 ? 'good' : 'bad') : ''),
-        kpi(t('Get shares'), al !== null ? allotText(al) : (st === 'upcoming' ? t('later') : '–'))));
+        kpi(t('Get shares'), al !== null ? allotText(al) : (st === 'upcoming' ? t('later') : st === 'open' ? t('soon') : '–'))));
     } else {
       const tr = trackRow(i.id), pl = i.post_listing, now = pl && fin(pl.last_price) && i.issue_price ? 100 * (pl.last_price / i.issue_price - 1) : null;
       card.append(el('div', { class: 'kpis' },
@@ -1075,11 +1074,12 @@
   }
   function ledgerCard(rows) {
     const card = el('div', { class: 'card stack' }, el('div', { class: 'sec-h' }, el('h3', { text: t('Every call, newest first') })));
+    const noLive = !rows.some(x => x.lock_stage !== 'backfill'), mode = noLive ? 'all' : UI.ledger;
     const seg = el('div', { class: 'seg', role: 'group' });
-    for (const [k, lab] of [['locked', 'Saved live'], ['all', 'Include reconstructed']]) seg.append(el('button', { type: 'button', 'aria-pressed': UI.ledger === k ? 'true' : 'false', onclick: () => { UI.ledger = k; const y = window.scrollY; renderProof(); window.scrollTo(0, y); } }, t(lab)));
+    for (const [k, lab] of [['locked', 'Saved live'], ['all', 'Include reconstructed']]) seg.append(el('button', { type: 'button', 'aria-pressed': mode === k ? 'true' : 'false', disabled: noLive && k === 'locked' ? '' : null, onclick: () => { UI.ledger = k; const y = window.scrollY; renderProof(); window.scrollTo(0, y); } }, t(lab)));
     if (rows.some(x => x.lock_stage === 'backfill')) card.append(seg);
-    let shown = rows.filter(x => UI.ledger === 'all' || x.lock_stage !== 'backfill');
-    if (!shown.length) shown = rows;
+    if (noLive && rows.length) card.append(el('p', { class: 'tiny muted', text: t('None of the calls saved live has listed yet, so only reconstructed ones are shown for now.') }));
+    const shown = rows.filter(x => mode === 'all' || x.lock_stage !== 'backfill');
     const list = el('div', { class: 'ledger' });
     const draw = (lim) => {
       list.replaceChildren();
@@ -1116,7 +1116,7 @@
   const tip = () => $('#tip');
   function showTip(evt, lines) { const tp = tip(); tp.replaceChildren(); lines.forEach((l, k) => tp.append(k ? el('div', { text: l }) : el('b', { text: l }))); tp.hidden = false; tp.style.left = Math.min(evt.clientX + 12, window.innerWidth - 250) + 'px'; tp.style.top = Math.min(evt.clientY + 12, window.innerHeight - 90) + 'px'; }
   function hideTip() { tip().hidden = true; }
-  function axisText(x, y, s, anchor, extra) { return svgEl('text', Object.assign({ x, y, 'text-anchor': anchor || 'middle', 'font-size': 12, fill: 'var(--muted)', 'font-family': 'var(--mono)' }, extra || {}), s); }
+  function axisText(x, y, s, anchor, extra) { return svgEl('text', Object.assign({ x, y, 'text-anchor': anchor || 'middle', 'font-size': 12, fill: 'var(--muted)', 'font-family': 'var(--num)' }, extra || {}), s); }
   function relChart(bins) {
     const wrap = el('div', { class: 'chart' }, el('h3', { text: t('When we say 70%, does it happen 7 times in 10?') }), el('p', { class: 'small ink2', text: t('Dots on the dashed line mean the chances are honest. Above the line we were too cautious, below it too hopeful. Bigger dots hold more IPOs.') }));
     const W = 520, H = 330, m = { t: 12, r: 14, b: 40, l: 46 };
@@ -1374,7 +1374,7 @@
   const CP = { bg: '#f4f6f9', surface: '#ffffff', ink: '#0b1b2b', ink2: '#3f5064', muted: '#66768a', hair: '#e1e7ee', brand: '#0e7c86', brandSoft: '#dcf0f1', navy: '#0b2540', gold: '#e6a817', good: '#137a3a', goodFill: '#1fa855', goodSoft: '#dcf5e4', warn: '#9a5208', warnSoft: '#fdf0d6', crit: '#b3261e', critSoft: '#fde4e1', info: '#2a5db0', infoSoft: '#e3ecfb' };
   const VC = { apply: ['#ffffff', 'goodFill'], lean: ['good', 'goodSoft'], coinflip: ['warn', 'warnSoft'], avoid: ['crit', 'critSoft'], watch: ['info', 'infoSoft'], nodata: ['muted', 'hair'] };
   const col = (k) => (k.startsWith('#') ? k : CP[k]);
-  function cFont(px, w, mono) { return (w || 400) + ' ' + px + 'px ' + (mono ? '"Fira Code", monospace' : '"Space Grotesk", "Noto Sans Devanagari", sans-serif'); }
+  function cFont(px, w) { return (w || 400) + ' ' + px + 'px ' + '"Space Grotesk", "Noto Sans Devanagari", sans-serif'; }
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
   function wrapT(c, text, x, y, maxW, lh, maxLines) {
     const words = String(text).split(/\s+/); let ln = '', n = 0;
@@ -1570,6 +1570,7 @@
     "Likely gain": "संभावित फ़ायदा",
     "Get shares": "शेयर मिलना",
     "later": "बाद में",
+    "soon": "जल्द",
     "Day one": "पहला दिन",
     "Now": "अभी",
     "We said": "हमने कहा",
@@ -2012,6 +2013,7 @@
     "Cess on tax %": "टैक्स पर सेस %",
     "Saved live": "लाइव सेव",
     "Include reconstructed": "बाद में बनाई राय भी शामिल करें",
+    "None of the calls saved live has listed yet, so only reconstructed ones are shown for now.": "लाइव सेव की गई कोई राय अभी लिस्ट नहीं हुई है, इसलिए फ़िलहाल सिर्फ़ बाद में बनाई राय दिखाई गई हैं।",
     "Off": "बंद",
     "9:00 am": "सुबह 9:00",
     "10:00 am": "सुबह 10:00",
