@@ -259,7 +259,7 @@
   const statusName = (st) => t(({ open: 'Open now', upcoming: 'Upcoming', closed: 'Awaiting listing', listed: 'Listed' })[st] || 'Upcoming');
   function rankLive(a, b) {
     const sa = a.st === 'open' ? 0 : 1, sb = b.st === 'open' ? 0 : 1;
-    return (sa - sb) || (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || ((b.score && b.score.p_up || 0) - (a.score && a.score.p_up || 0));
+    return (TIER_ORDER[tierOf(a)] - TIER_ORDER[tierOf(b)]) || (sa - sb) || ((b.score && b.score.p_up || 0) - (a.score && a.score.p_up || 0));
   }
 
   // ----------------------------------------------------- dates & steps ---
@@ -587,7 +587,8 @@
     const dow = DOWL[L()][new Date(utc(TODAY)).getUTCDay()];
     const head = open.length === 0 ? t('No IPO is open for bidding today') : open.length === 1 ? t('1 IPO is open for bidding') : t('{n} IPOs are open for bidding', { n: open.length });
     const lede = [];
-    if (open.length) lede.push(goodOpen.length === 0 ? t('None of them looks like a clear yes.') : goodOpen.length === 1 ? t('1 of them looks worth applying.') : t('{n} of them look worth applying.', { n: goodOpen.length }));
+    if (open.length === 1) lede.push(goodOpen.length ? t('It looks worth applying.') : t('It does not look like a clear yes.'));
+    else if (open.length) lede.push(goodOpen.length === 0 ? t('None of them looks like a clear yes.') : goodOpen.length === 1 ? t('1 of them looks worth applying.') : t('{n} of them look worth applying.', { n: goodOpen.length }));
     const nextUp = up.filter(r => isIso(r.eff.open_date)).sort((a, b) => a.eff.open_date < b.eff.open_date ? -1 : 1)[0];
     if (nextUp) lede.push(t('Next to open: {n}, {d}.', { n: nextUp.eff.name, d: relDay(nextUp.eff.open_date) }));
     host.append(el('div', { class: 'hello' }, el('div', { class: 'date', text: dow + ', ' + dshort(TODAY) }), el('h1', { text: head }), lede.length ? el('p', { class: 'lede', text: lede.join(' ') }) : null));
@@ -621,7 +622,7 @@
     const ev = r => (r.score && fin(r.score.ev.ev) ? r.score.ev.ev : -1e9), pu = r => (r.score && fin(r.score.p_up) ? r.score.p_up : -1);
     const SO = { open: 0, closed: 1, upcoming: 2, listed: 3 };
     const key = {
-      smart: r => [SO[r.st] ?? 9, TIER_ORDER[tierOf(r)], -pu(r)],
+      smart: r => [isLive(r) && ['apply', 'lean'].includes(tierOf(r)) ? 0 : 1, SO[r.st] ?? 9, TIER_ORDER[tierOf(r)], -pu(r)],
       chance: r => [r.st === 'listed' ? 1 : 0, -pu(r)],
       worth: r => [r.st === 'listed' ? 1 : 0, -ev(r)],
       date: r => [r.st === 'listed' ? 1 : 0, r.st === 'listed' ? -(utc(r.eff.listing_date || '2000-01-01')) : utc(r.eff.close_date || r.eff.open_date || '2099-01-01')],
@@ -953,7 +954,7 @@
     const facts = [];
     facts.push(note(block > PLAN.capital ? 'warn' : 'info', t('Money blocked at once: {b}', { b: inr(block) }), block > PLAN.capital ? ' ' + t('— more than the {c} you set. Untick some IPOs or use fewer accounts.', { c: inr(PLAN.capital) }) : ' ' + t('of your {c}.', { c: inr(PLAN.capital) })));
     if (!unknown && block > 0) facts.push(note('info', t('Chance that none of these applications gets any shares: {p}. Profits come in lumps, not every month.', { p: pct0(pNone) })));
-    if (anyEst) facts.push(note('info', t('Bidding has not started for some ticked IPOs, so their odds are estimated from past IPOs with a similar premium. The figure firms up once demand numbers come in.')));
+    if (anyEst) facts.push(note('info', t('Some ticked IPOs have no demand figures yet, so their odds are estimated from past IPOs with a similar premium. The figure firms up as bidding goes on.')));
     if (unknown) facts.push(note('info', t('Some ticked IPOs have no retail demand figures yet, so their lottery odds (and profit) are not counted.')));
     const need = posEv > 0 ? PLAN.target / (posEv / Math.max(1, posBlock)) : null;
     if (need && isFinite(need) && PLAN.target > total) facts.push(note('info', t('At these odds you would need about {n} blocked per round to expect {t}. The share lottery, not the premium, sets the limit; more family accounts help most.', { n: inrShort(need), t: inr(PLAN.target) })));
@@ -1626,6 +1627,8 @@
     "No IPO is open for bidding today": "आज कोई IPO बोली के लिए खुला नहीं है",
     "1 IPO is open for bidding": "1 IPO बोली के लिए खुला है",
     "{n} IPOs are open for bidding": "{n} IPO बोली के लिए खुले हैं",
+    "It looks worth applying.": "यह आवेदन के लायक लगता है।",
+    "It does not look like a clear yes.": "यह साफ़ हाँ नहीं लगता।",
     "None of them looks like a clear yes.": "इनमें से कोई भी साफ़ हाँ नहीं लगता।",
     "1 of them looks worth applying.": "इनमें से 1 में आवेदन करना ठीक लगता है।",
     "{n} of them look worth applying.": "इनमें से {n} में आवेदन करना ठीक लगता है।",
@@ -1793,7 +1796,7 @@
     "— more than the {c} you set. Untick some IPOs or use fewer accounts.": "— आपके तय {c} से ज़्यादा। कुछ IPO अनटिक करें या कम अकाउंट इस्तेमाल करें।",
     "of your {c}.": "— आपके {c} में से।",
     "Chance that none of these applications gets any shares: {p}. Profits come in lumps, not every month.": "इनमें से किसी भी आवेदन पर शेयर न मिलने का मौका: {p}। मुनाफ़ा कभी-कभार एक साथ आता है, हर महीने नहीं।",
-    "Bidding has not started for some ticked IPOs, so their odds are estimated from past IPOs with a similar premium. The figure firms up once demand numbers come in.": "कुछ टिक किए IPO में बोली अभी शुरू नहीं हुई, इसलिए उनकी संभावना मिलते-जुलते प्रीमियम वाले पिछले IPO से अनुमानित है। डिमांड के आंकड़े आने पर यह आंकड़ा पक्का होगा।",
+    "Some ticked IPOs have no demand figures yet, so their odds are estimated from past IPOs with a similar premium. The figure firms up as bidding goes on.": "कुछ टिक किए IPO के डिमांड आंकड़े अभी नहीं हैं, इसलिए उनकी संभावना मिलते-जुलते प्रीमियम वाले पिछले IPO से अनुमानित है। बोली आगे बढ़ने पर यह आंकड़ा पक्का होगा।",
     "about {p} chance at least one account gets shares (estimate)": "लगभग {p} संभावना कि कम से कम एक अकाउंट को शेयर मिलें (अनुमान)",
     "Some ticked IPOs have no retail demand figures yet, so their lottery odds (and profit) are not counted.": "कुछ टिक किए IPO के रिटेल डिमांड आंकड़े अभी नहीं हैं, इसलिए उनकी लॉटरी के मौके (और मुनाफ़ा) नहीं गिने गए।",
     "At these odds you would need about {n} blocked per round to expect {t}. The share lottery, not the premium, sets the limit; more family accounts help most.": "इन मौकों पर {t} की उम्मीद के लिए हर बार लगभग {n} ब्लॉक करना होगा। सीमा प्रीमियम नहीं, शेयर लॉटरी तय करती है; परिवार के ज़्यादा अकाउंट सबसे ज़्यादा मदद करते हैं।",
