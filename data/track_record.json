@@ -1,27 +1,27 @@
 {
-"generated_at": "2026-11-26T13:02:33Z",
+"generated_at": "2026-11-27T12:59:06Z",
 "started": "2026-11-15",
-"n": 999,
-"n_locked": 0,
+"n": 1000,
+"n_locked": 1,
 "n_backfill": 999,
-"n_pending": 3,
-"hit_rate": 0.8715,
+"n_pending": 2,
+"hit_rate": 0.8701,
 "by_verdict": {
 "apply": {
 "n": 161,
 "n_up": 150,
-"mean_gain": 33.4,
-"median_gain": 26.68
+"mean_gain": 33.31,
+"median_gain": 27.31
 },
 "lean": {
-"n": 446,
+"n": 447,
 "n_up": 379,
-"mean_gain": 44.93,
-"median_gain": 29.34
+"mean_gain": 44.81,
+"median_gain": 28.74
 },
 "coinflip": {
 "n": 209,
-"n_up": 115,
+"n_up": 114,
 "mean_gain": 1.63,
 "median_gain": 0.48
 },
@@ -29,7 +29,7 @@
 "n": 183,
 "n_up": 67,
 "mean_gain": -2.58,
-"median_gain": -3.07
+"median_gain": -3.42
 },
 "watch": {
 "n": 0,
@@ -38,10 +38,10 @@
 "median_gain": null
 }
 },
-"brier": 0.1468,
-"brier_gmp_only": 0.2065,
-"base_rate": 0.7117,
-"range_coverage": 0.7688,
+"brier": 0.1472,
+"brier_gmp_only": 0.2074,
+"base_rate": 0.71,
+"range_coverage": 0.768,
 "calibration": [
 {
 "bin_lo": 0.0,
@@ -82,7 +82,7 @@
 "bin_lo": 0.5,
 "bin_hi": 0.6,
 "pred_mean": 0.5727,
-"obs_rate": 0.5238,
+"obs_rate": 0.5143,
 "n": 105
 },
 {
@@ -95,9 +95,9 @@
 {
 "bin_lo": 0.7,
 "bin_hi": 0.8,
-"pred_mean": 0.751,
-"obs_rate": 0.7561,
-"n": 82
+"pred_mean": 0.7509,
+"obs_rate": 0.747,
+"n": 83
 },
 {
 "bin_lo": 0.8,
@@ -116,14 +116,14 @@
 ],
 "by_board": {
 "mainboard": {
-"n": 304,
-"n_called": 201,
-"hit_rate": 0.8955,
-"brier": 0.1302,
-"brier_gmp_only": 0.2039,
-"base_rate": 0.7171,
-"range_coverage": 0.7928,
-"mean_gain": 17.6
+"n": 305,
+"n_called": 202,
+"hit_rate": 0.8911,
+"brier": 0.1316,
+"brier_gmp_only": 0.2068,
+"base_rate": 0.7115,
+"range_coverage": 0.7902,
+"mean_gain": 17.46
 },
 "sme": {
 "n": 695,
@@ -137,17 +137,32 @@
 }
 },
 "locked_only": {
-"n": 0,
-"hit_rate": null,
-"n_called": 0,
-"brier": null,
-"brier_gmp_only": null,
-"base_rate": null,
-"range_coverage": null,
-"mean_gain": null
+"n": 1,
+"n_called": 1,
+"hit_rate": 1.0,
+"brier": 0.0663,
+"brier_gmp_only": 0.0625,
+"base_rate": 1.0,
+"range_coverage": 1.0,
+"mean_gain": 2.15
 },
 "notes": "'close' and 'pre_listing' rows were locked before the listing and never changed. 'backfill' rows were scored afterwards by the current model on the pre-listing inputs in history.json, so they are hindsight, not a forecast record; locked_only holds the genuine numbers. brier_gmp_only scores the naive forecast 'share of past listings in the same GMP bucket that rose'.",
 "rows": [
+{
+"id": "crystal-crop-protection-2026",
+"name": "Crystal Crop Protection Ltd.",
+"board": "mainboard",
+"listing_date": "2026-11-26",
+"lock_stage": "close",
+"p_up": 0.7426,
+"verdict_tier": "lean",
+"gain_p50": 6.13,
+"gain_p10": -10.3,
+"gain_p90": 25.46,
+"actual_gain_pct": 2.15,
+"gain_basis": "close",
+"listed_up": true
+},
 {
 "id": "antala-industries-2026",
 "name": "Antala Industries Ltd.",
@@ -249,7 +264,7 @@
 "gain_p50": 11.56,
 "gain_p10": -4.88,
 "gain_p90": 30.88,
-"actual_gain_pct": 15.62,
+"actual_gain_pct": 15.38,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -324,7 +339,7 @@
 "gain_p50": 1.31,
 "gain_p10": -15.13,
 "gain_p90": 20.63,
-"actual_gain_pct": 29.12,
+"actual_gain_pct": 28.74,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -339,7 +354,7 @@
 "gain_p50": 59.27,
 "gain_p10": 42.84,
 "gain_p90": 78.6,
-"actual_gain_pct": 79.2,
+"actual_gain_pct": 79.53,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -354,7 +369,7 @@
 "gain_p50": -5.27,
 "gain_p10": -21.7,
 "gain_p90": 14.06,
-"actual_gain_pct": 3.77,
+"actual_gain_pct": 3.73,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -384,7 +399,7 @@
 "gain_p50": -8.71,
 "gain_p10": -25.15,
 "gain_p90": 10.62,
-"actual_gain_pct": 6.15,
+"actual_gain_pct": 6.37,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -399,7 +414,7 @@
 "gain_p50": 23.39,
 "gain_p10": 6.95,
 "gain_p90": 42.72,
-"actual_gain_pct": 26.68,
+"actual_gain_pct": 26.66,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -414,7 +429,7 @@
 "gain_p50": -10.21,
 "gain_p10": -26.65,
 "gain_p90": 9.11,
-"actual_gain_pct": -8.44,
+"actual_gain_pct": -8.41,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -429,7 +444,7 @@
 "gain_p50": 75.75,
 "gain_p10": 59.31,
 "gain_p90": 95.08,
-"actual_gain_pct": 61.97,
+"actual_gain_pct": 61.95,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -459,7 +474,7 @@
 "gain_p50": 2.45,
 "gain_p10": -13.99,
 "gain_p90": 21.77,
-"actual_gain_pct": 9.78,
+"actual_gain_pct": 9.94,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -474,7 +489,7 @@
 "gain_p50": 20.06,
 "gain_p10": 3.62,
 "gain_p90": 39.39,
-"actual_gain_pct": -1.96,
+"actual_gain_pct": -1.65,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -504,7 +519,7 @@
 "gain_p50": -8.63,
 "gain_p10": -25.07,
 "gain_p90": 10.7,
-"actual_gain_pct": 0.22,
+"actual_gain_pct": 0.26,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -534,7 +549,7 @@
 "gain_p50": 36.69,
 "gain_p10": 20.25,
 "gain_p90": 56.02,
-"actual_gain_pct": 13.19,
+"actual_gain_pct": 13.36,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -684,7 +699,7 @@
 "gain_p50": -9.5,
 "gain_p10": -25.94,
 "gain_p90": 9.82,
-"actual_gain_pct": 11.99,
+"actual_gain_pct": 12.2,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -804,7 +819,7 @@
 "gain_p50": 53.49,
 "gain_p10": 37.05,
 "gain_p90": 72.82,
-"actual_gain_pct": 19.3,
+"actual_gain_pct": 19.27,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -834,7 +849,7 @@
 "gain_p50": 8.96,
 "gain_p10": -7.48,
 "gain_p90": 28.29,
-"actual_gain_pct": 4.07,
+"actual_gain_pct": 4.04,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -894,7 +909,7 @@
 "gain_p50": -8.85,
 "gain_p10": -25.29,
 "gain_p90": 10.48,
-"actual_gain_pct": -1.16,
+"actual_gain_pct": -1.98,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -909,7 +924,7 @@
 "gain_p50": 40.22,
 "gain_p10": 23.78,
 "gain_p90": 59.54,
-"actual_gain_pct": 48.9,
+"actual_gain_pct": 48.27,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -939,7 +954,7 @@
 "gain_p50": 6.39,
 "gain_p10": -10.05,
 "gain_p90": 25.72,
-"actual_gain_pct": -7.68,
+"actual_gain_pct": -7.77,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -984,7 +999,7 @@
 "gain_p50": -3.67,
 "gain_p10": -20.11,
 "gain_p90": 15.66,
-"actual_gain_pct": -18.5,
+"actual_gain_pct": -18.44,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1029,7 +1044,7 @@
 "gain_p50": 44.04,
 "gain_p10": 27.6,
 "gain_p90": 63.37,
-"actual_gain_pct": 58.47,
+"actual_gain_pct": 58.91,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1044,7 +1059,7 @@
 "gain_p50": 7.91,
 "gain_p10": -8.53,
 "gain_p90": 27.23,
-"actual_gain_pct": 2.85,
+"actual_gain_pct": 2.96,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1074,7 +1089,7 @@
 "gain_p50": -3.73,
 "gain_p10": -20.16,
 "gain_p90": 15.6,
-"actual_gain_pct": 13.51,
+"actual_gain_pct": 13.49,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1164,7 +1179,7 @@
 "gain_p50": -7.33,
 "gain_p10": -23.77,
 "gain_p90": 11.99,
-"actual_gain_pct": -20.0,
+"actual_gain_pct": -21.24,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1179,7 +1194,7 @@
 "gain_p50": 45.34,
 "gain_p10": 28.9,
 "gain_p90": 64.67,
-"actual_gain_pct": 85.37,
+"actual_gain_pct": 85.34,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1194,7 +1209,7 @@
 "gain_p50": -8.66,
 "gain_p10": -25.1,
 "gain_p90": 10.66,
-"actual_gain_pct": 2.83,
+"actual_gain_pct": 3.24,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1314,7 +1329,7 @@
 "gain_p50": 3.73,
 "gain_p10": -12.71,
 "gain_p90": 23.05,
-"actual_gain_pct": 8.51,
+"actual_gain_pct": 8.17,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1359,7 +1374,7 @@
 "gain_p50": 45.33,
 "gain_p10": 28.9,
 "gain_p90": 64.66,
-"actual_gain_pct": 76.6,
+"actual_gain_pct": 80.46,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1374,7 +1389,7 @@
 "gain_p50": 36.84,
 "gain_p10": 20.4,
 "gain_p90": 56.17,
-"actual_gain_pct": 35.48,
+"actual_gain_pct": 37.62,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1389,7 +1404,7 @@
 "gain_p50": -10.36,
 "gain_p10": -26.8,
 "gain_p90": 8.96,
-"actual_gain_pct": 17.14,
+"actual_gain_pct": 17.27,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1449,9 +1464,9 @@
 "gain_p50": -0.8,
 "gain_p10": -17.24,
 "gain_p90": 18.52,
-"actual_gain_pct": 0.33,
+"actual_gain_pct": 0.0,
 "gain_basis": "close",
-"listed_up": true
+"listed_up": false
 },
 {
 "id": "injecto-polymers-2026",
@@ -1494,7 +1509,7 @@
 "gain_p50": 3.86,
 "gain_p10": -12.57,
 "gain_p90": 23.19,
-"actual_gain_pct": 4.5,
+"actual_gain_pct": 3.54,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1584,7 +1599,7 @@
 "gain_p50": 13.88,
 "gain_p10": -2.56,
 "gain_p90": 33.21,
-"actual_gain_pct": 26.6,
+"actual_gain_pct": 26.17,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1599,7 +1614,7 @@
 "gain_p50": 20.54,
 "gain_p10": 4.1,
 "gain_p90": 39.86,
-"actual_gain_pct": 32.24,
+"actual_gain_pct": 31.92,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1614,7 +1629,7 @@
 "gain_p50": -11.0,
 "gain_p10": -27.44,
 "gain_p90": 8.32,
-"actual_gain_pct": 1.81,
+"actual_gain_pct": 1.99,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1629,7 +1644,7 @@
 "gain_p50": 21.65,
 "gain_p10": 5.22,
 "gain_p90": 40.98,
-"actual_gain_pct": 16.51,
+"actual_gain_pct": 6.58,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1644,7 +1659,7 @@
 "gain_p50": 20.72,
 "gain_p10": 4.29,
 "gain_p90": 40.05,
-"actual_gain_pct": 38.58,
+"actual_gain_pct": 38.56,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1674,7 +1689,7 @@
 "gain_p50": 6.42,
 "gain_p10": -10.02,
 "gain_p90": 25.74,
-"actual_gain_pct": -1.42,
+"actual_gain_pct": -1.4,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1704,7 +1719,7 @@
 "gain_p50": -9.19,
 "gain_p10": -25.63,
 "gain_p90": 10.14,
-"actual_gain_pct": -0.74,
+"actual_gain_pct": -0.58,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1719,7 +1734,7 @@
 "gain_p50": 31.62,
 "gain_p10": 15.18,
 "gain_p90": 50.95,
-"actual_gain_pct": 18.91,
+"actual_gain_pct": 18.88,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1734,7 +1749,7 @@
 "gain_p50": 24.51,
 "gain_p10": 8.07,
 "gain_p90": 43.84,
-"actual_gain_pct": 18.05,
+"actual_gain_pct": 18.32,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1749,7 +1764,7 @@
 "gain_p50": 48.76,
 "gain_p10": 32.32,
 "gain_p90": 68.09,
-"actual_gain_pct": 6.45,
+"actual_gain_pct": 4.52,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1794,7 +1809,7 @@
 "gain_p50": 7.57,
 "gain_p10": -8.87,
 "gain_p90": 26.89,
-"actual_gain_pct": -4.46,
+"actual_gain_pct": -4.5,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1839,7 +1854,7 @@
 "gain_p50": 15.39,
 "gain_p10": -1.05,
 "gain_p90": 34.71,
-"actual_gain_pct": 9.81,
+"actual_gain_pct": 9.77,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1869,7 +1884,7 @@
 "gain_p50": -12.28,
 "gain_p10": -28.72,
 "gain_p90": 7.05,
-"actual_gain_pct": -1.12,
+"actual_gain_pct": -1.21,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -1914,7 +1929,7 @@
 "gain_p50": 16.72,
 "gain_p10": 0.29,
 "gain_p90": 36.05,
-"actual_gain_pct": 20.75,
+"actual_gain_pct": 18.22,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1944,7 +1959,7 @@
 "gain_p50": 60.87,
 "gain_p10": 44.43,
 "gain_p90": 80.19,
-"actual_gain_pct": 111.75,
+"actual_gain_pct": 108.75,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -1974,7 +1989,7 @@
 "gain_p50": 52.9,
 "gain_p10": 36.46,
 "gain_p90": 72.23,
-"actual_gain_pct": 34.54,
+"actual_gain_pct": 34.62,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2019,7 +2034,7 @@
 "gain_p50": -18.68,
 "gain_p10": -35.11,
 "gain_p90": 0.65,
-"actual_gain_pct": -23.64,
+"actual_gain_pct": -21.31,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -2034,7 +2049,7 @@
 "gain_p50": 20.64,
 "gain_p10": 4.2,
 "gain_p90": 39.96,
-"actual_gain_pct": 11.1,
+"actual_gain_pct": 10.93,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2049,7 +2064,7 @@
 "gain_p50": 24.76,
 "gain_p10": 8.32,
 "gain_p90": 44.08,
-"actual_gain_pct": -9.01,
+"actual_gain_pct": -8.95,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -2079,7 +2094,7 @@
 "gain_p50": 64.99,
 "gain_p10": 48.55,
 "gain_p90": 84.32,
-"actual_gain_pct": 48.58,
+"actual_gain_pct": 42.62,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2109,7 +2124,7 @@
 "gain_p50": 41.58,
 "gain_p10": 25.14,
 "gain_p90": 60.9,
-"actual_gain_pct": 15.25,
+"actual_gain_pct": 15.2,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2124,7 +2139,7 @@
 "gain_p50": 114.28,
 "gain_p10": 97.85,
 "gain_p90": 133.61,
-"actual_gain_pct": 95.55,
+"actual_gain_pct": 95.6,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2154,7 +2169,7 @@
 "gain_p50": 12.32,
 "gain_p10": -4.11,
 "gain_p90": 31.65,
-"actual_gain_pct": 5.42,
+"actual_gain_pct": 5.44,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2184,7 +2199,7 @@
 "gain_p50": 17.75,
 "gain_p10": 1.31,
 "gain_p90": 37.07,
-"actual_gain_pct": 2.56,
+"actual_gain_pct": 2.47,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2199,7 +2214,7 @@
 "gain_p50": -6.94,
 "gain_p10": -23.38,
 "gain_p90": 12.38,
-"actual_gain_pct": 1.96,
+"actual_gain_pct": 2.18,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2214,7 +2229,7 @@
 "gain_p50": 38.87,
 "gain_p10": 22.43,
 "gain_p90": 58.19,
-"actual_gain_pct": 23.6,
+"actual_gain_pct": 23.58,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2229,7 +2244,7 @@
 "gain_p50": -8.04,
 "gain_p10": -24.48,
 "gain_p90": 11.28,
-"actual_gain_pct": -3.07,
+"actual_gain_pct": -3.42,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -2319,7 +2334,7 @@
 "gain_p50": 42.71,
 "gain_p10": 26.27,
 "gain_p90": 62.04,
-"actual_gain_pct": 47.89,
+"actual_gain_pct": 47.94,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2364,7 +2379,7 @@
 "gain_p50": 53.85,
 "gain_p10": 37.41,
 "gain_p90": 73.18,
-"actual_gain_pct": 76.21,
+"actual_gain_pct": 76.33,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2394,7 +2409,7 @@
 "gain_p50": 21.67,
 "gain_p10": 5.24,
 "gain_p90": 41.0,
-"actual_gain_pct": 29.64,
+"actual_gain_pct": 29.61,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2409,7 +2424,7 @@
 "gain_p50": 18.57,
 "gain_p10": 2.13,
 "gain_p90": 37.9,
-"actual_gain_pct": 29.08,
+"actual_gain_pct": 28.41,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2424,7 +2439,7 @@
 "gain_p50": 33.53,
 "gain_p10": 17.09,
 "gain_p90": 52.86,
-"actual_gain_pct": 36.29,
+"actual_gain_pct": 36.34,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2469,7 +2484,7 @@
 "gain_p50": 3.97,
 "gain_p10": -12.47,
 "gain_p90": 23.29,
-"actual_gain_pct": -8.85,
+"actual_gain_pct": -8.74,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -2514,7 +2529,7 @@
 "gain_p50": 39.05,
 "gain_p10": 22.61,
 "gain_p90": 58.38,
-"actual_gain_pct": 26.64,
+"actual_gain_pct": 26.66,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2589,7 +2604,7 @@
 "gain_p50": 32.16,
 "gain_p10": 15.72,
 "gain_p90": 51.48,
-"actual_gain_pct": 46.82,
+"actual_gain_pct": 46.53,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2604,7 +2619,7 @@
 "gain_p50": 6.58,
 "gain_p10": -9.85,
 "gain_p90": 25.91,
-"actual_gain_pct": 15.43,
+"actual_gain_pct": 15.38,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2634,7 +2649,7 @@
 "gain_p50": -4.34,
 "gain_p10": -20.78,
 "gain_p90": 14.98,
-"actual_gain_pct": 13.04,
+"actual_gain_pct": 13.0,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2724,9 +2739,9 @@
 "gain_p50": 6.24,
 "gain_p10": -10.2,
 "gain_p90": 25.57,
-"actual_gain_pct": 1.73,
+"actual_gain_pct": -1.73,
 "gain_basis": "close",
-"listed_up": true
+"listed_up": false
 },
 {
 "id": "lohia-corp-2026",
@@ -2739,7 +2754,7 @@
 "gain_p50": -1.47,
 "gain_p10": -17.91,
 "gain_p90": 17.86,
-"actual_gain_pct": 16.38,
+"actual_gain_pct": 16.39,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2754,7 +2769,7 @@
 "gain_p50": 40.58,
 "gain_p10": 24.14,
 "gain_p90": 59.9,
-"actual_gain_pct": 52.94,
+"actual_gain_pct": 52.95,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2814,7 +2829,7 @@
 "gain_p50": 20.43,
 "gain_p10": 4.0,
 "gain_p90": 39.76,
-"actual_gain_pct": 24.58,
+"actual_gain_pct": 24.65,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2844,7 +2859,7 @@
 "gain_p50": 18.57,
 "gain_p10": 2.13,
 "gain_p90": 37.9,
-"actual_gain_pct": 6.23,
+"actual_gain_pct": 6.25,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2889,7 +2904,7 @@
 "gain_p50": 18.69,
 "gain_p10": 2.25,
 "gain_p90": 38.02,
-"actual_gain_pct": 22.63,
+"actual_gain_pct": 22.83,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2934,7 +2949,7 @@
 "gain_p50": 42.96,
 "gain_p10": 26.52,
 "gain_p90": 62.29,
-"actual_gain_pct": 43.87,
+"actual_gain_pct": 44.26,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -2964,7 +2979,7 @@
 "gain_p50": 8.24,
 "gain_p10": -8.2,
 "gain_p90": 27.57,
-"actual_gain_pct": 7.64,
+"actual_gain_pct": 7.47,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3084,7 +3099,7 @@
 "gain_p50": -5.18,
 "gain_p10": -21.62,
 "gain_p90": 14.14,
-"actual_gain_pct": 0.36,
+"actual_gain_pct": 0.33,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3129,7 +3144,7 @@
 "gain_p50": -15.32,
 "gain_p10": -31.76,
 "gain_p90": 4.0,
-"actual_gain_pct": -17.31,
+"actual_gain_pct": -17.41,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -3189,7 +3204,7 @@
 "gain_p50": 41.21,
 "gain_p10": 24.77,
 "gain_p90": 60.53,
-"actual_gain_pct": 30.04,
+"actual_gain_pct": 29.09,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3204,7 +3219,7 @@
 "gain_p50": -13.51,
 "gain_p10": -29.95,
 "gain_p90": 5.81,
-"actual_gain_pct": -10.94,
+"actual_gain_pct": -10.92,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -3354,7 +3369,7 @@
 "gain_p50": 5.65,
 "gain_p10": -10.79,
 "gain_p90": 24.98,
-"actual_gain_pct": 18.2,
+"actual_gain_pct": 11.98,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3414,7 +3429,7 @@
 "gain_p50": 39.23,
 "gain_p10": 22.8,
 "gain_p90": 58.56,
-"actual_gain_pct": 25.62,
+"actual_gain_pct": 29.11,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3699,7 +3714,7 @@
 "gain_p50": 10.7,
 "gain_p10": -5.73,
 "gain_p90": 30.03,
-"actual_gain_pct": 22.01,
+"actual_gain_pct": 21.87,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3759,7 +3774,7 @@
 "gain_p50": -8.4,
 "gain_p10": -24.83,
 "gain_p90": 10.93,
-"actual_gain_pct": 10.5,
+"actual_gain_pct": 8.66,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3819,7 +3834,7 @@
 "gain_p50": 2.76,
 "gain_p10": -13.68,
 "gain_p90": 22.08,
-"actual_gain_pct": 3.49,
+"actual_gain_pct": 3.67,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3864,7 +3879,7 @@
 "gain_p50": -7.79,
 "gain_p10": -24.23,
 "gain_p90": 11.54,
-"actual_gain_pct": -15.09,
+"actual_gain_pct": -17.22,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -3909,7 +3924,7 @@
 "gain_p50": -6.97,
 "gain_p10": -23.41,
 "gain_p90": 12.36,
-"actual_gain_pct": -10.43,
+"actual_gain_pct": -10.44,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -3939,7 +3954,7 @@
 "gain_p50": -10.33,
 "gain_p10": -26.77,
 "gain_p90": 9.0,
-"actual_gain_pct": 11.33,
+"actual_gain_pct": 11.28,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -3954,7 +3969,7 @@
 "gain_p50": -24.6,
 "gain_p10": -41.04,
 "gain_p90": -5.28,
-"actual_gain_pct": -27.9,
+"actual_gain_pct": -28.17,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -3969,7 +3984,7 @@
 "gain_p50": -9.39,
 "gain_p10": -25.83,
 "gain_p90": 9.94,
-"actual_gain_pct": -7.35,
+"actual_gain_pct": -7.46,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4029,7 +4044,7 @@
 "gain_p50": -10.44,
 "gain_p10": -26.88,
 "gain_p90": 8.88,
-"actual_gain_pct": 7.33,
+"actual_gain_pct": 7.4,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -4089,7 +4104,7 @@
 "gain_p50": -9.08,
 "gain_p10": -25.52,
 "gain_p90": 10.24,
-"actual_gain_pct": -9.72,
+"actual_gain_pct": -9.63,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4104,7 +4119,7 @@
 "gain_p50": -16.08,
 "gain_p10": -32.52,
 "gain_p90": 3.24,
-"actual_gain_pct": 6.66,
+"actual_gain_pct": 7.24,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -4119,7 +4134,7 @@
 "gain_p50": -26.13,
 "gain_p10": -42.57,
 "gain_p90": -6.8,
-"actual_gain_pct": -31.35,
+"actual_gain_pct": -29.37,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4164,7 +4179,7 @@
 "gain_p50": -12.95,
 "gain_p10": -29.39,
 "gain_p90": 6.37,
-"actual_gain_pct": -17.62,
+"actual_gain_pct": -17.58,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4209,7 +4224,7 @@
 "gain_p50": -6.13,
 "gain_p10": -22.56,
 "gain_p90": 13.2,
-"actual_gain_pct": 1.59,
+"actual_gain_pct": 1.87,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -4269,7 +4284,7 @@
 "gain_p50": -9.73,
 "gain_p10": -26.17,
 "gain_p90": 9.59,
-"actual_gain_pct": -5.87,
+"actual_gain_pct": -5.84,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4284,7 +4299,7 @@
 "gain_p50": -13.06,
 "gain_p10": -29.5,
 "gain_p90": 6.27,
-"actual_gain_pct": -0.07,
+"actual_gain_pct": -0.08,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4479,7 +4494,7 @@
 "gain_p50": -9.49,
 "gain_p10": -25.93,
 "gain_p90": 9.84,
-"actual_gain_pct": -11.31,
+"actual_gain_pct": -11.37,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4584,7 +4599,7 @@
 "gain_p50": -1.3,
 "gain_p10": -17.74,
 "gain_p90": 18.02,
-"actual_gain_pct": -3.53,
+"actual_gain_pct": -3.6,
 "gain_basis": "close",
 "listed_up": false
 },
@@ -4629,7 +4644,7 @@
 "gain_p50": 65.56,
 "gain_p10": 49.12,
 "gain_p90": 84.89,
-"actual_gain_pct": 76.43,
+"actual_gain_pct": 76.78,
 "gain_basis": "close",
 "listed_up": true
 },
@@ -9130,21 +9145,6 @@
 "gain_p10": -23.05,
 "gain_p90": 29.97,
 "actual_gain_pct": 3.5,
-"gain_basis": "close",
-"listed_up": true
-},
-{
-"id": "virtual-galaxy-infotech-2025",
-"name": "Virtual Galaxy Infotech Ltd.",
-"board": "sme",
-"listing_date": "2025-05-19",
-"lock_stage": "backfill",
-"p_up": 0.9991,
-"verdict_tier": "lean",
-"gain_p50": 72.61,
-"gain_p10": 47.87,
-"gain_p90": 100.89,
-"actual_gain_pct": 33.1,
 "gain_basis": "close",
 "listed_up": true
 }
