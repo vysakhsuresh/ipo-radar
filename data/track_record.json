@@ -1,11 +1,11 @@
 {
-"generated_at": "2026-11-27T12:59:06Z",
+"generated_at": "2026-11-28T12:10:14Z",
 "started": "2026-11-15",
-"n": 1000,
-"n_locked": 1,
+"n": 1002,
+"n_locked": 3,
 "n_backfill": 999,
-"n_pending": 2,
-"hit_rate": 0.8701,
+"n_pending": 1,
+"hit_rate": 0.8703,
 "by_verdict": {
 "apply": {
 "n": 161,
@@ -14,10 +14,10 @@
 "median_gain": 27.31
 },
 "lean": {
-"n": 447,
-"n_up": 379,
-"mean_gain": 44.81,
-"median_gain": 28.74
+"n": 448,
+"n_up": 380,
+"mean_gain": 44.71,
+"median_gain": 28.71
 },
 "coinflip": {
 "n": 209,
@@ -26,10 +26,10 @@
 "median_gain": 0.48
 },
 "avoid": {
-"n": 183,
+"n": 184,
 "n_up": 67,
 "mean_gain": -2.58,
-"median_gain": -3.42
+"median_gain": -3.21
 },
 "watch": {
 "n": 0,
@@ -39,9 +39,9 @@
 }
 },
 "brier": 0.1472,
-"brier_gmp_only": 0.2074,
-"base_rate": 0.71,
-"range_coverage": 0.768,
+"brier_gmp_only": 0.2076,
+"base_rate": 0.7096,
+"range_coverage": 0.7685,
 "calibration": [
 {
 "bin_lo": 0.0,
@@ -81,9 +81,9 @@
 {
 "bin_lo": 0.5,
 "bin_hi": 0.6,
-"pred_mean": 0.5727,
-"obs_rate": 0.5143,
-"n": 105
+"pred_mean": 0.5725,
+"obs_rate": 0.5094,
+"n": 106
 },
 {
 "bin_lo": 0.6,
@@ -109,45 +109,75 @@
 {
 "bin_lo": 0.9,
 "bin_hi": 1.0,
-"pred_mean": 0.9803,
-"obs_rate": 0.983,
-"n": 353
+"pred_mean": 0.9801,
+"obs_rate": 0.9831,
+"n": 354
 }
 ],
 "by_board": {
 "mainboard": {
-"n": 305,
+"n": 306,
 "n_called": 202,
 "hit_rate": 0.8911,
-"brier": 0.1316,
-"brier_gmp_only": 0.2068,
-"base_rate": 0.7115,
-"range_coverage": 0.7902,
-"mean_gain": 17.46
+"brier": 0.1321,
+"brier_gmp_only": 0.2079,
+"base_rate": 0.7092,
+"range_coverage": 0.7908,
+"mean_gain": 17.4
 },
 "sme": {
-"n": 695,
-"n_called": 406,
-"hit_rate": 0.8596,
-"brier": 0.154,
-"brier_gmp_only": 0.2076,
-"base_rate": 0.7094,
-"range_coverage": 0.7583,
-"mean_gain": 28.68
+"n": 696,
+"n_called": 407,
+"hit_rate": 0.86,
+"brier": 0.1538,
+"brier_gmp_only": 0.2075,
+"base_rate": 0.7098,
+"range_coverage": 0.7586,
+"mean_gain": 28.64
 }
 },
 "locked_only": {
-"n": 1,
-"n_called": 1,
+"n": 3,
+"n_called": 2,
 "hit_rate": 1.0,
-"brier": 0.0663,
-"brier_gmp_only": 0.0625,
-"base_rate": 1.0,
+"brier": 0.1231,
+"brier_gmp_only": 0.2443,
+"base_rate": 0.6667,
 "range_coverage": 1.0,
-"mean_gain": 2.15
+"mean_gain": 0.7
 },
 "notes": "'close' and 'pre_listing' rows were locked before the listing and never changed. 'backfill' rows were scored afterwards by the current model on the pre-listing inputs in history.json, so they are hindsight, not a forecast record; locked_only holds the genuine numbers. brier_gmp_only scores the naive forecast 'share of past listings in the same GMP bucket that rose'.",
 "rows": [
+{
+"id": "watrana-rentals-2026",
+"name": "Watrana Rentals Limited",
+"board": "sme",
+"listing_date": "2026-11-27",
+"lock_stage": "close",
+"p_up": 0.9261,
+"verdict_tier": "lean",
+"gain_p50": 22.05,
+"gain_p10": -2.69,
+"gain_p90": 50.33,
+"actual_gain_pct": 2.45,
+"gain_basis": "close",
+"listed_up": true
+},
+{
+"id": "mahanadi-coalfields-2026",
+"name": "Mahanadi Coalfields Limited",
+"board": "mainboard",
+"listing_date": "2026-11-27",
+"lock_stage": "close",
+"p_up": 0.5455,
+"verdict_tier": "avoid",
+"gain_p50": -3.73,
+"gain_p10": -20.17,
+"gain_p90": 15.59,
+"actual_gain_pct": -2.5,
+"gain_basis": "close",
+"listed_up": false
+},
 {
 "id": "crystal-crop-protection-2026",
 "name": "Crystal Crop Protection Ltd.",
@@ -9115,36 +9145,6 @@
 "gain_p10": 10.39,
 "gain_p90": 46.15,
 "actual_gain_pct": 18.13,
-"gain_basis": "close",
-"listed_up": true
-},
-{
-"id": "accretion-pharmaceuticals-2025",
-"name": "Accretion Pharmaceuticals Ltd.",
-"board": "sme",
-"listing_date": "2025-05-21",
-"lock_stage": "backfill",
-"p_up": 0.6898,
-"verdict_tier": "coinflip",
-"gain_p50": 6.73,
-"gain_p10": -18.01,
-"gain_p90": 35.0,
-"actual_gain_pct": -17.87,
-"gain_basis": "close",
-"listed_up": false
-},
-{
-"id": "integrity-infrabuild-developers-2025",
-"name": "Integrity Infrabuild Developers Ltd.",
-"board": "sme",
-"listing_date": "2025-05-20",
-"lock_stage": "backfill",
-"p_up": 0.5976,
-"verdict_tier": "coinflip",
-"gain_p50": 1.69,
-"gain_p10": -23.05,
-"gain_p90": 29.97,
-"actual_gain_pct": 3.5,
 "gain_basis": "close",
 "listed_up": true
 }
